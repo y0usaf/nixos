@@ -36,6 +36,7 @@ in {
     "python"
     "sync-tokens"
     "qbittorrent"
+    "impermanence"
   ];
 
   # Directory Configurations
