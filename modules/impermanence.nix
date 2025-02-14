@@ -14,12 +14,8 @@
     directories = [
       # Your critical directories
       "nixos"
-      "Music"
-      "DCIM"
-      "Pictures"
       "Dev"
       "Tokens"
-      ".local/share/Steam"
       # Configuration directories
       ".ssh"
       ".gnupg"
@@ -29,7 +25,7 @@
       "Documents"
       "Videos"
       "Downloads"
-      # Firefox profiles (adjust as needed)
+      # Firefox profiles
       ".mozilla/firefox"
       # Your cursor configurations 
       ".cursor"           # for ~/.cursor
@@ -40,6 +36,5 @@
       ".gitconfig"
       # Add other specific files you want to persist
     ];
-    allowOther = true; # Allows other users to access persistent files
   };
 }
