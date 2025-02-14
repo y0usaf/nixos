@@ -21,7 +21,6 @@
       "Tokens"
       ".local/share/Steam"
       # Configuration directories
-      ".config/nixos"
       ".ssh"
       ".gnupg"
       # State directories

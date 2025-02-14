@@ -17,10 +17,51 @@
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
 
+  # Root as tmpfs
   fileSystems."/" = {
+    device = "none";
+    fsType = "tmpfs";
+    options = [ "defaults" "size=2G" "mode=755" ];
+  };
+
+  # Persist volume
+  fileSystems."/persist" = {
     device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
     fsType = "btrfs";
-    options = ["subvol=@"];
+    options = [ "subvol=@persist" ];
+    neededForBoot = true;
+  };
+
+  # Home directory
+  fileSystems."/home" = {
+    device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+    fsType = "btrfs";
+    options = [ "subvol=@home" ];
+  };
+
+  # Special-purpose mounts
+  fileSystems."/home/y0usaf/Music" = {
+    device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+    fsType = "btrfs";
+    options = [ "subvol=@music" ];
+  };
+
+  fileSystems."/home/y0usaf/DCIM" = {
+    device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+    fsType = "btrfs";
+    options = [ "subvol=@dcim" ];
+  };
+
+  fileSystems."/home/y0usaf/Pictures" = {
+    device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+    fsType = "btrfs";
+    options = [ "subvol=@pictures" ];
+  };
+
+  fileSystems."/home/y0usaf/.local/share/Steam" = {
+    device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+    fsType = "btrfs";
+    options = [ "subvol=@steam" ];
   };
 
   fileSystems."/boot" = {
