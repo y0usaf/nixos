@@ -8,7 +8,7 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usbhid" ];
+  boot.initrd.availableKernelModules = [ "nvme" "usbhid" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -19,16 +19,21 @@
       options = [ "subvol=@" ];
     };
 
-  fileSystems."/persist" =
-    { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
-      fsType = "btrfs";
-      options = [ "subvol=@persist" "noatime" ];
-    };
+  #fileSystems."/btrfs" =
+  #  { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+  #    fsType = "btrfs";
+  #  };
 
   fileSystems."/home" =
     { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
       fsType = "btrfs";
       options = [ "subvol=@home" ];
+    };
+
+  fileSystems."/persist" =
+    { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+      fsType = "btrfs";
+      options = [ "subvol=@persist" ];
     };
 
   fileSystems."/swap" =
@@ -37,16 +42,20 @@
       options = [ "subvol=@swap" ];
     };
 
+  fileSystems."/var/lib/lxd/devlxd" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
+    };
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/5330-BB8D";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  fileSystems."/home/y0usaf/.local/share/Steam" =
-    { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
-      fsType = "btrfs";
-      options = [ "subvol=@steam" ];
+  fileSystems."/var/lib/lxd/shmounts" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
     };
 
   fileSystems."/home/y0usaf/DCIM" =
@@ -61,20 +70,16 @@
       options = [ "subvol=@music" ];
     };
 
+  fileSystems."/home/y0usaf/.local/share/Steam" =
+    { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
+      fsType = "btrfs";
+      options = [ "subvol=@steam" ];
+    };
+
   fileSystems."/home/y0usaf/Pictures" =
     { device = "/dev/disk/by-uuid/f3d25172-f728-4bb6-a14d-f86e97a6a0e7";
       fsType = "btrfs";
       options = [ "subvol=@pictures" ];
-    };
-
-  fileSystems."/var/lib/lxd/shmounts" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/var/lib/lxd/devlxd" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
     };
 
   fileSystems."/btrfs" =
