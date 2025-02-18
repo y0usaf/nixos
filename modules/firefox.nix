@@ -339,7 +339,7 @@
   mkProfileConfig = name: {
     inherit name;
     settings = commonSettings;
-    #userChrome = userChromeCss;
+    userChrome = userChromeCss;
   };
 
   # Generate profile configurations for all detected profiles
@@ -355,7 +355,7 @@ in {
     profiles = {
       "y0usaf" = {
         settings = commonSettings;
-        #userChrome = userChromeCss;
+        userChrome = userChromeCss;
       };
     };
   };
