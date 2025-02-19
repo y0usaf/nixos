@@ -27,9 +27,9 @@
       "Downloads"
       # Firefox profiles
       ".mozilla/firefox"
-      # Your cursor configurations 
-      ".cursor"           # for ~/.cursor
-      ".config/Cursor"    # for ~/.config/Cursor
+      # Your cursor configurations
+      ".cursor" # for ~/.cursor
+      ".config/Cursor" # for ~/.config/Cursor
     ];
     files = [
       # Important dotfiles
