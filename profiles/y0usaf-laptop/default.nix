@@ -137,6 +137,5 @@ in {
   # Personal Packages
   personalPackages = with pkgs; [
     realesrgan-ncnn-vulkan
-    inputs.zen-browser.packages.default
   ];
 }

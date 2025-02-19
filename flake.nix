@@ -93,9 +93,6 @@
     impermanence = {
       url = "github:nix-community/impermanence";
     };
-    zen-browser = {
-      url = "github.com/0xc000022070/zen-browser-flake";
-    };
   };
   ####################################################################
   #                        SYSTEM OUTPUTS                            #
