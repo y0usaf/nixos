@@ -38,6 +38,7 @@ in {
     "sync-tokens"
     "qbittorrent"
     "impermanence"
+    "zen-browser"
   ];
 
   # Directory Configurations
@@ -138,4 +139,7 @@ in {
   personalPackages = with pkgs; [
     realesrgan-ncnn-vulkan
   ];
+
+  # Enable Zen Browser
+  bzv.zen-browser.enable = true;
 }
