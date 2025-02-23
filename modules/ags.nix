@@ -26,7 +26,7 @@
   ];
 
   # How many times do we want to repeat these values?
-  repetitionCount = 4;
+  repetitionCount = 8;
   # Use lib.genList to generate a list with the shadowOffsets repeated
   repeatedShadow = lib.concatStringsSep ",\n" (lib.concatLists (lib.genList (i: shadowOffsets) repetitionCount));
 

@@ -3,7 +3,7 @@
 # 🎯 Target: Desktop Environment for Development and Daily Use         #
 #──────────────────────────────────────────────────────────────────────#
 {
-  description = "NixOS configuration";
+  description = "NixOS configuration with Impermanence";
 
   ####################################################################
   #                         INPUT SOURCES                            #
@@ -88,8 +88,12 @@
       # Again, ensure that the same nixpkgs version is adhered to by following it.
       inputs.nixpkgs.follows = "nixpkgs";
     };
-  };
 
+    # Impermanence: Home Manager module for managing persistent state.
+    impermanence = {
+      url = "github:nix-community/impermanence";
+    };
+  };
   ####################################################################
   #                        SYSTEM OUTPUTS                            #
   ####################################################################
@@ -105,6 +109,7 @@
     hyprpaper,
     pyproject-nix,
     uv2nix,
+    impermanence,
     ...
   }: let
     ## ────── System & Package Configuration ──────

@@ -9,7 +9,8 @@ in {
   homeDirectory = homeDir;
   hostname = "y0usaf-laptop";
   stateVersion = "24.11";
-  timezone = "America/Toronto";
+  #timezone = "America/Toronto";
+  timezone = "Europe/London";
 
   features = [
     "hyprland"
@@ -36,6 +37,8 @@ in {
     "python"
     "sync-tokens"
     "qbittorrent"
+    "impermanence"
+    "zen-browser"
   ];
 
   # Directory Configurations
@@ -136,4 +139,7 @@ in {
   personalPackages = with pkgs; [
     realesrgan-ncnn-vulkan
   ];
+
+  # Enable Zen Browser
+  bzv.zen-browser.enable = true;
 }
