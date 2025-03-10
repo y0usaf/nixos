@@ -56,21 +56,17 @@ in {
     # Add the whisper-overlay package to user packages
     home.packages = [pkgs.whisper-overlay];
 
-    # Configure the realtime-stt-server service directly
-    systemd.user.services.realtime-stt-server = {
-      Unit = {
-        Description = "Realtime STT Server for whisper-overlay";
-        After = ["network.target"];
-      };
-
-      Service = {
-        ExecStart = "${pkgs.whisper-overlay}/bin/realtime-stt-server --device ${cfg.device} --model ${cfg.model} --model-realtime ${cfg.modelRealtime} ${optionalString (cfg.language != "") "--language ${cfg.language}"}";
-        Restart = "on-failure";
-      };
-
-      Install = {
-        WantedBy = ["default.target"];
-      };
+    # Use the Home Manager module provided by whisper-overlay
+    services.realtime-stt-server = {
+      enable = true;
+      autoStart = true;
+      device = cfg.device;
+      model = cfg.model;
+      modelRealtime = cfg.modelRealtime;
+      language = cfg.language;
     };
+
+    # Enable CUDA support for better performance
+    nixpkgs.config.cudaSupport = true;
   };
 }
