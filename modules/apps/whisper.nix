@@ -6,9 +6,9 @@
   ...
 }:
 with lib; let
-  cfg = config.modules.apps.whisper-overlay;
+  cfg = config.modules.apps.whisper;
 in {
-  options.modules.apps.whisper-overlay = {
+  options.modules.apps.whisper = {
     enable = mkEnableOption "Enable whisper-overlay speech-to-text service";
 
     autoStart = mkOption {
