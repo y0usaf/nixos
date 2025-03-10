@@ -66,6 +66,12 @@
     claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
     claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
     claude-desktop.inputs.flake-utils.follows = "flake-utils";
+
+    # Whisper Overlay - Speech-to-text for Wayland
+    whisper-overlay = {
+      url = "github:oddlama/whisper-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   ###########################################################################
@@ -84,6 +90,7 @@
       overlays = [
         (final: prev: {
           inherit (inputs.uv2nix.packages.${system}) uv2nix;
+          inherit (inputs.whisper-overlay.packages.${system}) whisper-overlay;
         })
       ];
       config.allowUnfree = true;
@@ -145,6 +152,7 @@
               };
             }
             inputs.chaotic.nixosModules.default
+            inputs.whisper-overlay.nixosModules.default
           ];
         };
       })
@@ -164,7 +172,10 @@
         value = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = commonSpecialArgs // {profile = profileConfig;};
-          modules = [./home.nix];
+          modules = [
+            ./home.nix
+            inputs.whisper-overlay.homeManagerModules.default
+          ];
         };
       })
       profileNames
