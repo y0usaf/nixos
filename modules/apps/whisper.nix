@@ -8,6 +8,8 @@
 }:
 with lib; let
   cfg = config.modules.apps.whisper;
+  # Get the whisper-overlay package directly from inputs
+  whisper-overlay-pkg = inputs.whisper-overlay.packages.${pkgs.system}.whisper-overlay;
 in {
   options.modules.apps.whisper = {
     enable = mkEnableOption "Enable whisper speech-to-text overlay";
@@ -37,9 +39,12 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
-    # Add the whisper-overlay package to user packages
-    home.packages = [pkgs.whisper-overlay];
+  config = {
+    # Always enable the module if the feature is enabled
+    modules.apps.whisper.enable = true;
+
+    # Add the whisper-overlay package directly from inputs
+    home.packages = [whisper-overlay-pkg];
 
     # Use the Home Manager module provided by whisper-overlay
     services.realtime-stt-server = {
