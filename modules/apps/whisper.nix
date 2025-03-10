@@ -53,35 +53,23 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Enable the realtime-stt-server service
-    services.realtime-stt-server = {
-      enable = true;
-      device = cfg.device;
-      model = cfg.model;
-      modelRealtime = cfg.modelRealtime;
-      language = cfg.language;
-    };
-
     # Add the whisper-overlay package to user packages
     home.packages = [pkgs.whisper-overlay];
 
-    # Create a simple script to start the overlay
-    home.file.".config/scripts/start-whisper-overlay.sh" = {
-      executable = true;
-      text = ''
-        #!/bin/sh
-        whisper-overlay overlay --hotkey KEY_RIGHTCTRL
-      '';
-    };
+    # Configure the realtime-stt-server service directly
+    systemd.user.services.realtime-stt-server = {
+      Unit = {
+        Description = "Realtime STT Server for whisper-overlay";
+        After = ["network.target"];
+      };
 
-    # Add autostart entry for Hyprland if that feature is enabled
-    xdg.configFile = mkIf (builtins.elem "hyprland" profile.features) {
-      "hypr/autostart.d/whisper-overlay.sh" = {
-        executable = true;
-        text = ''
-          #!/bin/sh
-          ${config.home.homeDirectory}/.config/scripts/start-whisper-overlay.sh &
-        '';
+      Service = {
+        ExecStart = "${pkgs.whisper-overlay}/bin/realtime-stt-server --device ${cfg.device} --model ${cfg.model} --model-realtime ${cfg.modelRealtime} ${optionalString (cfg.language != "") "--language ${cfg.language}"}";
+        Restart = "on-failure";
+      };
+
+      Install = {
+        WantedBy = ["default.target"];
       };
     };
   };
