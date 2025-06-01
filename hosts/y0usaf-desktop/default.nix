@@ -205,11 +205,58 @@ in {
         ".config/hjem-test.txt".text = ''
           Hjem is now integrated into your NixOS configuration!
           This file confirms that Hjem is properly set up.
+        '';
 
-          Next steps:
-          1. Begin migrating configurations from Home Manager to Hjem
-          2. Start with gaming and AGS configurations as they use text attributes
-          3. Move packages to users.users.${username}.packages
+        # Shell configuration
+        ".config/shell/aliases.sh".text = ''
+          # Shell aliases
+          alias ls='ls --color=auto'
+          alias ll='ls -la'
+          alias grep='grep --color=auto'
+          alias nixswitch='cd ~/nixos && nh os switch'
+          alias nixedit='cd ~/nixos && $EDITOR'
+        '';
+
+        # Git configuration
+        ".gitconfig".text = ''
+          [user]
+            name = ${username}
+            email = OA99@Outlook.com
+
+          [init]
+            defaultBranch = main
+
+          [pull]
+            rebase = false
+
+          [push]
+            autoSetupRemote = true
+        '';
+
+        # Kitty terminal configuration
+        ".config/kitty/kitty.conf".text = ''
+          # Kitty configuration
+          font_family      Fast_Mono
+          bold_font        auto
+          italic_font      auto
+          bold_italic_font auto
+          font_size 12.0
+
+          # Theme
+          background_opacity 0.95
+          background #282c34
+          foreground #abb2bf
+          cursor #528bff
+
+          # Colors
+          color0 #282c34
+          color1 #e06c75
+          color2 #98c379
+          color3 #e5c07b
+          color4 #61afef
+          color5 #c678dd
+          color6 #56b6c2
+          color7 #abb2bf
         '';
       };
     };

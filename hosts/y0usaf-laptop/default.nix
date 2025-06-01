@@ -201,11 +201,105 @@ in {
         ".config/hjem-test.txt".text = ''
           Hjem is now integrated into your NixOS configuration!
           This file confirms that Hjem is properly set up.
+        '';
 
-          Next steps:
-          1. Begin migrating configurations from Home Manager to Hjem
-          2. Start with gaming and AGS configurations as they use text attributes
-          3. Move packages to users.users.${username}.packages
+        # Shell configuration
+        ".config/shell/aliases.sh".text = ''
+          # Shell aliases
+          alias ls='ls --color=auto'
+          alias ll='ls -la'
+          alias grep='grep --color=auto'
+          alias nixswitch='cd ~/nixos && nh os switch'
+          alias nixedit='cd ~/nixos && $EDITOR'
+          alias powersave='sudo cpupower frequency-set -g powersave'
+          alias performance='sudo cpupower frequency-set -g performance'
+        '';
+
+        # Git configuration
+        ".gitconfig".text = ''
+          [user]
+            name = ${username}
+            email = OA99@Outlook.com
+
+          [init]
+            defaultBranch = main
+
+          [pull]
+            rebase = false
+
+          [push]
+            autoSetupRemote = true
+        '';
+
+        # Foot terminal configuration
+        ".config/foot/foot.ini".text = ''
+          # Foot terminal configuration for laptop
+          font=Fast_Mono:size=10
+          pad=10x10
+
+          [colors]
+          alpha=0.95
+          foreground=abb2bf
+          background=282c34
+
+          # Normal/regular colors
+          regular0=282c34  # black
+          regular1=e06c75  # red
+          regular2=98c379  # green
+          regular3=e5c07b  # yellow
+          regular4=61afef  # blue
+          regular5=c678dd  # magenta
+          regular6=56b6c2  # cyan
+          regular7=abb2bf  # white
+
+          # Bright colors
+          bright0=5c6370   # bright black
+          bright1=e06c75   # bright red
+          bright2=98c379   # bright green
+          bright3=e5c07b   # bright yellow
+          bright4=61afef   # bright blue
+          bright5=c678dd   # bright magenta
+          bright6=56b6c2   # bright cyan
+          bright7=ffffff   # bright white
+
+          [cursor]
+          color=282c34 528bff
+        '';
+
+        # Battery optimization
+        ".config/powersave/battery-profile.sh".executable = true;
+        ".config/powersave/battery-profile.sh".text = ''
+          #!/bin/sh
+          # Optimize for battery life when on battery power
+
+          if [ "$1" = "battery" ]; then
+            # CPU governor
+            sudo cpupower frequency-set -g powersave
+
+            # Reduce screen brightness
+            brightnessctl set 50%
+
+            # Disable bluetooth if not connected
+            if ! bluetoothctl info | grep -q "Connected: yes"; then
+              bluetoothctl power off
+            fi
+
+            echo "Switched to battery saving mode"
+          elif [ "$1" = "ac" ]; then
+            # CPU governor
+            sudo cpupower frequency-set -g performance
+
+            # Restore screen brightness
+            brightnessctl set 80%
+
+            # Enable bluetooth
+            bluetoothctl power on
+
+            echo "Switched to performance mode"
+          else
+            echo "Usage: $0 [battery|ac]"
+            exit 1
+          fi
         '';
       };
     };
