@@ -198,6 +198,22 @@ in {
       };
     };
 
+    # Hjem Configuration
+    hjem = {
+      files = {
+        # Example file to verify Hjem is working
+        ".config/hjem-test.txt".text = ''
+          Hjem is now integrated into your NixOS configuration!
+          This file confirms that Hjem is properly set up.
+
+          Next steps:
+          1. Begin migrating configurations from Home Manager to Hjem
+          2. Start with gaming and AGS configurations as they use text attributes
+          3. Move packages to users.users.${username}.packages
+        '';
+      };
+    };
+
     # SHARED CONFIGURATION (both system and home)
     core = {
       # Local home-specific settings

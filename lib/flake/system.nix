@@ -29,6 +29,7 @@ in {
             # Import the shared configurations
             (hostsDir + "/default.nix")
             inputs.home-manager.nixosModules.home-manager
+            inputs.hjem.nixosModules.default
             # Add system-specific imports that shouldn't be exposed to HM
           ]
           ++ (shared.systemConfigs.${hostname}.cfg.system.imports or [])
@@ -62,6 +63,12 @@ in {
                   # Apply unified home configuration
                   inherit (shared.homeConfigs.${hostname}) cfg;
                 };
+              };
+
+              # Configure Hjem for the user
+              hjem.users.${shared.systemConfigs.${hostname}.cfg.system.username} = {
+                enable = true;
+                files = shared.homeConfigs.${hostname}.cfg.hjem.files or {};
               };
             }
             inputs.chaotic.nixosModules.default

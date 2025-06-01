@@ -32,7 +32,7 @@ inputs: let
   ## Common Special Arguments for Modules
   commonSpecialArgs = {
     inherit inputs;
-    inherit (inputs) whisper-overlay disko fast-fonts;
+    inherit (inputs) whisper-overlay disko fast-fonts hjem;
     inherit helpers;
   };
 in {

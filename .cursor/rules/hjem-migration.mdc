@@ -1,0 +1,164 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Hjem Migration Guidelines
+
+## Overview
+This document outlines the process for migrating from Home Manager to Hjem while maintaining the current module structure and ensuring a smooth transition.
+
+## Core Principles
+
+1. **Preserve Module Structure**: The current folder and module structure should remain unchanged.
+2. **Replace Configs, Not Structure**: Home Manager configurations should be replaced with Hjem symlinked dotfiles while maintaining the existing organization.
+3. **Package Migration**: All packages in `home.packages` will be migrated to `users.users.y0usaf.packages` in the NixOS configuration.
+
+## Key Differences Between Home Manager and Hjem
+
+- **Home Manager**: Comprehensive user environment manager that handles packages, services, dotfiles, and more.
+- **Hjem**: Focused solely on managing dotfiles in $HOME (similar to Home Manager's `home.file`).
+- **Package Management**: Hjem doesn't handle packages; use `users.users.y0usaf.packages` instead.
+
+## Migration Strategy
+
+### Phase 1: Setup and Initial Configuration
+
+1. Add Hjem to flake.nix (already completed):
+   ```nix
+   hjem = {
+     url = "github:feel-co/hjem";
+     inputs.nixpkgs.follows = "nixpkgs";
+   };
+   ```
+
+2. Add basic Hjem configuration in your NixOS module:
+   ```nix
+   # This can be added to an appropriate module file
+   {
+     imports = [ inputs.hjem.nixosModules.default ];
+     
+     hjem.users.y0usaf = {
+       enable = true;
+       files = {
+         # Start with just a few files for testing
+       };
+     };
+   }
+   ```
+
+### Phase 2: Prioritized Migration Path
+
+Start with configurations that already use `.text` attributes, as these are the easiest to migrate:
+
+1. **Begin with Gaming Configurations**:
+   - Marvel Rivals configuration uses `xdg.dataFile."...".text` which directly maps to Hjem
+   - Example migration:
+     ```nix
+     # From Home Manager:
+     xdg.dataFile."Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/GameUserSettings.ini".text = lib.generators.toINI {} {...};
+     
+     # To Hjem:
+     hjem.users.y0usaf.files.".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/GameUserSettings.ini".text = lib.generators.toINI {} {...};
+     ```
+
+2. **Next Migrate AGS Configuration**:
+   - The AGS config uses `xdg.configFile."ags/app.tsx".text` with substantial inline content
+   - Example migration:
+     ```nix
+     # From Home Manager:
+     xdg.configFile."ags/app.tsx".text = ''...large typescript content...'';
+     
+     # To Hjem:
+     hjem.users.y0usaf.files.".config/ags/app.tsx".text = ''...large typescript content...'';
+     ```
+
+3. **Then Other Config-Heavy Modules**:
+   - Look for other modules that primarily use `xdg.configFile` or similar
+   - Desktop environment configurations can come next
+
+4. **Finally Complex Configurations**:
+   - Modules with activation scripts and complex behavior
+
+### Phase 3: Package Migration
+
+For each module migrated to Hjem, move its packages:
+
+1. **Gaming Packages**:
+   ```nix
+   # From Home Manager:
+   home.packages = with pkgs; [ steam protonup-qt gamemode ];
+   
+   # To NixOS:
+   users.users.y0usaf.packages = with pkgs; [ steam protonup-qt gamemode ];
+   ```
+
+2. **AGS Packages**:
+   ```nix
+   # From Home Manager:
+   home.packages = with pkgs; [ ags ];
+   
+   # To NixOS:
+   users.users.y0usaf.packages = with pkgs; [ ags ];
+   ```
+
+3. **Handle Implicit Packages**:
+   - For modules using `programs.X.enable = true`, identify and explicitly add these packages
+
+### Phase 4: Handle Activation Scripts
+
+For modules like gaming/mods.nix that use activation scripts:
+
+1. **Option 1: NixOS Activation Scripts**:
+   - Move the logic to a system activation script
+
+2. **Option 2: Systemd Services**:
+   - Create a user systemd service to perform the same actions
+
+3. **Option 3: Direct File Management**:
+   - Use Hjem's file management for what can be handled with static files
+   - Use external scripts for dynamic aspects
+
+### Phase 5: Final Transition
+
+1. Once all configurations are migrated and tested, remove Home Manager
+2. Perform a full rebuild to validate the system
+
+## File Structure
+
+The current module structure should be preserved:
+
+```
+home/
+  core/
+  dev/
+  gaming/
+  programs/
+  session/
+  shell/
+  tools/
+  ui/
+```
+
+All that changes is HOW the files are managed (Hjem instead of Home Manager), not WHERE they are defined in the configuration.
+
+## Handling Special Cases
+
+### Environment Variables
+Home Manager environment variables should be moved to appropriate shell configuration files or NixOS configuration.
+
+### Activation Scripts
+Home Manager activation scripts should be reimplemented as appropriate systemd services or NixOS activation scripts.
+
+## Rollback Plan
+
+In case of issues, be prepared to revert to Home Manager:
+1. Keep Home Manager in the flake until migration is complete
+2. Maintain a backup of working configuration
+3. Test each migration phase thoroughly before proceeding
+
+## Additional Resources
+
+- [Hjem GitHub Repository](mdc:https:/github.com/feel-co/hjem)
+- [Home Manager Documentation](mdc:https:/nix-community.github.io/home-manager)
+- [NixOS Wiki](mdc:https:/nixos.wiki)
