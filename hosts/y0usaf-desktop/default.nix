@@ -97,7 +97,7 @@ in {
 
       # Applications
       programs = {
-        bambu.enable = true;
+        bambu.enable = false;
         discord.enable = true;
         vesktop.enable = true;
         creative.enable = true;
