@@ -8,7 +8,7 @@ inputs: let
   pkgs = import inputs.nixpkgs {
     inherit system;
     overlays = [
-      (_final: prev: {
+      (_final: _prev: {
         fastFonts = inputs.fast-fonts.packages.${system}.default;
       })
     ];
@@ -18,8 +18,8 @@ inputs: let
 
   ## Define helpers separately
   helpers = {
-    importDirs = import ../../helpers/import-dirs.nix {lib = pkgs.lib;};
-    importModules = import ../../helpers/import-modules.nix {lib = pkgs.lib;};
+    importDirs = import ../../helpers/import-dirs.nix {inherit (pkgs) lib;};
+    importModules = import ../../helpers/import-modules.nix {inherit (pkgs) lib;};
   };
 
   ## Import host utilities
