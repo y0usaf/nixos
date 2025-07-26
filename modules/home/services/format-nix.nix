@@ -35,20 +35,21 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = [pkgs.alejandra pkgs.inotify-tools];
+    };
 
-      systemd.services.format-nix-watcher = {
-        description = "Watch and format Nix files on change";
-        after = ["graphical-session.target"];
-        wantedBy = ["default.target"];
+    # Move systemd service to NixOS level
+    systemd.user.services.format-nix-watcher = {
+      description = "Watch and format Nix files on change";
+      after = ["graphical-session.target"];
+      wantedBy = ["default.target"];
 
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = formatScript;
-          Restart = "always";
-          RestartSec = "5";
-        };
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = formatScript;
+        Restart = "always";
+        RestartSec = "5";
       };
     };
   };

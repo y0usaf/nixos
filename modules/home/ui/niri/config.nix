@@ -9,7 +9,7 @@
   # Force rebuild - updated launcher command
 in {
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = [
         pkgs.niri
         pkgs.grim
@@ -19,7 +19,7 @@ in {
         pkgs.swaybg
       ];
 
-      file.xdg_config = {
+      files = {
         "niri/config.kdl" = {
           text = ''
             prefer-no-csd

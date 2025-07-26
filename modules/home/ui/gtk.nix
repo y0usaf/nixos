@@ -82,7 +82,7 @@
   bookmarksContent = lib.concatStringsSep "\n" bookmarks;
 in {
   options.home.ui.gtk = {
-    enable = lib.mkEnableOption "GTK theming and configuration using nix-maid";
+    enable = lib.mkEnableOption "GTK theming and configuration using hjem";
     scale = lib.mkOption {
       type = lib.types.float;
       default = 1.0;
@@ -91,21 +91,19 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         gtk3
         gtk4
       ];
-      file = {
-        xdg_config = {
-          "gtk-3.0/settings.ini".text = lib.generators.toINI {} gtk3Settings;
-          "gtk-3.0/gtk.css".text = gtkCss;
-          "gtk-3.0/bookmarks".text = bookmarksContent;
-          "gtk-4.0/settings.ini".text = lib.generators.toINI {} gtk4Settings;
-        };
-        home.".zshenv".text = lib.mkAfter ''
+      files = {
+        ".zshenv".text = lib.mkAfter ''
           export XCURSOR_SIZE="${builtins.replaceStrings [".0"] [""] (toString (builtins.floor (24 * scaleFactor)))}"
         '';
+        ".config/gtk-3.0/settings.ini".text = lib.generators.toINI {} gtk3Settings;
+        ".config/gtk-3.0/gtk.css".text = gtkCss;
+        ".config/gtk-3.0/bookmarks".text = bookmarksContent;
+        ".config/gtk-4.0/settings.ini".text = lib.generators.toINI {} gtk4Settings;
       };
     };
   };

@@ -10,11 +10,11 @@ in {
     enable = lib.mkEnableOption "qutebrowser web browser";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         qutebrowser
       ];
-      file.xdg_config."qutebrowser/config.py".text = ''
+      files.".config/qutebrowser/config.py".text = ''
         # Basic qutebrowser configuration
         config.load_autoconfig(False)
 

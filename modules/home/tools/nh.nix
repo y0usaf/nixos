@@ -20,11 +20,11 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         nh
       ];
-      file.home.".config/zsh/.zshrc".text = lib.mkAfter ''
+      files.".config/zsh/.zshrc".text = lib.mkAfter ''
         export NH_FLAKE="${config.user.nixosConfigDirectory}"
         nhs() {
           clear

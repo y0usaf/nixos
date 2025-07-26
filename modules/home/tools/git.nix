@@ -40,12 +40,12 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         git
         openssh
       ];
-      file.home = {
+      files = {
         ".gitconfig".text = ''
           [user]
             name = ${cfg.name}

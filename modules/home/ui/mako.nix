@@ -10,11 +10,11 @@ in {
     enable = lib.mkEnableOption "Mako notification daemon";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         mako
       ];
-      file.xdg_config."mako/config".text = ''
+      files.".config/mako/config".text = ''
         actions=true
         anchor=top-right
         background-color=

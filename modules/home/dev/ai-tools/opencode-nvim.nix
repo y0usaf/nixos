@@ -8,8 +8,8 @@
   username = config.user.name;
 in {
   config = lib.mkIf (cfg.enable && opencodeCfg.enable) {
-    users.users.${username}.maid.file = {
-      xdg_config."nvim/lua/opencode-config.lua".text = ''
+    hjem.users.${username}.files = {
+      ".config/nvim/lua/opencode-config.lua".text = ''
 
           opencode.setup({
             -- API configuration
@@ -118,7 +118,7 @@ in {
         end
       '';
 
-      xdg_config."nvim/lua/vim-pack-opencode.lua".text = ''
+      ".config/nvim/lua/vim-pack-opencode.lua".text = ''
         -- Add opencode.nvim plugin to vim.pack
         vim.pack.add({
           "https://github.com/NickvanDyke/opencode.nvim",

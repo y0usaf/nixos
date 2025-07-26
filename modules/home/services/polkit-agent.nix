@@ -10,9 +10,12 @@ in {
     enable = lib.mkEnableOption "polkit authentication agent";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = [pkgs.polkit_gnome];
-      systemd.services.polkit-gnome-authentication-agent-1 = {
+    };
+    
+    # Move systemd service to NixOS level
+    systemd.user.services.polkit-gnome-authentication-agent-1 = {
         description = "polkit-gnome-authentication-agent-1";
         wantedBy = ["graphical-session.target"];
         after = ["graphical-session.target"];
@@ -24,6 +27,5 @@ in {
           TimeoutStopSec = 10;
         };
       };
-    };
   };
 }

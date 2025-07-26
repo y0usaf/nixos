@@ -7,8 +7,8 @@
   username = config.user.name;
 in {
   config = lib.mkIf cfg.enable {
-    users.users.${username}.maid.file = {
-      xdg_config."nvim/init.lua".text = ''
+    hjem.users.${username}.files = {
+      ".config/nvim/init.lua".text = ''
         vim.g.mapleader = " "
         vim.g.maplocalleader = "\\"
         vim.opt.number = true

@@ -10,10 +10,10 @@ in {
     enable = lib.mkEnableOption "web applications via Chromium";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = [pkgs.ungoogled-chromium];
-      file = {
-        home.".local/share/applications/keybard.desktop".text = ''
+      files = {
+        ".local/share/applications/keybard.desktop".text = ''
           [Desktop Entry]
           Name=Keybard
           Exec=${lib.getExe pkgs.chromium} --app=https://captdeaf.github.io/keybard %U
@@ -22,7 +22,7 @@ in {
           Categories=Utility;System;
           Comment=Keyboard testing utility
         '';
-        home.".local/share/applications/google-meet.desktop".text = ''
+        ".local/share/applications/google-meet.desktop".text = ''
           [Desktop Entry]
           Name=Google Meet
           Exec=${lib.getExe pkgs.chromium} --app=https://meet.google.com %U

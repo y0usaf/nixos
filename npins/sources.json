@@ -152,19 +152,6 @@
       "url": "https://github.com/nix-community/neovim-nightly-overlay/archive/57acedd7c9b2b2e6d23cc4c3110e541061a3b6d9.tar.gz",
       "hash": "1s59h5h3a151lz12gi83q59s0p6kkq1f2j9s81v4nl685i0m2was"
     },
-    "nix-maid": {
-      "type": "Git",
-      "repository": {
-        "type": "GitHub",
-        "owner": "y0usaf",
-        "repo": "nix-maid"
-      },
-      "branch": "smfh-integration",
-      "submodules": false,
-      "revision": "1faf991fefc415c3820667bc769edc8ae34ccc18",
-      "url": "https://github.com/y0usaf/nix-maid/archive/1faf991fefc415c3820667bc769edc8ae34ccc18.tar.gz",
-      "hash": "1246pnywi3sa2h4r9mnr31wqbb6p5l3cs5zwrabbyfg4943gr91b"
-    },
     "nix-minecraft": {
       "type": "Git",
       "repository": {

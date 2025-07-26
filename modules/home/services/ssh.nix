@@ -10,11 +10,11 @@ in {
     enable = lib.mkEnableOption "SSH configuration module";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         openssh
       ];
-      file.home.".ssh/config".text = ''
+      hjem.users.${config.user.name}.files.".ssh/config".text = ''
         ForwardAgent yes
         AddKeysToAgent yes
         ServerAliveInterval 60
@@ -38,7 +38,7 @@ in {
           ExecStartPost = "${pkgs.coreutils}/bin/systemctl --user set-environment SSH_AUTH_SOCK=$SSH_AUTH_SOCK";
         };
       };
-      file.home."{{xdg_config_home}}/zsh/.zshenv".text = lib.mkAfter ''
+      hjem.users.${config.user.name}.files."{{xdg_config_home}}/zsh/.zshenv".text = lib.mkAfter ''
         export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
       '';
     };

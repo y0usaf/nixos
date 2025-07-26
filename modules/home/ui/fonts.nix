@@ -79,9 +79,9 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${username}.maid = {
+    hjem.users.${config.user.name} = {
       packages = mainFontPackages ++ fallbackPackages;
-      file.xdg_config = {
+      files = {
         "fontconfig/fonts.conf".text = fontXmlConfig;
       };
     };

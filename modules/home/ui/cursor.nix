@@ -19,12 +19,12 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${username}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         hyprcursorPackage
         xcursorPackage
       ];
-      file.home = {
+      files = {
         ".profile".text = lib.mkAfter ''
           export HYPRCURSOR_THEME="${hyprThemeName}"
           export HYPRCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
@@ -32,7 +32,7 @@ in {
           export XCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
         '';
       };
-      file.xdg_config = {
+      files = {
         "gtk-3.0/settings.ini".text = lib.mkAfter ''
           [Settings]
           gtk-cursor-theme-name=${x11ThemeName}

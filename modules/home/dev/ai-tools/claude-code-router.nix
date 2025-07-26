@@ -11,20 +11,21 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         nodejs_20
       ];
 
-      file.home = {
+      files = {
         ".claude-code-router/.keep".text = "";
       };
-
-      systemd.tmpfiles.dynamicRules = [
-        "d {{home}}/.npm-global 0755 {{user}} {{group}} - -"
-        "d {{home}}/.claude-code-router 0755 {{user}} {{group}} - -"
-      ];
     };
+
+    # Create directories using systemd-tmpfiles at the NixOS level
+    systemd.tmpfiles.rules = [
+      "d ${config.user.homeDirectory}/.npm-global 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.claude-code-router 0755 ${config.user.name} users - -"
+    ];
 
     # Add npm global bin to PATH
     environment.variables.PATH = lib.mkAfter "${config.user.homeDirectory}/.npm-global/bin";

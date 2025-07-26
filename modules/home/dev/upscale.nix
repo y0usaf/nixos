@@ -11,11 +11,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         realesrgan-ncnn-vulkan
       ];
-      file.home.".config/zsh/aliases/esrgan.zsh".text = ''
+      files.".config/zsh/aliases/esrgan.zsh".text = ''
         alias esrgan="realesrgan-ncnn-vulkan -i ${config.user.homeDirectory}/Pictures/Upscale/Input -o ${config.user.homeDirectory}/Pictures/Upscale/Output"
       '';
     };

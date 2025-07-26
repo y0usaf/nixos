@@ -9,7 +9,7 @@ in {
     enable = lib.mkEnableOption "cat fetch display on shell startup";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid.file.home.".config/zsh/.zshrc".text = lib.mkAfter ''
+    hjem.users.${config.user.name}.files.".config/zsh/.zshrc".text = lib.mkAfter ''
       print_cats() {
           echo -e "\033[0;31m ⟋|､      \033[0;34m  ⟋|､      \033[0;35m  ⟋|､      \033[0;32m  ⟋|､
       \033[0;31m(°､ ｡ 7    \033[0;34m(°､ ｡ 7    \033[0;35m(°､ ｡ 7    \033[0;32m(°､ ｡ 7

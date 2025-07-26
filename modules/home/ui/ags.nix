@@ -14,11 +14,11 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = [
         pkgs.ags
       ];
-      file.xdg_config = {
+      files = {
         "ags/app.tsx".text = ''
           import { App, Astal, Gtk } from "astal/gtk3"
           import { Variable, exec, subprocess } from "astal"

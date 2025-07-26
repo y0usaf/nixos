@@ -10,8 +10,8 @@ in {
     enable = lib.mkEnableOption "Wayland configuration";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
-      file.home."{{xdg_config_home}}/zsh/.zshenv".text = lib.mkAfter ''
+    hjem.users.${config.user.name} = {
+      files.".config/zsh/.zshenv".text = lib.mkAfter ''
         export WLR_NO_HARDWARE_CURSORS=1
         export NIXOS_OZONE_WL=1
         export QT_QPA_PLATFORM=wayland

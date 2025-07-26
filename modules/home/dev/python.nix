@@ -14,7 +14,7 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         python3
         python312
@@ -33,7 +33,7 @@ in {
         gcc
         binutils
       ];
-      file.home = {
+      files = {
         "{{xdg_config_home}}/zsh/.zshenv".text = lib.mkAfter ''
           export PYTHONUSERBASE="{{home}}/.local/share/python"
           export PIP_CACHE_DIR="{{xdg_cache_home}}/pip"
@@ -87,11 +87,13 @@ in {
           }
         '';
       };
-      systemd.tmpfiles.dynamicRules = [
-        "d {{home}}/.local/share/python 0755 {{user}} {{group}} - -"
-        "d {{xdg_cache_home}}/pip 0755 {{user}} {{group}} - -"
-        "d {{home}}/.local/share/venvs 0755 {{user}} {{group}} - -"
-      ];
     };
+    
+    # Create directories using systemd-tmpfiles at the NixOS level
+    systemd.tmpfiles.rules = [
+      "d ${config.user.homeDirectory}/.local/share/python 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.cache/pip 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.local/share/venvs 0755 ${config.user.name} users - -"
+    ];
   };
 }

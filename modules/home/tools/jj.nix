@@ -28,11 +28,11 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         jujutsu
       ];
-      file.home = {
+      files = {
         ".config/jj/config.toml".text = ''
           [user]
           name = "${cfg.name}"

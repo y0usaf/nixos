@@ -10,13 +10,13 @@ in {
     enable = lib.mkEnableOption "android tools and waydroid";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         waydroid
         android-tools
         scrcpy
       ];
-      file.home = {
+      files = {
         ".android_env".text = ''
           export ANDROID_HOME="$XDG_DATA_HOME/android"
           export ADB_VENDOR_KEY="$XDG_CONFIG_HOME/android"

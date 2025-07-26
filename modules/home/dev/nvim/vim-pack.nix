@@ -7,7 +7,7 @@
   username = config.user.name;
 in {
   config = lib.mkIf cfg.enable {
-    users.users.${username}.maid.file.xdg_config."nvim/lua/vim-pack-config.lua".text = ''
+    hjem.users.${username}.files.".config/nvim/lua/vim-pack-config.lua".text = ''
       -- Core plugins with vim.pack
       vim.pack.add({
         -- LSP and Completion

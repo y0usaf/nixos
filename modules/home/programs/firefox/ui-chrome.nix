@@ -229,8 +229,8 @@
   '';
 in {
   config = lib.mkIf config.home.programs.firefox.enable {
-    users.users.${username}.maid = {
-      file.home = {
+    hjem.users.${config.user.name} = {
+      files = {
         ".mozilla/firefox/${username}.default/chrome/userChrome.css".text = userChromeCss;
         ".mozilla/firefox/${username}.default-release/chrome/userChrome.css".text = userChromeCss;
       };

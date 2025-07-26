@@ -22,14 +22,14 @@ in {
   config = lib.mkIf cfg.enable {
     environment.variables.ZDOTDIR = "${config.user.configDirectory}/zsh";
     programs.zsh.enable = true;
-    users.users.${name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         zsh
         bat
         lsd
         tree
       ];
-      file.home = {
+      files = {
         ".config/zsh/.zshenv".text = let
           tokenFunctionScript = ''
             export_vars_from_files() {

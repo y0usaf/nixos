@@ -8,7 +8,7 @@
   username = config.user.name;
 in {
   config = lib.mkIf cfg.enable {
-    users.users.${username}.maid.packages = [
+    hjem.users.${username}.packages = [
       pkgs.ripgrep
       pkgs.fd
       pkgs.tree-sitter

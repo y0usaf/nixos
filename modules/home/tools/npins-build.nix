@@ -11,12 +11,12 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         npins
         alejandra
       ];
-      file.home.".config/zsh/.zshrc".text = lib.mkAfter ''
+      files.".config/zsh/.zshrc".text = lib.mkAfter ''
         # Npins build helpers
         export NIXOS_CONFIG_PATH="${config.user.nixosConfigDirectory}"
 

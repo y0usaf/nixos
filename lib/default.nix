@@ -72,10 +72,6 @@ in {
           ...
         }: {
           imports = [
-            (import (sources.nix-maid + "/src/nixos") {
-              smfh = null;
-            })
-            # Add hjem for migration testing
             (sources.hjem + "/modules/nixos")
           ];
           config = {
@@ -88,13 +84,7 @@ in {
               )
               hostUserConfigs
             );
-            # Configure maid for each user
-            users.users = lib.genAttrs users (_username: {
-              maid = {
-                packages = [];
-              };
-            });
-            # Configure hjem for each user (parallel to maid for now)
+            # Configure hjem for each user
             hjem = {
               # Use SMFH manifest linker instead of systemd-tmpfiles
               linker = pkgs.callPackage (sources.smfh + "/package.nix") {};

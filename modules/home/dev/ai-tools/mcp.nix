@@ -76,20 +76,22 @@ in {
     enable = lib.mkEnableOption "Model Context Protocol configuration";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         nodejs_20
         uv
       ];
-      file.home = {
+      files = {
         ".cursor/mcp.json".text = builtins.toJSON mcpServersConfig;
         ".claude/mcp_config.json".text = builtins.toJSON mcpServersConfig;
         ".claude/mcp_servers.json".text = builtins.toJSON claudeCodeServers;
       };
-      systemd.tmpfiles.dynamicRules = [
-        "d {{home}}/.local/share/npm/lib/node_modules 0755 {{user}} {{group}} - -"
-      ];
     };
+
+    # Create directories using systemd-tmpfiles at the NixOS level
+    systemd.tmpfiles.rules = [
+      "d ${config.user.homeDirectory}/.local/share/npm/lib/node_modules 0755 ${config.user.name} users - -"
+    ];
     system.activationScripts.setupClaudeMcp = {
       text = ''
         echo "Setting up Claude MCP servers via CLI..."

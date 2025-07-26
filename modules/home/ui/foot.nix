@@ -56,11 +56,11 @@ in {
     enable = lib.mkEnableOption "foot terminal emulator";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         foot
       ];
-      file.xdg_config."foot/foot.ini".text = lib.mkAfter (lib.generators.toINI {} footConfig);
+      files.".config/foot/foot.ini".text = lib.mkAfter (lib.generators.toINI {} footConfig);
     };
   };
 }

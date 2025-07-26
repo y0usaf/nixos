@@ -7,11 +7,11 @@
   username = config.user.name;
 in {
   config = lib.mkIf config.home.programs.firefox.enable {
-    users.users.${username}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         firefox
       ];
-      file.home = {
+      files = {
         ".profile".text = lib.mkAfter ''
           export MOZ_ENABLE_WAYLAND=1
           export MOZ_USE_XINPUT2=1

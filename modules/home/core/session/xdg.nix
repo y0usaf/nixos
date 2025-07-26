@@ -9,9 +9,9 @@ in {
     enable = lib.mkEnableOption "XDG directory configuration";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
-      file = {
-        home.".zshenv".text = lib.mkAfter ''
+    hjem.users.${config.user.name} = {
+      files = {
+        ".zshenv".text = lib.mkAfter ''
           export XDG_CONFIG_HOME="$HOME/.config"
           export XDG_DATA_HOME="$HOME/.local/share"
           export XDG_STATE_HOME="$HOME/.local/state"
@@ -50,8 +50,7 @@ in {
           export SSB_HOME="$XDG_DATA_HOME/zoom"
           export __GL_SHADER_DISK_CACHE_PATH="$XDG_CACHE_HOME/nv"
         '';
-        xdg_config = {
-          "user-dirs.dirs".text = ''
+        ".config/user-dirs.dirs".text = ''
             XDG_DESKTOP_DIR="${config.user.homeDirectory}/Desktop"
             XDG_DOWNLOAD_DIR="${config.user.homeDirectory}/Downloads"
             XDG_TEMPLATES_DIR="${config.user.homeDirectory}/Templates"
@@ -63,7 +62,7 @@ in {
             XDG_SCREENSHOTS_DIR="${config.user.homeDirectory}/Pictures/Screenshots"
             XDG_WALLPAPERS_DIR="${config.user.homeDirectory}/Pictures/Wallpapers"
           '';
-          "mimeapps.list".text = ''
+        ".config/mimeapps.list".text = ''
             [Default Applications]
             text/html=firefox.desktop
             x-scheme-handler/http=firefox.desktop
@@ -96,7 +95,7 @@ in {
             x-scheme-handler/https=firefox.desktop
             x-scheme-handler/ftp=firefox.desktop
           '';
-          xdg_data."applications/firefox.desktop".text = ''
+        ".local/share/applications/firefox.desktop".text = ''
             [Desktop Entry]
             Name=Firefox
             GenericName=Web Browser
@@ -108,7 +107,7 @@ in {
             Icon=firefox
             StartupNotify=true
           '';
-          "python/pythonrc".text = ''
+        ".config/python/pythonrc".text = ''
             import os
             import atexit
             import readline
@@ -125,7 +124,6 @@ in {
                 readline.append_history_file(new_h_len - prev_h_len, histfile)
             atexit.register(save, h_len, histfile)
           '';
-        };
       };
     };
   };

@@ -20,8 +20,8 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
-      systemd.services."nixos-git-sync" = {
+    # Move systemd service to NixOS level
+    systemd.user.services."nixos-git-sync" = {
         description = "Sync NixOS configuration changes after successful build";
         script = ''
                     set -x
@@ -52,6 +52,5 @@ in {
         };
         wantedBy = ["default.target"];
       };
-    };
   };
 }

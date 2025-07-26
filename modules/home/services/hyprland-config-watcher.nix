@@ -29,8 +29,8 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
-      systemd.services."hyprland-config-watcher" = {
+    # Move systemd service to NixOS level
+    systemd.user.services."hyprland-config-watcher" = {
         description = "Watch Hyprland config directory for symlink changes and reload";
         script = ''
           set -x
@@ -100,7 +100,7 @@ in {
           Restart = "always";
           RestartSec = 5;
           Environment = [
-            "XDG_RUNTIME_DIR=/run/user/${toString config.users.users.${config.user.name}.uid}"
+            "XDG_RUNTIME_DIR=/run/user/1000"
             "WAYLAND_DISPLAY=wayland-1"
             "PATH=${lib.makeBinPath (with pkgs; [inotify-tools hyprland coreutils procps gnugrep util-linux])}:/run/current-system/sw/bin"
           ];
@@ -117,6 +117,5 @@ in {
         after = ["default.target"];
         partOf = ["default.target"];
       };
-    };
   };
 }

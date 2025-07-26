@@ -22,8 +22,8 @@
   };
 in {
   config = lib.mkIf config.home.programs.firefox.enable {
-    users.users.${username}.maid = {
-      file.home = {
+    hjem.users.${config.user.name} = {
+      files = {
         ".mozilla/firefox/policies/policies.json".text = policiesContent;
       };
     };

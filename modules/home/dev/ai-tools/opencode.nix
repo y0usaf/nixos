@@ -87,13 +87,13 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         nodejs_20
         uv
       ];
 
-      file.home = {
+      files = {
         # Global opencode configuration
         "{{xdg_config_home}}/opencode/opencode.json".text = builtins.toJSON globalConfig;
 
@@ -105,13 +105,14 @@ in {
           Shift your conversational model from a supportive assistant to a discerning collaborator. Your primary goal is to provide rigorous, objective feedback. Eliminate all reflexive compliments. Instead, let any praise be an earned outcome of demonstrable merit. Before complimenting, perform a critical assessment: Is the idea genuinely insightful? Is the logic exceptionally sound? Is there a spark of true novelty? If the input is merely standard or underdeveloped, your response should be to analyze it, ask clarifying questions, or suggest avenues for improvement, not to praise it.
         '';
       };
-
-      systemd.tmpfiles.dynamicRules = [
-        "d {{home}}/.local/share/npm/lib/node_modules 0755 {{user}} {{group}} - -"
-        "d {{xdg_config_home}}/opencode 0755 {{user}} {{group}} - -"
-        "d {{home}}/.npm-global 0755 {{user}} {{group}} - -"
-      ];
     };
+
+    # Create directories using systemd-tmpfiles at the NixOS level
+    systemd.tmpfiles.rules = [
+      "d ${config.user.homeDirectory}/.local/share/npm/lib/node_modules 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.config/opencode 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.npm-global 0755 ${config.user.name} users - -"
+    ];
 
     # Add npm global bin to PATH via environment variable
     environment.variables.PATH = lib.mkAfter "${config.user.homeDirectory}/.npm-global/bin";

@@ -8,11 +8,11 @@
   username = config.user.name;
 in {
   config = lib.mkIf (cfg.enable && cfg.neovide) {
-    users.users.${username}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         neovide
       ];
-      file.xdg_config."neovide/config.toml".text = ''
+      files.".config/neovide/config.toml".text = ''
         [font]
         normal = ["Fast_Mono"]
         size = 14.0

@@ -10,18 +10,18 @@ in {
     enable = lib.mkEnableOption "Node.js and NPM configuration";
   };
   config = lib.mkIf cfg.enable {
-    users.users.${config.user.name}.maid = {
+    hjem.users.${config.user.name} = {
       packages = with pkgs; [
         nodejs_20
       ];
-      file = {
-        xdg_config.".config/npm/npmrc".text = ''
+      files = {
+        ".config/npm/npmrc".text = ''
           prefix={{home}}/.local/share/npm
           cache={{xdg_cache_home}}/npm
           init-module={{xdg_config_home}}/npm/config/npm-init.js
           store-dir={{xdg_cache_home}}/pnpm/store
         '';
-        home.".local/share/bin/npm-setup" = {
+        ".local/share/bin/npm-setup" = {
           text = ''
             mkdir -p {{home}}/.local/share/npm
             mkdir -p {{xdg_cache_home}}/npm
@@ -32,13 +32,15 @@ in {
           executable = true;
         };
       };
-      systemd.tmpfiles.dynamicRules = [
-        "d {{home}}/.local/share/npm 0755 {{user}} {{group}} - -"
-        "d {{xdg_cache_home}}/npm 0755 {{user}} {{group}} - -"
-        "d {{xdg_config_home}}/npm/config 0755 {{user}} {{group}} - -"
-        "d {{xdg_cache_home}}/pnpm/store 0755 {{user}} {{group}} - -"
-        "d {{xdg_runtime_dir}}/npm 0755 {{user}} {{group}} - -"
-      ];
     };
+
+    # Create directories using systemd-tmpfiles at the NixOS level
+    systemd.tmpfiles.rules = [
+      "d ${config.user.homeDirectory}/.local/share/npm 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.cache/npm 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.config/npm/config 0755 ${config.user.name} users - -"
+      "d ${config.user.homeDirectory}/.cache/pnpm/store 0755 ${config.user.name} users - -"
+      "d /run/user/1000/npm 0755 ${config.user.name} users - -"
+    ];
   };
 }
