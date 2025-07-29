@@ -214,6 +214,57 @@ in {
           };
         })
 
+        # 🔥 ROUND 3 OBLITERATION - MEDIUM MODULES ANNIHILATED! 🔥
+
+        # From modules/system/services/scx.nix (9 lines -> inlined)
+        # TEMPORARILY COMMENTED - ALREADY CONFIGURED VIA services module
+        # ({pkgs, ...}: {
+        #   config = {
+        #     services.scx = {
+        #       enable = true;
+        #       scheduler = "scx_lavd";
+        #       package = pkgs.scx.rustscheds;
+        #     };
+        #   };
+        # })
+
+        # From modules/home/gaming/shader-cache.nix (10 lines -> inlined)
+        ({config, ...}: {
+          config = {
+            hjem.users.${config.user.name}.files.".config/steam/steam_dev.cfg" = {
+              text = ''
+                unShaderBackgroundProcessingThreads ${toString config.nix.settings.max-jobs}
+              '';
+              clobber = true;
+            };
+          };
+        })
+
+        # From modules/system/programs/obs.nix (10 lines -> inlined)
+        ({config, ...}: {
+          boot = {
+            kernelModules = ["v4l2loopback"];
+            extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
+            extraModprobeConfig = ''
+              options v4l2loopback exclusive_caps=1
+            '';
+          };
+          security.polkit.enable = true;
+        })
+
+        # From modules/home/ui/hyprland/monitors.nix (9 lines -> inlined)
+        # NOTE: This needs to be in hjem config, not system config
+        # TEMPORARILY COMMENTED - needs proper hyprland integration
+        # ({...}: {
+        #   monitor = [
+        #     "DP-4,highres@highrr,0x0,1"
+        #     "DP-3,highres@highrr,0x0,1"
+        #     "DP-2,5120x1440@239.76,0x0,1"
+        #     "DP-1,5120x1440@239.76,0x0,1"
+        #     "eDP-1,1920x1080@300.00,0x0,1"
+        #   ];
+        # })
+
         # Home manager integration
         (sources.hjem + "/modules/nixos")
         allModules.home.core
