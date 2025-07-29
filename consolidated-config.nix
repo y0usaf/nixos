@@ -259,7 +259,43 @@ in {
           };
         })
         # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
-        allModules.home.ui
+
+        # From modules/home/ui/default.nix (16 lines -> OBLITERATED!)
+        (import ./modules/home/ui/ags.nix)
+        (import ./modules/home/ui/cursor.nix)
+        (import ./modules/home/ui/fonts.nix)
+        (import ./modules/home/ui/foot.nix)
+        (import ./modules/home/ui/gtk.nix)
+        (import ./modules/home/ui/hyprland)
+        (import ./modules/home/ui/mako.nix)
+        # From modules/home/ui/niri/default.nix + options.nix inline (5+19 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.ui.niri;
+        in {
+          # From modules/home/ui/niri/options.nix (5 lines -> INLINED!)
+          options.home.ui.niri = {
+            enable = lib.mkEnableOption "Niri wayland compositor";
+          };
+
+          imports = [
+            ./modules/home/ui/niri/config.nix
+          ];
+
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              xwayland-satellite
+            ];
+          };
+        })
+        (import ./modules/home/ui/qutebrowser.nix)
+        (import ./modules/home/ui/quickshell.nix)
+        (import ./modules/home/ui/wallust.nix)
+        (import ./modules/home/ui/wayland.nix)
 
         # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
 
@@ -267,10 +303,12 @@ in {
         (import ./modules/home/gaming/controllers.nix)
         (import ./modules/home/gaming/core.nix)
         (import ./modules/home/gaming/shader-cache.nix)
-        (import ./modules/home/gaming/balatro)
+        # From modules/home/gaming/balatro/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/balatro/installation.nix)
         (import ./modules/home/gaming/emulation)
         (import ./modules/home/gaming/marvel-rivals)
-        (import ./modules/home/gaming/wukong)
+        # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/wukong/engine.nix)
 
         # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
         (import ./modules/home/programs/android.nix)
