@@ -227,13 +227,13 @@ in {
             };
           };
 
-          # Configure hjem for all users
+          # Configure hjem for all users (simplified like original)
           hjem = {
             linker = pkgs.callPackage (sources.smfh + "/package.nix") {};
-            users = lib.genAttrs users (
-              username:
-                lib.filterAttrs (name: _: name != "system") hostUserConfigs.${username}
-            );
+            users = lib.genAttrs users (_username: {
+              packages = [];
+              files = {};
+            });
           };
         })
       ];
