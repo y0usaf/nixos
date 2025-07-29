@@ -122,6 +122,25 @@ in {
         allModules.system.users
         allModules.system.virtualization
 
+        # 🔥 SYSTEM LEVEL WRAPPER BYPASS - COMMENTED OUT DUE TO CONFLICTS 🔥
+        # These cause conflicts because they're already imported via allModules.system.*
+        # The system modules need to be completely replaced, not bypassed
+
+        # # From modules/system/boot/default.nix (6 lines -> OBLITERATED)
+        # (import ./modules/system/boot/kernel.nix)
+        # (import ./modules/system/boot/loader.nix)
+        #
+        # # From modules/system/programs/default.nix (6 lines -> OBLITERATED)
+        # (import ./modules/system/programs/hyprland.nix)
+        # (import ./modules/system/programs/obs.nix)
+        #
+        # # From modules/system/virtualization/default.nix (6 lines -> OBLITERATED)
+        # (import ./modules/system/virtualization/android.nix)
+        # (import ./modules/system/virtualization/containers.nix)
+        #
+        # # From modules/system/users/default.nix (5 lines -> OBLITERATED)
+        # (import ./modules/system/users/accounts.nix)
+
         # INLINED TINY MODULES START HERE
         # From modules/system/security/polkit.nix (5 lines -> inlined)
         ({...}: {
@@ -132,20 +151,9 @@ in {
 
         # 🔥 MASS INLINE OPERATION - TINY MODULES OBLITERATED! 🔥
 
-        # From modules/home/ui/niri/options.nix (5 lines -> inlined)
-        ({lib, ...}: {
-          options.home.ui.niri = {
-            enable = lib.mkEnableOption "Niri wayland compositor";
-          };
-        })
+        # REMOVED - niri options causing conflicts with ui module
 
-        # From modules/home/dev/nvim/options.nix (6 lines -> inlined)
-        ({lib, ...}: {
-          options.home.dev.nvim = {
-            enable = lib.mkEnableOption "Enhanced Neovim with MNW wrapper";
-            neovide = lib.mkEnableOption "Neovide GUI for Neovim";
-          };
-        })
+        # REMOVED - nvim options causing conflicts with dev module
 
         # From modules/system/security/rtkit.nix (5 lines -> inlined)
         ({...}: {
@@ -184,6 +192,38 @@ in {
         allModules.home.services
         allModules.home.shell
         allModules.home.tools
+
+        # 🔥 OBLITERATED HOME DEFAULT.NIX WRAPPERS! 🔥
+
+        # From modules/home/dev/nvim.nix (3 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA dev module
+        # (import ./modules/home/dev/nvim)
+
+        # From modules/home/core/fonts/default.nix (5 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA core module
+        # (import ./modules/home/core/fonts/presets.nix)
+
+        # From modules/home/core/session/default.nix (5 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA core module
+        # (import ./modules/home/core/session/xdg.nix)
+
+        # From modules/home/gaming/balatro/default.nix (5 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA gaming module
+        # (import ./modules/home/gaming/balatro/installation.nix)
+
+        # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA gaming module
+        # (import ./modules/home/gaming/wukong/engine.nix)
+
+        # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA gaming module
+        # (import ./modules/home/gaming/emulation/cemu.nix)
+        # (import ./modules/home/gaming/emulation/dolphin.nix)
+
+        # From modules/home/ui/hyprland/default.nix (6 lines -> OBLITERATED)
+        # TEMPORARILY COMMENTED - ALREADY IMPORTED VIA ui module
+        # (import ./modules/home/ui/hyprland/options.nix)
+        # (import ./modules/home/ui/hyprland/config.nix)
         # allModules.home.ui (commented out - wayland.nix inlined below)
         # Import individual UI modules except wayland.nix
         (import ./modules/home/ui/ags.nix)
