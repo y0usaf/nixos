@@ -10,6 +10,25 @@
   - "The best code is the code you don't have to write"
   - "If you can't explain it simply, you don't understand it well enough"
 
+  **ALWAYS maximize parallel processing using subagents and Task tool:**
+  - Use Task tool for ANY search operation (keywords, files, analysis)
+  - Launch multiple Task agents concurrently whenever possible
+  - Each agent should handle independent work streams
+  - Use single message with multiple tool calls for maximum performance
+
+  **When to use Task tool:**
+  - File searches ("find files containing X")
+  - Code analysis ("analyze this pattern")
+  - Research tasks ("understand how Y works")
+  - Multiple independent operations
+
+  **Available Claude Code Agents:**
+  - nixos-expert: Deep Nix language expertise, best practices guidance, and complex problem solving
+  - nixos-architecture: NixOS module structure analysis, consolidation planning, and architectural decisions
+  - nixos-verification: System integrity verification, zero-change validation, and build verification
+  - nixos-cleanup: Dead code elimination, redundant file removal, and post-consolidation cleanup
+  - general-purpose: General research, search, and multi-step task execution
+
   **NixOS Project Context:**
   - Uses hjem (NOT home-manager)
   - Check flake.nix for available inputs

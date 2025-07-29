@@ -1,1 +1,5 @@
 tmp/
+
+# Claude AI files
+.claude/
+.claude-agents/
