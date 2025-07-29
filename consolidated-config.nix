@@ -100,13 +100,23 @@ let
       ];
       core = import ./modules/system/core;
       hardware = import ./modules/system/hardware;
-      networking = import ./modules/system/networking;
+      # From modules/system/networking/default.nix (7 lines -> OBLITERATED!)
+      networking = [
+        (import ./modules/system/networking/firewall.nix)
+        (import ./modules/system/networking/networkmanager.nix)
+        (import ./modules/system/networking/xdg-portal.nix)
+      ];
       # From modules/system/programs/default.nix (6 lines -> OBLITERATED!)
       programs = [
         (import ./modules/system/programs/hyprland.nix)
         (import ./modules/system/programs/obs.nix)
       ];
-      security = import ./modules/system/security;
+      # From modules/system/security/default.nix (7 lines -> OBLITERATED!)
+      security = [
+        (import ./modules/system/security/polkit.nix)
+        (import ./modules/system/security/rtkit.nix)
+        (import ./modules/system/security/sudo.nix)
+      ];
       services = import ./modules/system/services;
       # From modules/system/users/default.nix (5 lines -> OBLITERATED!)
       users = import ./modules/system/users/accounts.nix;
@@ -323,7 +333,10 @@ in {
         # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED!)
         (import ./modules/home/gaming/emulation/cemu.nix)
         (import ./modules/home/gaming/emulation/dolphin.nix)
-        (import ./modules/home/gaming/marvel-rivals)
+        # From modules/home/gaming/marvel-rivals/default.nix (7 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/marvel-rivals/engine.nix)
+        (import ./modules/home/gaming/marvel-rivals/gameusersettings.nix)
+        (import ./modules/home/gaming/marvel-rivals/marvelusersettings.nix)
         # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
         (import ./modules/home/gaming/wukong/engine.nix)
 
