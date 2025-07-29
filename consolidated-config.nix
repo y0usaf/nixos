@@ -259,9 +259,37 @@ in {
           };
         })
         # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
-        allModules.home.gaming
-        allModules.home.programs
         allModules.home.ui
+
+        # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
+
+        # From modules/home/gaming/default.nix (11 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/controllers.nix)
+        (import ./modules/home/gaming/core.nix)
+        (import ./modules/home/gaming/shader-cache.nix)
+        (import ./modules/home/gaming/balatro)
+        (import ./modules/home/gaming/emulation)
+        (import ./modules/home/gaming/marvel-rivals)
+        (import ./modules/home/gaming/wukong)
+
+        # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
+        (import ./modules/home/programs/android.nix)
+        (import ./modules/home/programs/bambu.nix)
+        (import ./modules/home/programs/bluetooth.nix)
+        (import ./modules/home/programs/creative.nix)
+        (import ./modules/home/programs/discord.nix)
+        (import ./modules/home/programs/imv.nix)
+        (import ./modules/home/programs/media.nix)
+        (import ./modules/home/programs/mpv.nix)
+        (import ./modules/home/programs/obs.nix)
+        (import ./modules/home/programs/obsidian.nix)
+        (import ./modules/home/programs/pcmanfm.nix)
+        (import ./modules/home/programs/qbittorrent.nix)
+        (import ./modules/home/programs/stremio.nix)
+        (import ./modules/home/programs/sway-launcher-desktop.nix)
+        (import ./modules/home/programs/vesktop.nix)
+        (import ./modules/home/programs/webapps.nix)
+        (import ./modules/home/programs/firefox)
 
         # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
 
