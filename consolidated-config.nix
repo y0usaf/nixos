@@ -263,10 +263,34 @@ in {
         allModules.home.dev
         allModules.home.gaming
         allModules.home.programs
-        allModules.home.services
-        allModules.home.shell
-        allModules.home.tools
         allModules.home.ui
+
+        # 🔥 OBLITERATED WRAPPER MODULES! 🔥
+
+        # From modules/home/shell/default.nix (8 lines -> OBLITERATED!)
+        (import ./modules/home/shell/aliases.nix)
+        (import ./modules/home/shell/cat-fetch.nix)
+        (import ./modules/home/shell/zellij.nix)
+        (import ./modules/home/shell/zsh.nix)
+
+        # From modules/home/tools/default.nix (12 lines -> OBLITERATED!)
+        (import ./modules/home/tools/7z.nix)
+        (import ./modules/home/tools/file-roller.nix)
+        (import ./modules/home/tools/git.nix)
+        (import ./modules/home/tools/jj.nix)
+        (import ./modules/home/tools/nh.nix)
+        (import ./modules/home/tools/npins-build.nix)
+        (import ./modules/home/tools/spotdl.nix)
+        (import ./modules/home/tools/yt-dlp.nix)
+
+        # From modules/home/services/default.nix (10 lines -> OBLITERATED!)
+        (import ./modules/home/services/format-nix.nix)
+        (import ./modules/home/services/hyprland-config-watcher.nix)
+        (import ./modules/home/services/nixos-git-sync.nix)
+        (import ./modules/home/services/polkit-agent.nix)
+        (import ./modules/home/services/polkit-gnome.nix)
+        (import ./modules/home/services/ssh.nix)
+        (import ./modules/home/services/syncthing.nix)
       ];
 
       _module.args = {
