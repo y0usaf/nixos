@@ -349,8 +349,50 @@ in {
         # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
         (import ./modules/home/programs/android.nix)
         (import ./modules/home/programs/bambu.nix)
-        (import ./modules/home/programs/bluetooth.nix)
-        (import ./modules/home/programs/creative.nix)
+        # From modules/home/programs/bluetooth.nix (24 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.programs.bluetooth;
+        in {
+          options.home.programs.bluetooth = {
+            enable = lib.mkEnableOption "Bluetooth user tools";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                blueman
+                bluetuith
+              ];
+              files.".config/autostart/blueman.desktop" = {
+                clobber = true;
+                source = "${pkgs.blueman}/etc/xdg/autostart/blueman.desktop";
+              };
+            };
+          };
+        })
+        # From modules/home/programs/creative.nix (18 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.programs.creative;
+        in {
+          options.home.programs.creative = {
+            enable = lib.mkEnableOption "creative applications module";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              pinta
+              gimp
+            ];
+          };
+        })
         (import ./modules/home/programs/discord.nix)
         # From modules/home/programs/imv.nix (15 lines -> INLINED!)
         ({
@@ -368,7 +410,28 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [imv];
           };
         })
-        (import ./modules/home/programs/media.nix)
+        # From modules/home/programs/media.nix (21 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.programs.media;
+        in {
+          options.home.programs.media = {
+            enable = lib.mkEnableOption "media applications";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              pavucontrol
+              ffmpeg
+              vlc
+              stremio
+              cmus
+            ];
+          };
+        })
         # From modules/home/programs/mpv.nix (15 lines -> INLINED!)
         ({
           config,
