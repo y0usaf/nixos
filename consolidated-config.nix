@@ -167,7 +167,19 @@ in {
         allModules.home.services
         allModules.home.shell
         allModules.home.tools
-        allModules.home.ui
+        # allModules.home.ui (commented out - wayland.nix inlined below)
+        # Import individual UI modules except wayland.nix
+        (import ./modules/home/ui/ags.nix)
+        (import ./modules/home/ui/cursor.nix)
+        (import ./modules/home/ui/fonts.nix)
+        (import ./modules/home/ui/foot.nix)
+        (import ./modules/home/ui/gtk.nix)
+        (import ./modules/home/ui/hyprland)
+        (import ./modules/home/ui/mako.nix)
+        (import ./modules/home/ui/niri)
+        (import ./modules/home/ui/qutebrowser.nix)
+        (import ./modules/home/ui/quickshell.nix)
+        (import ./modules/home/ui/wallust.nix)
 
         # From modules/home/ui/wayland.nix (31 lines -> inlined)
         ({
