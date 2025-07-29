@@ -108,6 +108,14 @@ in {
           '';
           clobber = true;
         };
+        ".config/claude/settings.json" = {
+          text = ''
+            {
+              "includeCoAuthoredBy": false
+            }
+          '';
+          clobber = true;
+        };
       };
     };
   };
