@@ -305,7 +305,9 @@ in {
         (import ./modules/home/gaming/shader-cache.nix)
         # From modules/home/gaming/balatro/default.nix (5 lines -> OBLITERATED!)
         (import ./modules/home/gaming/balatro/installation.nix)
-        (import ./modules/home/gaming/emulation)
+        # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/emulation/cemu.nix)
+        (import ./modules/home/gaming/emulation/dolphin.nix)
         (import ./modules/home/gaming/marvel-rivals)
         # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
         (import ./modules/home/gaming/wukong/engine.nix)
@@ -349,7 +351,18 @@ in {
         (import ./modules/home/dev/latex.nix)
         (import ./modules/home/dev/npm.nix)
         # From modules/home/dev/nvim.nix (3 lines -> OBLITERATED!)
-        (import ./modules/home/dev/nvim)
+        # From modules/home/dev/nvim/default.nix (9 lines -> OBLITERATED!)
+        (import ./modules/home/dev/nvim/neovide.nix)
+        # From modules/home/dev/nvim/options.nix (6 lines -> INLINED!)
+        ({lib, ...}: {
+          options.home.dev.nvim = {
+            enable = lib.mkEnableOption "Enhanced Neovim with MNW wrapper";
+            neovide = lib.mkEnableOption "Neovide GUI for Neovim";
+          };
+        })
+        (import ./modules/home/dev/nvim/packages.nix)
+        (import ./modules/home/dev/nvim/settings.nix)
+        (import ./modules/home/dev/nvim/vim-pack.nix)
         (import ./modules/home/dev/python.nix)
         (import ./modules/home/dev/repomix.nix)
         (import ./modules/home/dev/upscale.nix)
