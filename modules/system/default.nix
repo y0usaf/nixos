@@ -51,7 +51,14 @@
     # Programs modules (consolidated from ./programs/default.nix)
     ./programs/hyprland.nix
     # obs.nix (10 lines -> INLINED!)
-    ({config, ...}: {boot = {kernelModules = ["v4l2loopback"]; extraModulePackages = with config.boot.kernelPackages; [v4l2loopback]; extraModprobeConfig = ''options v4l2loopback exclusive_caps=1'';}; security.polkit.enable = true;})
+    ({config, ...}: {
+      boot = {
+        kernelModules = ["v4l2loopback"];
+        extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
+        extraModprobeConfig = ''options v4l2loopback exclusive_caps=1'';
+      };
+      security.polkit.enable = true;
+    })
 
     # Security modules (consolidated from ./security/default.nix)
     # polkit.nix (3 lines -> INLINED!)
@@ -90,7 +97,14 @@
       };
     })
     # dbus.nix (11 lines -> INLINED!)
-    ({pkgs, ...}: {config = {services.dbus = {enable = true; packages = [pkgs.dconf pkgs.gcr];};};})
+    ({pkgs, ...}: {
+      config = {
+        services.dbus = {
+          enable = true;
+          packages = [pkgs.dconf pkgs.gcr];
+        };
+      };
+    })
     ./services/mediamtx.nix
     # scx.nix (9 lines -> INLINED!)
     ({pkgs, ...}: {
