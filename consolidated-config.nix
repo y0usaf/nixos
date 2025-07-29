@@ -122,6 +122,35 @@ in {
         allModules.system.users
         allModules.system.virtualization
 
+        # INLINED TINY MODULES START HERE
+        # From modules/system/security/polkit.nix (5 lines -> inlined)
+        ({...}: {
+          config = {
+            security.polkit.enable = true;
+          };
+        })
+
+        # From modules/system/security/rtkit.nix (5 lines -> inlined)
+        ({...}: {
+          config = {
+            security.rtkit.enable = true;
+          };
+        })
+
+        # From modules/system/core/nix-ld.nix (5 lines -> inlined)
+        ({...}: {
+          config = {
+            programs.nix-ld.enable = true;
+          };
+        })
+
+        # From modules/system/hardware/i2c.nix (5 lines -> inlined)
+        ({...}: {
+          config = {
+            hardware.i2c.enable = true;
+          };
+        })
+
         # Home manager integration
         (sources.hjem + "/modules/nixos")
         allModules.home.core
