@@ -117,7 +117,13 @@ let
         (import ./modules/system/security/rtkit.nix)
         (import ./modules/system/security/sudo.nix)
       ];
-      services = import ./modules/system/services;
+      # From modules/system/services/default.nix (8 lines -> OBLITERATED!)
+      services = [
+        (import ./modules/system/services/audio.nix)
+        (import ./modules/system/services/dbus.nix)
+        (import ./modules/system/services/mediamtx.nix)
+        (import ./modules/system/services/scx.nix)
+      ];
       # From modules/system/users/default.nix (5 lines -> OBLITERATED!)
       users = import ./modules/system/users/accounts.nix;
       # From modules/system/virtualization/default.nix (6 lines -> OBLITERATED!)
@@ -352,7 +358,24 @@ in {
         (import ./modules/home/programs/obs.nix)
         (import ./modules/home/programs/obsidian.nix)
         (import ./modules/home/programs/pcmanfm.nix)
-        (import ./modules/home/programs/qbittorrent.nix)
+        # From modules/home/programs/qbittorrent.nix (17 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.programs.qbittorrent;
+        in {
+          options.home.programs.qbittorrent = {
+            enable = lib.mkEnableOption "qBittorrent torrent client";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              qbittorrent
+            ];
+          };
+        })
         (import ./modules/home/programs/stremio.nix)
         (import ./modules/home/programs/sway-launcher-desktop.nix)
         (import ./modules/home/programs/vesktop.nix)
@@ -404,8 +427,42 @@ in {
         (import ./modules/home/shell/zsh.nix)
 
         # From modules/home/tools/default.nix (12 lines -> OBLITERATED!)
-        (import ./modules/home/tools/7z.nix)
-        (import ./modules/home/tools/file-roller.nix)
+        # From modules/home/tools/7z.nix (17 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.tools."7z";
+        in {
+          options.home.tools."7z" = {
+            enable = lib.mkEnableOption "7z (p7zip) archive manager";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              p7zip
+            ];
+          };
+        })
+        # From modules/home/tools/file-roller.nix (17 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.tools.file-roller;
+        in {
+          options.home.tools.file-roller = {
+            enable = lib.mkEnableOption "file-roller (archive manager)";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              file-roller
+            ];
+          };
+        })
         (import ./modules/home/tools/git.nix)
         (import ./modules/home/tools/jj.nix)
         (import ./modules/home/tools/nh.nix)
