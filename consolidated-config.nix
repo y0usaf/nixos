@@ -183,6 +183,37 @@ in {
           };
         })
 
+        # 🔥 ROUND 2 OBLITERATION - MORE TINY MODULES DESTROYED! 🔥
+
+        # From modules/system/core/ollama.nix (7 lines -> inlined)
+        ({...}: {
+          config = {
+            services.ollama = {
+              enable = true;
+            };
+          };
+        })
+
+        # From modules/system/hardware/video.nix (7 lines -> inlined)
+        ({...}: {
+          config = {
+            services.udev.extraRules = ''
+              KERNEL=="video[0-9]*", GROUP="video", MODE="0660"
+            '';
+          };
+        })
+
+        # From modules/system/core/nix-tools.nix (9 lines -> inlined)
+        ({pkgs, ...}: {
+          config = {
+            environment.systemPackages = [
+              pkgs.alejandra
+              pkgs.statix
+              pkgs.deadnix
+            ];
+          };
+        })
+
         # Home manager integration
         (sources.hjem + "/modules/nixos")
         allModules.home.core
