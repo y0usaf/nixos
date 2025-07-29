@@ -45,7 +45,7 @@ in {
                 mod-key "Alt"
             }
 
-            output "DP-4" {
+            output "DP-2" {
                 mode "5120x1440@239.761"
                 position x=0 y=0
             }

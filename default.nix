@@ -465,7 +465,12 @@ in {
           };
         })
         (import ./modules/home/programs/webapps.nix)
-        (import ./modules/home/programs/firefox)
+        # From modules/home/programs/firefox/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/programs/firefox/config.nix)
+        (import ./modules/home/programs/firefox/packages.nix)
+        (import ./modules/home/programs/firefox/performance.nix)
+        (import ./modules/home/programs/firefox/policies.nix)
+        (import ./modules/home/programs/firefox/ui-chrome.nix)
 
         # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
 
@@ -481,7 +486,11 @@ in {
         (import ./modules/home/core/fonts/presets.nix)
 
         # From modules/home/dev/default.nix (13 lines -> OBLITERATED!)
-        (import ./modules/home/dev/ai-tools)
+        (import ./modules/home/dev/opencode.nix)
+        (import ./modules/home/dev/opencode-nvim.nix)
+        (import ./modules/home/dev/claude/claude-code.nix)
+        (import ./modules/home/dev/gemini-cli.nix)
+        (import ./modules/home/dev/mcp.nix)
         (import ./modules/home/dev/cursor-ide.nix)
         (import ./modules/home/dev/docker.nix)
         (import ./modules/home/dev/latex.nix)
