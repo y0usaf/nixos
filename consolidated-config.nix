@@ -130,6 +130,23 @@ in {
           };
         })
 
+        # 🔥 MASS INLINE OPERATION - TINY MODULES OBLITERATED! 🔥
+
+        # From modules/home/ui/niri/options.nix (5 lines -> inlined)
+        ({lib, ...}: {
+          options.home.ui.niri = {
+            enable = lib.mkEnableOption "Niri wayland compositor";
+          };
+        })
+
+        # From modules/home/dev/nvim/options.nix (6 lines -> inlined)
+        ({lib, ...}: {
+          options.home.dev.nvim = {
+            enable = lib.mkEnableOption "Enhanced Neovim with MNW wrapper";
+            neovide = lib.mkEnableOption "Neovide GUI for Neovim";
+          };
+        })
+
         # From modules/system/security/rtkit.nix (5 lines -> inlined)
         ({...}: {
           config = {
