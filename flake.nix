@@ -5,15 +5,15 @@
   inputs = {};
 
   outputs = _: let
-    consolidated-config = import ./consolidated-config.nix;
+    config = import ./default.nix;
   in {
     # Just expose our npins-based nixosConfigurations
-    inherit (consolidated-config) nixosConfigurations;
+    inherit (config) nixosConfigurations;
 
     # Expose formatter for flake check compatibility
-    formatter.x86_64-linux = consolidated-config.formatter.x86_64-linux;
+    formatter.x86_64-linux = config.formatter.x86_64-linux;
 
     # Expose the lib
-    inherit (consolidated-config) lib;
+    inherit (config) lib;
   };
 }
