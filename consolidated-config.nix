@@ -259,11 +259,31 @@ in {
           };
         })
         # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
-        allModules.home.core
-        allModules.home.dev
         allModules.home.gaming
         allModules.home.programs
         allModules.home.ui
+
+        # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
+
+        # From modules/home/core/default.nix (11 lines -> OBLITERATED!)
+        (import ./modules/home/core/appearance.nix)
+        (import ./modules/home/core/defaults.nix)
+        (import ./modules/home/core/directories.nix)
+        (import ./modules/home/core/packages.nix)
+        (import ./modules/home/core/user.nix)
+        (import ./modules/home/core/session)
+        (import ./modules/home/core/fonts)
+
+        # From modules/home/dev/default.nix (13 lines -> OBLITERATED!)
+        (import ./modules/home/dev/ai-tools)
+        (import ./modules/home/dev/cursor-ide.nix)
+        (import ./modules/home/dev/docker.nix)
+        (import ./modules/home/dev/latex.nix)
+        (import ./modules/home/dev/npm.nix)
+        (import ./modules/home/dev/nvim.nix)
+        (import ./modules/home/dev/python.nix)
+        (import ./modules/home/dev/repomix.nix)
+        (import ./modules/home/dev/upscale.nix)
 
         # 🔥 OBLITERATED WRAPPER MODULES! 🔥
 
