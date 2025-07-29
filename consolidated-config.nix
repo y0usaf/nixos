@@ -258,8 +258,15 @@ in {
             ];
           };
         })
-        # Import home manager modules (EXACTLY like original)
-        ./modules/home
+        # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
+        allModules.home.core
+        allModules.home.dev
+        allModules.home.gaming
+        allModules.home.programs
+        allModules.home.services
+        allModules.home.shell
+        allModules.home.tools
+        allModules.home.ui
       ];
 
       _module.args = {
