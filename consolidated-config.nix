@@ -93,15 +93,28 @@ let
   allModules = {
     # System modules
     system = {
-      boot = import ./modules/system/boot;
+      # From modules/system/boot/default.nix (6 lines -> OBLITERATED!)
+      boot = [
+        (import ./modules/system/boot/kernel.nix)
+        (import ./modules/system/boot/loader.nix)
+      ];
       core = import ./modules/system/core;
       hardware = import ./modules/system/hardware;
       networking = import ./modules/system/networking;
-      programs = import ./modules/system/programs;
+      # From modules/system/programs/default.nix (6 lines -> OBLITERATED!)
+      programs = [
+        (import ./modules/system/programs/hyprland.nix)
+        (import ./modules/system/programs/obs.nix)
+      ];
       security = import ./modules/system/security;
       services = import ./modules/system/services;
-      users = import ./modules/system/users;
-      virtualization = import ./modules/system/virtualization;
+      # From modules/system/users/default.nix (5 lines -> OBLITERATED!)
+      users = import ./modules/system/users/accounts.nix;
+      # From modules/system/virtualization/default.nix (6 lines -> OBLITERATED!)
+      virtualization = [
+        (import ./modules/system/virtualization/android.nix)
+        (import ./modules/system/virtualization/containers.nix)
+      ];
     };
 
     # Home modules
@@ -266,7 +279,9 @@ in {
         (import ./modules/home/ui/fonts.nix)
         (import ./modules/home/ui/foot.nix)
         (import ./modules/home/ui/gtk.nix)
-        (import ./modules/home/ui/hyprland)
+        # From modules/home/ui/hyprland/default.nix (6 lines -> OBLITERATED!)
+        (import ./modules/home/ui/hyprland/options.nix)
+        (import ./modules/home/ui/hyprland/config.nix)
         (import ./modules/home/ui/mako.nix)
         # From modules/home/ui/niri/default.nix + options.nix inline (5+19 lines -> INLINED!)
         ({
