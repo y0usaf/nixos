@@ -195,8 +195,69 @@ in {
             };
           };
         })
-        # Import user configuration abstraction
-        ./lib/user-config.nix
+        # User configuration abstraction (from lib/user-config.nix - 95 lines -> INLINED!)
+        ({
+          lib,
+          config,
+          ...
+        }: {
+          options = {
+            user = {
+              name = lib.mkOption {
+                type = lib.types.str;
+                description = "Primary username for the system";
+                example = "alice";
+              };
+              homeDirectory = lib.mkOption {
+                type = lib.types.path;
+                description = "Home directory path for the user";
+                example = "/home/alice";
+              };
+              configDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/.config";
+                description = "XDG config directory path";
+              };
+              dataDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/.local/share";
+                description = "XDG data directory path";
+              };
+              stateDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/.local/state";
+                description = "XDG state directory path";
+              };
+              cacheDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/.cache";
+                description = "XDG cache directory path";
+              };
+              nixosConfigDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/nixos";
+                description = "NixOS configuration directory";
+              };
+              tokensDirectory = lib.mkOption {
+                type = lib.types.path;
+                default = "${config.user.homeDirectory}/Tokens";
+                description = "Directory containing API tokens and secrets";
+              };
+            };
+          };
+          config = {
+            assertions = [
+              {
+                assertion = config.user.name != "";
+                message = "user.name must be set to a non-empty string";
+              }
+              {
+                assertion = lib.hasPrefix "/" (toString config.user.homeDirectory);
+                message = "user.homeDirectory must be an absolute path";
+              }
+            ];
+          };
+        })
         # Import home manager modules (EXACTLY like original)
         ./modules/home
       ];
