@@ -12,7 +12,8 @@
 
     # Networking modules (consolidated from ./networking/default.nix)
     ./networking/firewall.nix
-    ./networking/networkmanager.nix
+    # networkmanager.nix (3 lines -> INLINED!)
+    (_: {config = {networking.networkmanager.enable = true;};})
     ./networking/xdg-portal.nix
 
     # Programs modules (consolidated from ./programs/default.nix)
@@ -20,8 +21,10 @@
     ./programs/obs.nix
 
     # Security modules (consolidated from ./security/default.nix)
-    ./security/polkit.nix
-    ./security/rtkit.nix
+    # polkit.nix (3 lines -> INLINED!)
+    (_: {config = {security.polkit.enable = true;};})
+    # rtkit.nix (3 lines -> INLINED!)
+    (_: {config = {security.rtkit.enable = true;};})
     ./security/sudo.nix
 
     # Services modules (consolidated from ./services/default.nix)
