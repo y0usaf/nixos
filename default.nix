@@ -89,62 +89,7 @@ let
 
   inherit (pkgs) lib;
 
-  # ALL MODULE IMPORTS CONSOLIDATED HERE
-  allModules = {
-    # System modules
-    system = {
-      # From modules/system/boot/default.nix (6 lines -> OBLITERATED!)
-      boot = [
-        (import ./modules/system/boot/kernel.nix)
-        (import ./modules/system/boot/loader.nix)
-      ];
-      core = import ./modules/system/core;
-      hardware = import ./modules/system/hardware;
-      # From modules/system/networking/default.nix (7 lines -> OBLITERATED!)
-      networking = [
-        (import ./modules/system/networking/firewall.nix)
-        (import ./modules/system/networking/networkmanager.nix)
-        (import ./modules/system/networking/xdg-portal.nix)
-      ];
-      # From modules/system/programs/default.nix (6 lines -> OBLITERATED!)
-      programs = [
-        (import ./modules/system/programs/hyprland.nix)
-        (import ./modules/system/programs/obs.nix)
-      ];
-      # From modules/system/security/default.nix (7 lines -> OBLITERATED!)
-      security = [
-        (import ./modules/system/security/polkit.nix)
-        (import ./modules/system/security/rtkit.nix)
-        (import ./modules/system/security/sudo.nix)
-      ];
-      # From modules/system/services/default.nix (8 lines -> OBLITERATED!)
-      services = [
-        (import ./modules/system/services/audio.nix)
-        (import ./modules/system/services/dbus.nix)
-        (import ./modules/system/services/mediamtx.nix)
-        (import ./modules/system/services/scx.nix)
-      ];
-      # From modules/system/users/default.nix (5 lines -> OBLITERATED!)
-      users = import ./modules/system/users/accounts.nix;
-      # From modules/system/virtualization/default.nix (6 lines -> OBLITERATED!)
-      virtualization = [
-        (import ./modules/system/virtualization/android.nix)
-        (import ./modules/system/virtualization/containers.nix)
-      ];
-    };
-
-    # Home modules
-    home = {
-      core = import ./modules/home/core;
-      dev = import ./modules/home/dev;
-      gaming = import ./modules/home/gaming;
-      programs = import ./modules/home/programs;
-      services = import ./modules/home/services;
-      shell = import ./modules/home/shell;
-      tools = import ./modules/home/tools;
-      ui = import ./modules/home/ui;
-    };
-  };
+  # LEGACY allModules structure removed - all functionality consolidated into default.nix!
 
   # User configurations
   userConfigs = {
