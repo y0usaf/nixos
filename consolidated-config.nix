@@ -352,12 +352,59 @@ in {
         (import ./modules/home/programs/bluetooth.nix)
         (import ./modules/home/programs/creative.nix)
         (import ./modules/home/programs/discord.nix)
-        (import ./modules/home/programs/imv.nix)
+        # From modules/home/programs/imv.nix (15 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.programs.imv;
+        in {
+          options.home.programs.imv = {
+            enable = lib.mkEnableOption "imv image viewer";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [imv];
+          };
+        })
         (import ./modules/home/programs/media.nix)
-        (import ./modules/home/programs/mpv.nix)
+        # From modules/home/programs/mpv.nix (15 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.programs.mpv;
+        in {
+          options.home.programs.mpv = {
+            enable = lib.mkEnableOption "mpv media player";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [mpv];
+          };
+        })
         (import ./modules/home/programs/obs.nix)
         (import ./modules/home/programs/obsidian.nix)
-        (import ./modules/home/programs/pcmanfm.nix)
+        # From modules/home/programs/pcmanfm.nix (17 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.programs.pcmanfm;
+        in {
+          options.home.programs.pcmanfm = {
+            enable = lib.mkEnableOption "pcmanfm file manager";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [
+              pcmanfm
+            ];
+          };
+        })
         # From modules/home/programs/qbittorrent.nix (17 lines -> INLINED!)
         ({
           config,
@@ -376,9 +423,39 @@ in {
             ];
           };
         })
-        (import ./modules/home/programs/stremio.nix)
+        # From modules/home/programs/stremio.nix (15 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.programs.stremio;
+        in {
+          options.home.programs.stremio = {
+            enable = lib.mkEnableOption "Stremio media center";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = with pkgs; [stremio];
+          };
+        })
         (import ./modules/home/programs/sway-launcher-desktop.nix)
-        (import ./modules/home/programs/vesktop.nix)
+        # From modules/home/programs/vesktop.nix (15 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.programs.vesktop;
+        in {
+          options.home.programs.vesktop = {
+            enable = lib.mkEnableOption "Vesktop (Discord client) module";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = [pkgs.vesktop];
+          };
+        })
         (import ./modules/home/programs/webapps.nix)
         (import ./modules/home/programs/firefox)
 
