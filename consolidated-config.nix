@@ -249,7 +249,7 @@ in {
               options v4l2loopback exclusive_caps=1
             '';
           };
-          security.polkit.enable = true;
+          # security.polkit.enable = true; # COMMENTED - already enabled above
         })
 
         # From modules/home/ui/hyprland/monitors.nix (9 lines -> inlined)
