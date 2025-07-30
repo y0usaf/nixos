@@ -269,26 +269,30 @@ in {
           };
         })
         (import ./modules/home/ui/qutebrowser.nix)
-        (import ./modules/home/ui/wayland-tools.nix)
-
-        # 🔥 CONSOLIDATED MODULE IMPORTS! 🔥
-        (import ./modules/home/gaming.nix)
-        (import ./modules/home/programs.nix)
-        (import ./modules/home/services.nix)
-        (import ./modules/home/shell.nix)
-        (import ./modules/home/tools.nix)
+        (import ./modules/home/ui/quickshell.nix)
+        (import ./modules/home/ui/wallust.nix)
+        (import ./modules/home/ui/wayland.nix)
 
         # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
-        # balatro/installation.nix consolidated into gaming.nix
+
+        # From modules/home/gaming/default.nix (11 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/controllers.nix)
+        (import ./modules/home/gaming/core.nix)
+        (import ./modules/home/gaming/shader-cache.nix)
+        # From modules/home/gaming/balatro/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/balatro/installation.nix)
         # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED!)
-        # emulation modules consolidated into gaming.nix
-        # marvel-rivals modules consolidated elsewhere
+        # emulation/cemu.nix + dolphin.nix (34 lines -> INLINED INTO CORE!)
+        # From modules/home/gaming/marvel-rivals/default.nix (7 lines -> OBLITERATED!)
+        (import ./modules/home/gaming/marvel-rivals/engine.nix)
+        (import ./modules/home/gaming/marvel-rivals/gameusersettings.nix)
+        (import ./modules/home/gaming/marvel-rivals/marvelusersettings.nix)
         # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
-        # wukong module consolidated into gaming.nix
+        # wukong/engine.nix (54 lines -> INLINED INTO CORE!)
 
         # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
-        # android.nix consolidated into programs.nix
-        # bambu.nix consolidated into programs.nix
+        (import ./modules/home/programs/android.nix)
+        (import ./modules/home/programs/bambu.nix)
         # From modules/home/programs/bluetooth.nix (24 lines -> INLINED!)
         ({
           config,
@@ -333,7 +337,7 @@ in {
             ];
           };
         })
-        # discord.nix consolidated into programs.nix
+        (import ./modules/home/programs/discord.nix)
         # From modules/home/programs/imv.nix (15 lines -> INLINED!)
         ({
           config,
@@ -388,8 +392,8 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [mpv];
           };
         })
-        # obs.nix consolidated into programs.nix
-        # obsidian.nix consolidated into programs.nix
+        (import ./modules/home/programs/obs.nix)
+        (import ./modules/home/programs/obsidian.nix)
         # From modules/home/programs/pcmanfm.nix (17 lines -> INLINED!)
         ({
           config,
@@ -442,7 +446,7 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [stremio];
           };
         })
-        # sway-launcher-desktop.nix consolidated into programs.nix
+        (import ./modules/home/programs/sway-launcher-desktop.nix)
         # From modules/home/programs/vesktop.nix (15 lines -> INLINED!)
         ({
           config,
@@ -459,8 +463,13 @@ in {
             hjem.users.${config.user.name}.packages = [pkgs.vesktop];
           };
         })
-        # webapps.nix consolidated into programs.nix
-        # Firefox modules consolidated into programs.nix
+        (import ./modules/home/programs/webapps.nix)
+        # From modules/home/programs/firefox/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/programs/firefox/config.nix)
+        (import ./modules/home/programs/firefox/packages.nix)
+        (import ./modules/home/programs/firefox/performance.nix)
+        (import ./modules/home/programs/firefox/policies.nix)
+        (import ./modules/home/programs/firefox/ui-chrome.nix)
 
         # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
 
@@ -470,9 +479,10 @@ in {
         (import ./modules/home/core/directories.nix)
         (import ./modules/home/core/packages.nix)
         (import ./modules/home/core/user.nix)
-        # Session modules consolidated elsewhere
+        # From modules/home/core/session/default.nix (5 lines -> OBLITERATED!)
+        (import ./modules/home/core/session/xdg.nix)
         # From modules/home/core/fonts/default.nix (5 lines -> OBLITERATED!)
-        (import ./modules/home/core/fonts-presets.nix)
+        (import ./modules/home/core/fonts/presets.nix)
 
         # From modules/home/dev/default.nix (13 lines -> OBLITERATED!)
         (import ./modules/home/dev/opencode.nix)
@@ -480,8 +490,9 @@ in {
         (import ./modules/home/dev/claude/claude-code.nix)
         (import ./modules/home/dev/gemini-cli.nix)
         (import ./modules/home/dev/mcp.nix)
-        (import ./modules/home/dev/tools.nix)
+        (import ./modules/home/dev/cursor-ide.nix)
         (import ./modules/home/dev/docker.nix)
+        (import ./modules/home/dev/latex.nix)
         (import ./modules/home/dev/npm.nix)
         # From modules/home/dev/nvim.nix (3 lines -> OBLITERATED!)
         # From modules/home/dev/nvim/default.nix (9 lines -> OBLITERATED!)
@@ -497,11 +508,16 @@ in {
         (import ./modules/home/dev/nvim/settings.nix)
         (import ./modules/home/dev/nvim/vim-pack.nix)
         (import ./modules/home/dev/python.nix)
-        # repomix.nix and upscale.nix consolidated into dev/tools.nix
+        (import ./modules/home/dev/repomix.nix)
+        (import ./modules/home/dev/upscale.nix)
 
         # 🔥 OBLITERATED WRAPPER MODULES! 🔥
 
-        # Shell modules consolidated into shell.nix
+        # From modules/home/shell/default.nix (8 lines -> OBLITERATED!)
+        (import ./modules/home/shell/aliases.nix)
+        (import ./modules/home/shell/cat-fetch.nix)
+        (import ./modules/home/shell/zellij.nix)
+        (import ./modules/home/shell/zsh.nix)
 
         # From modules/home/tools/default.nix (12 lines -> OBLITERATED!)
         # From modules/home/tools/7z.nix (17 lines -> INLINED!)
@@ -540,9 +556,21 @@ in {
             ];
           };
         })
-        # Tools modules consolidated into tools.nix
+        (import ./modules/home/tools/git.nix)
+        (import ./modules/home/tools/jj.nix)
+        (import ./modules/home/tools/nh.nix)
+        (import ./modules/home/tools/npins-build.nix)
+        (import ./modules/home/tools/spotdl.nix)
+        (import ./modules/home/tools/yt-dlp.nix)
 
-        # Services modules consolidated into services.nix
+        # From modules/home/services/default.nix (10 lines -> OBLITERATED!)
+        (import ./modules/home/services/format-nix.nix)
+        (import ./modules/home/services/hyprland-config-watcher.nix)
+        (import ./modules/home/services/nixos-git-sync.nix)
+        (import ./modules/home/services/polkit-agent.nix)
+        (import ./modules/home/services/polkit-gnome.nix)
+        (import ./modules/home/services/ssh.nix)
+        (import ./modules/home/services/syncthing.nix)
       ];
 
       _module.args = {
