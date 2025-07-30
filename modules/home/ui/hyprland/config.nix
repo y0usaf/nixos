@@ -11,10 +11,7 @@
   generators = import ./generators/toHyprconf.nix lib;
   coreConfig = import ./core.nix {inherit config lib hostSystem cfg;};
   keybindingsConfig = import ./keybindings.nix {inherit lib config defaults cfg;};
-  windowRulesConfig = import ./window-rules.nix {inherit config lib cfg;};
-  monitorsConfig = import ./monitors.nix {inherit config lib cfg;};
-  agsConfig = import ./ags-integration.nix {inherit config lib cfg;};
-  quickshellConfig = import ./quickshell-integration.nix {inherit config lib cfg;};
+  integrationsConfig = import ./integrations.nix {inherit config lib cfg;};
 in {
   config = lib.mkIf cfg.enable {
     hjem.users.${config.user.name} = {
@@ -34,18 +31,16 @@ in {
             hyprlandConfig = let
               baseConfig = lib.foldl lib.recursiveUpdate {} [
                 coreConfig
-                windowRulesConfig
-                monitorsConfig
+                integrationsConfig
               ];
-              allBinds = (keybindingsConfig.bind or []) ++ (agsConfig.bind or []) ++ (quickshellConfig.bind or []);
-              allBindm = (keybindingsConfig.bindm or []) ++ (agsConfig.bindm or []) ++ (quickshellConfig.bindm or []);
-              allBindr = (keybindingsConfig.bindr or []) ++ (agsConfig.bindr or []) ++ (quickshellConfig.bindr or []);
-              allBinds_hold = (keybindingsConfig.binds or []) ++ (agsConfig.binds or []) ++ (quickshellConfig.binds or []);
+              allBinds = (keybindingsConfig.bind or []) ++ (integrationsConfig.bind or []);
+              allBindm = (keybindingsConfig.bindm or []) ++ (integrationsConfig.bindm or []);
+              allBindr = (keybindingsConfig.bindr or []) ++ (integrationsConfig.bindr or []);
+              allBinds_hold = (keybindingsConfig.binds or []) ++ (integrationsConfig.binds or []);
             in
               baseConfig
               // keybindingsConfig
-              // agsConfig
-              // quickshellConfig
+              // integrationsConfig
               // {
                 bind = allBinds;
                 bindm = allBindm;

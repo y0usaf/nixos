@@ -269,9 +269,7 @@ in {
           };
         })
         (import ./modules/home/ui/qutebrowser.nix)
-        (import ./modules/home/ui/quickshell.nix)
-        (import ./modules/home/ui/wallust.nix)
-        (import ./modules/home/ui/wayland.nix)
+        (import ./modules/home/ui/wayland-tools.nix)
 
         # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
 
@@ -282,14 +280,13 @@ in {
         # From modules/home/gaming/balatro/default.nix (5 lines -> OBLITERATED!)
         (import ./modules/home/gaming/balatro/installation.nix)
         # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED!)
-        (import ./modules/home/gaming/emulation/cemu.nix)
-        (import ./modules/home/gaming/emulation/dolphin.nix)
+        # emulation/cemu.nix + dolphin.nix (34 lines -> INLINED INTO CORE!)
         # From modules/home/gaming/marvel-rivals/default.nix (7 lines -> OBLITERATED!)
         (import ./modules/home/gaming/marvel-rivals/engine.nix)
         (import ./modules/home/gaming/marvel-rivals/gameusersettings.nix)
         (import ./modules/home/gaming/marvel-rivals/marvelusersettings.nix)
         # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
-        (import ./modules/home/gaming/wukong/engine.nix)
+        # wukong/engine.nix (54 lines -> INLINED INTO CORE!)
 
         # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
         (import ./modules/home/programs/android.nix)
@@ -483,7 +480,7 @@ in {
         # From modules/home/core/session/default.nix (5 lines -> OBLITERATED!)
         (import ./modules/home/core/session/xdg.nix)
         # From modules/home/core/fonts/default.nix (5 lines -> OBLITERATED!)
-        (import ./modules/home/core/fonts/presets.nix)
+        (import ./modules/home/core/fonts-presets.nix)
 
         # From modules/home/dev/default.nix (13 lines -> OBLITERATED!)
         (import ./modules/home/dev/opencode.nix)
