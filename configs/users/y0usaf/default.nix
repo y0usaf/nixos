@@ -148,13 +148,13 @@ _: {
       wii-u.enable = true;
       gcn-wii.enable = true;
     };
-    marvel-rivals = {
-      engine.enable = true;
-      gameusersettings.enable = true;
-      marvelusersettings.enable = true;
-    };
+    # marvel-rivals = {
+    #   engine.enable = true;
+    #   gameusersettings.enable = true;
+    #   marvelusersettings.enable = true;
+    # };
     balatro = {
-      enable = true;
+      enable = true; # Re-enabled with npins sources
       enableLovelyInjector = true;
       enabledMods = ["steamodded" "talisman" "morespeeds" "cardsleeves" "multiplayer" "jokerdisplay" "pokermon" "aura" "handybalatro" "stickersalwaysshown"];
     };

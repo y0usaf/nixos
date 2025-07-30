@@ -67,28 +67,32 @@ in {
         type = lib.types.str;
         description = "Git email address.";
       };
+      nixos-git-sync = {
+        enable = lib.mkEnableOption "NixOS configuration git sync service";
+        nixosRepoUrl = lib.mkOption {
+          type = lib.types.str;
+          description = "Git repository URL for NixOS configuration";
+        };
+        remoteBranch = lib.mkOption {
+          type = lib.types.str;
+          default = "main";
+          description = "Remote branch to push to";
+        };
+      };
     };
     # tools/npins-build.nix -> INLINED\!
     home.tools.npins-build = {
       enable = lib.mkEnableOption "npins-build helper script";
     };
   };
-  
+
   config = lib.mkMerge [
     (lib.mkIf spotdlCfg.enable {
       hjem.users.${config.user.name} = {
         packages = with pkgs; [
           ffmpeg
         ];
-        files = {
-          ".config/zsh/.zshrc" = {
-            text = lib.mkAfter ''
-              alias spotm4a="uvx spotdl --format m4a --output '{title}'"
-              alias spotmp3="uvx spotdl --format mp3 --output '{title}'"
-            '';
-            clobber = true;
-          };
-        };
+        # zsh aliases moved to shell.nix to prevent conflicts
       };
     })
     (lib.mkIf ytdlpCfg.enable {
@@ -97,19 +101,7 @@ in {
           yt-dlp-light
           ffmpeg
         ];
-        files = {
-          ".config/zsh/.zshrc" = {
-            text = lib.mkAfter ''
-              alias ytm4a="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format m4a --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
-              alias ytmp3="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format mp3 --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
-              alias ytmp4="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k -vf scale=-2:720' -o '%(title)s.%(ext)s'"
-              alias ytmp4s="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=480]+ba/b[height<=480]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 26 -preset faster -c:a aac -b:a 96k -vf scale=-2:480' -o '%(title)s.%(ext)s'"
-              alias ytwebm="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video webm --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libvpx-vp9 -crf 30 -b:v 0 -c:a libopus -vf scale=-2:720' -o '%(title)s.%(ext)s'"
-              alias ytdiscord="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 28 -preset faster -c:a aac -b:a 96k -vf scale=-2:min(720,ih) -fs 7.8M' -o '%(title)s_discord.%(ext)s'"
-            '';
-            clobber = true;
-          };
-        };
+        # zsh aliases moved to shell.nix to prevent conflicts
       };
     })
     (lib.mkIf nhCfg.enable {
@@ -117,33 +109,7 @@ in {
         packages = with pkgs; [
           nh
         ];
-        files = {
-          ".config/zsh/.zshrc" = {
-            text = lib.mkAfter ''
-              export NH_FLAKE="${config.user.nixosConfigDirectory}"
-              nhs() {
-                clear
-                local update=""
-                local dry=""
-                local OPTIND
-                while getopts "du" opt; do
-                  case $opt in
-                    d) dry="--dry" ;;
-                    u) update="--update" ;;
-                    *) echo "Invalid option: -$OPTARG" >&2 ;;
-                  esac
-                done
-                shift $((OPTIND-1))
-                nh os switch $update $dry "$@"
-              }
-              alias nhd="nhs -d"
-              alias nhu="nhs -u"
-              alias nhud="nhs -ud"
-              alias nhc="nh clean all"
-            '';
-            clobber = true;
-          };
-        };
+        # zsh aliases moved to shell.nix to prevent conflicts
       };
     })
     (lib.mkIf jjCfg.enable {
@@ -151,136 +117,194 @@ in {
         packages = with pkgs; [
           jujutsu
         ];
-        files =
-          {
-            ".config/jj/config.toml" = {
-              text = ''
-                [user]
-                name = "${jjCfg.name}"
-                email = "${jjCfg.email}"
-                [ui]
-                default-command = "status"
-                editor = "${jjCfg.editor}"
-                diff-editor = "${jjCfg.editor}"
-                [git]
-                auto-local-branch = true
-                push-branch-prefix = ""
-                [revset-aliases]
-                "mine" = "author(${jjCfg.email})"
-                "recent" = "heads(::@ & recent(5))"
-                ${lib.optionalString jjCfg.enableAliases ''
-                  [aliases]
-                  l = ["log", "-r", "recent"]
-                  ll = ["log", "-r", "::@"]
-                  s = ["status"]
-                  d = ["diff"]
-                  c = ["commit"]
-                  ca = ["commit", "--amend"]
-                  co = ["checkout"]
-                  n = ["new"]
-                  e = ["edit"]
-                  b = ["branch"]
-                  rb = ["rebase"]
-                  sp = ["split"]
-                  sq = ["squash"]
-                ''}
-              '';
-              clobber = true;
-            };
-          }
-          // lib.optionalAttrs jjCfg.enableAliases {
-            ".config/zsh/.zshrc" = {
-              text = ''
-                alias jl='jj log -r recent'
-                alias jll='jj log -r ::@'
-                alias js='jj status'
-                alias jd='jj diff'
-                alias jc='jj commit'
-                alias jca='jj commit --amend'
-                alias jco='jj checkout'
-                alias jn='jj new'
-                alias je='jj edit'
-                alias jb='jj branch'
-                alias jrb='jj rebase'
-                alias jsp='jj split'
-                alias jsq='jj squash'
-              '';
-              clobber = true;
-            };
+        files = {
+          ".config/jj/config.toml" = {
+            text = ''
+              [user]
+              name = "${jjCfg.name}"
+              email = "${jjCfg.email}"
+              [ui]
+              default-command = "status"
+              editor = "${jjCfg.editor}"
+              diff-editor = "${jjCfg.editor}"
+              [git]
+              auto-local-branch = true
+              push-branch-prefix = ""
+              [revset-aliases]
+              "mine" = "author(${jjCfg.email})"
+              "recent" = "heads(::@ & recent(5))"
+              ${lib.optionalString jjCfg.enableAliases ''
+                [aliases]
+                l = ["log", "-r", "recent"]
+                ll = ["log", "-r", "::@"]
+                s = ["status"]
+                d = ["diff"]
+                c = ["commit"]
+                ca = ["commit", "--amend"]
+                co = ["checkout"]
+                n = ["new"]
+                e = ["edit"]
+                b = ["branch"]
+                rb = ["rebase"]
+                sp = ["split"]
+                sq = ["squash"]
+              ''}
+            '';
+            clobber = true;
           };
+        };
+        # zsh aliases moved to shell.nix to prevent conflicts
       };
     })
     (lib.mkIf gitCfg.enable {
-      hjem.users.${config.user.name}.files = {
-        ".config/git/config" = {
-          text = ''
-            [user]
-                name = ${gitCfg.name}
-                email = ${gitCfg.email}
-            [core]
-                editor = nvim
-                autocrlf = false
-            [init]
-                defaultBranch = main
-            [push]
-                default = simple
-            [pull]
-                rebase = false
-            [diff]
-                tool = nvimdiff
-                colorMoved = default
-            [merge]
-                tool = nvimdiff
-            [difftool "nvimdiff"]
-                cmd = nvim -d "$LOCAL" "$REMOTE"
-            [mergetool "nvimdiff"]
-                cmd = nvim -d "$LOCAL" "$REMOTE" "$MERGED" -c '$wincmd w' -c 'wincmd J'
-            [alias]
-                st = status
-                co = checkout
-                br = branch
-                ci = commit
-                ca = commit --amend
-                unstage = reset HEAD --
-                last = log -1 HEAD
-                visual = \!gitk
-                amend = commit --amend --no-edit
-                graph = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-                tree = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
-                oops = commit --amend --no-edit
-                wip = commit -am "WIP"
-                unwip = reset HEAD~1
-            [credential]
-                helper = store
-            [color]
-                ui = auto
-            [color "diff"]
-                meta = yellow bold
-                commit = green bold
-                frag = magenta bold
-                old = red bold
-                new = green bold
-                whitespace = red reverse
-            [color "diff-highlight"]
-                oldNormal = red bold
-                oldHighlight = red bold 52
-                newNormal = green bold
-                newHighlight = green bold 22
-          '';
-          clobber = true;
+      hjem.users.${config.user.name} = {
+        packages = with pkgs; [git-lfs];
+        files = {
+          ".local/share/bin/nixos-git-sync" = {
+            executable = true;
+            text = ''
+                      #!/usr/bin/env bash
+                      set -x
+                      sleep 2
+                      REPO_PATH="${config.user.nixosConfigDirectory}"
+                      if [ ! -d "$REPO_PATH" ]; then
+                        echo "Repository directory does not exist: $REPO_PATH"
+                        exit 1
+                      fi
+                      cd "$REPO_PATH"
+                      if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                        git add .
+                        FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                        CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                        COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+              Files changed:
+              $CHANGED_FILES"
+                        git commit -m "$COMMIT_MSG"
+                        git push origin ${gitCfg.nixos-git-sync.remoteBranch} --force
+                      else
+                        echo "No changes to commit"
+                      fi
+            '';
+            clobber = true;
+          };
+          ".local/share/bin/setup-nixos-repo" = {
+            executable = true;
+            text = ''
+              #!/usr/bin/env bash
+              set -e
+              REPO_DIR="${config.user.nixosConfigDirectory}"
+              REPO_URL="${gitCfg.nixos-git-sync.nixosRepoUrl}"
+
+              if [ ! -d "$REPO_DIR" ]; then
+                echo "Setting up NixOS repository at $REPO_DIR"
+                git clone "$REPO_URL" "$REPO_DIR"
+                cd "$REPO_DIR"
+              else
+                echo "Repository already exists at $REPO_DIR"
+                cd "$REPO_DIR"
+                git remote set-url origin "$REPO_URL"
+                git pull origin ${gitCfg.nixos-git-sync.remoteBranch} || true
+              fi
+
+              echo "Repository setup complete"
+            '';
+            clobber = true;
+          };
+          "gitconfig" = {
+            text = ''
+              [user]
+                  name = ${gitCfg.name}
+                  email = ${gitCfg.email}
+              [core]
+                  editor = nvim
+                  autocrlf = false
+              [init]
+                  defaultBranch = main
+              [push]
+                  default = simple
+              [pull]
+                  rebase = false
+              [diff]
+                  tool = nvimdiff
+                  colorMoved = default
+              [merge]
+                  tool = nvimdiff
+              [difftool "nvimdiff"]
+                  cmd = nvim -d "$LOCAL" "$REMOTE"
+              [mergetool "nvimdiff"]
+                  cmd = nvim -d "$LOCAL" "$REMOTE" "$MERGED" -c '$wincmd w' -c 'wincmd J'
+              [alias]
+                  st = status
+                  co = checkout
+                  br = branch
+                  ci = commit
+                  ca = commit --amend
+                  unstage = reset HEAD --
+                  last = log -1 HEAD
+                  visual = \!gitk
+                  amend = commit --amend --no-edit
+                  graph = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+                  tree = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
+                  oops = commit --amend --no-edit
+                  wip = commit -am "WIP"
+                  unwip = reset HEAD~1
+              [credential]
+                  helper = store
+              [color]
+                  ui = auto
+              [color "diff"]
+                  meta = yellow bold
+                  commit = green bold
+                  frag = magenta bold
+                  old = red bold
+                  new = green bold
+                  whitespace = red reverse
+              [color "diff-highlight"]
+                  oldNormal = red bold
+                  oldHighlight = red bold 52
+                  newNormal = green bold
+                  newHighlight = green bold 22
+            '';
+            clobber = true;
+          };
         };
       };
     })
     (lib.mkIf npinsCfg.enable {
-      hjem.users.${config.user.name}.files = {
-        ".config/zsh/.zshrc" = {
-          text = lib.mkAfter ''
-            npins-build() {
-                nix-build -E 'let sources = import ./npins; in (import sources.nixpkgs {}).callPackage ./. { inherit sources; }' "$@"
-            }
-          '';
-          clobber = true;
+      hjem.users.${config.user.name}.packages = with pkgs; [npins];
+      # npins-build function moved to shell.nix to prevent conflicts
+    })
+    (lib.mkIf gitCfg.nixos-git-sync.enable {
+      systemd.user.services."nixos-git-sync" = {
+        description = "Sync NixOS configuration changes after successful build";
+        script = ''
+                    set -x
+                    sleep 2
+                    REPO_PATH="${config.user.nixosConfigDirectory}"
+                    if [ ! -d "$REPO_PATH" ]; then
+                      echo "Repository directory does not exist: $REPO_PATH"
+                      exit 1
+                    fi
+                    cd "$REPO_PATH"
+                    if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                      git add .
+                      FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                      CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                      COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+          Files changed:
+          $CHANGED_FILES"
+                      git commit -m "$COMMIT_MSG"
+                      git push origin ${gitCfg.nixos-git-sync.remoteBranch} --force
+                    else
+                      echo "No changes to commit"
+                    fi
+        '';
+        serviceConfig.Type = "oneshot";
+        path = with pkgs; [git coreutils openssh];
+        environment = {
+          SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent";
         };
+        wantedBy = ["default.target"];
       };
     })
   ];
