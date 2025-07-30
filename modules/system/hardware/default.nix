@@ -46,7 +46,26 @@
     })
     # i2c.nix (3 lines -> INLINED!)
     (_: {config = {hardware.i2c.enable = true;};})
-    ./input.nix
+    # input.nix (19 lines -> INLINED!)
+    ({
+      lib,
+      hostSystem,
+      ...
+    }: {
+      config = {
+        services.udev.extraRules = lib.mkMerge [
+          ''
+            KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users"
+            KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", TAG+="uaccess"
+          ''
+          (lib.mkIf (hostSystem.services.controllers.enable or false) ''
+            KERNEL=="hidraw*", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="0ce6", MODE="0660", TAG+="uaccess"
+            KERNEL=="hidraw*", KERNELS=="*054C:0CE6*", MODE="0660", TAG+="uaccess"
+            KERNEL=="hidraw*", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="0df2", MODE="0660", TAG+="uaccess"
+          '')
+        ];
+      };
+    })
     ./nvidia.nix
     # video.nix (7 lines -> INLINED!)
     (_: {config = {services.udev.extraRules = ''KERNEL=="video[0-9]*", GROUP="video", MODE="0660"'';};})
