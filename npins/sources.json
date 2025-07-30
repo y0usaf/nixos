@@ -1,5 +1,57 @@
 {
   "pins": {
+    "Aura": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "SpectralPack",
+        "repo": "Aura"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "dbb6496d163d15e86b0afb6879d32b891164af05",
+      "url": "https://github.com/SpectralPack/Aura/archive/dbb6496d163d15e86b0afb6879d32b891164af05.tar.gz",
+      "hash": "1414yivy6rgwgl9mpkps6pnm5mzl2wj7j2fczia6n7020m2dnqg1"
+    },
+    "Balatro-Stickers-Always-Shown": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "SirMaiquis",
+        "repo": "Balatro-Stickers-Always-Shown"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "8bc6d74796aee5e78e817591ea42575099519964",
+      "url": "https://github.com/SirMaiquis/Balatro-Stickers-Always-Shown/archive/8bc6d74796aee5e78e817591ea42575099519964.tar.gz",
+      "hash": "0gsdbn02yg87msvxalz5znpznws6x5n81gyfl5ir29ivn41sr85d"
+    },
+    "BalatroMultiplayer": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "Balatro-Multiplayer",
+        "repo": "BalatroMultiplayer"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "495f515806f0f07a8668a6fa3221ce4cc183356b",
+      "url": "https://github.com/Balatro-Multiplayer/BalatroMultiplayer/archive/495f515806f0f07a8668a6fa3221ce4cc183356b.tar.gz",
+      "hash": "1b408g8y40s5386wcjyrnrxj8wn47g0160gz2ff374ilhjicdgmv"
+    },
+    "CardSleeves": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "larswijn",
+        "repo": "CardSleeves"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "4250089ca52d4cb2d3cf6c2fd7d0d6ae66428650",
+      "url": "https://github.com/larswijn/CardSleeves/archive/4250089ca52d4cb2d3cf6c2fd7d0d6ae66428650.tar.gz",
+      "hash": "0szl3b5j7zcjq4kh95prxnc34x0b6bgva244zbshcxd49yf6xfjp"
+    },
     "Deepin-Dark-hyprcursor": {
       "type": "Git",
       "repository": {
@@ -39,6 +91,19 @@
       "url": "https://github.com/y0usaf/Fast-Font/archive/0fedb4d14f298154489cab4163a0aae3dcc2c373.tar.gz",
       "hash": "1snw63dp4h3d9c1009jp7mpf9h4if9wx38kk4gs0b7znmbkdj9xa"
     },
+    "HandyBalatro": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "SleepyG11",
+        "repo": "HandyBalatro"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "bee3e6cdc4bb368a3f0233cf49e460eaa6f05e39",
+      "url": "https://github.com/SleepyG11/HandyBalatro/archive/bee3e6cdc4bb368a3f0233cf49e460eaa6f05e39.tar.gz",
+      "hash": "1ccsymdnva8sfyvyld6a6sgkhshyhjmzwyf6bnb5mhipl6sz47v8"
+    },
     "Hyprland": {
       "type": "GitRelease",
       "repository": {
@@ -54,6 +119,45 @@
       "revision": "4e242d086e20b32951fdc0ebcbfb4d41b5be8dcc",
       "url": "https://api.github.com/repos/hyprwm/Hyprland/tarball/v0.50.1",
       "hash": "12fx7nrhw0h5s3c5jydxwfjcq5glrf1gc1b16arhm2gm99hp76cz"
+    },
+    "JokerDisplay": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nh6574",
+        "repo": "JokerDisplay"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "f29d18bdfbfc02f831f1e1e5292df72b9c263add",
+      "url": "https://github.com/nh6574/JokerDisplay/archive/f29d18bdfbfc02f831f1e1e5292df72b9c263add.tar.gz",
+      "hash": "0zrn87n95x54w69qc6ly1nwkccpwfyipxjbvpvqfgvngf71i0m8d"
+    },
+    "Pokermon": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "InertSteak",
+        "repo": "Pokermon"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "403a1ca7a74f38de522ee546a0efb0a01c78a9db",
+      "url": "https://github.com/InertSteak/Pokermon/archive/403a1ca7a74f38de522ee546a0efb0a01c78a9db.tar.gz",
+      "hash": "1z7fnlgkzvya2cvwgxdpggbybdnlw740vjlmx20qs82pb1rx1pbh"
+    },
+    "Talisman": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "SpectralPack",
+        "repo": "Talisman"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "f2911d467e660033c4d62c9f6aade2edb7ecc155",
+      "url": "https://github.com/SpectralPack/Talisman/archive/f2911d467e660033c4d62c9f6aade2edb7ecc155.tar.gz",
+      "hash": "0y1x8mn61my12vy4h77vvyhvkm04sww6ivgvy458ddl6m11bzxlj"
     },
     "alejandra": {
       "type": "GitRelease",
@@ -219,6 +323,19 @@
       "revision": "39f5c06153f63100376bc607b1465850b6df77fd",
       "url": "https://api.github.com/repos/feel-co/smfh/tarball/1.1",
       "hash": "03319rrh1jd37cz5ramknnrrnfrm0hy38ryk11grr8hq97bv1mgz"
+    },
+    "smods": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "Steamodded",
+        "repo": "smods"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "b163d0c0a04bdbc97559939952660cb3f185bb93",
+      "url": "https://github.com/Steamodded/smods/archive/b163d0c0a04bdbc97559939952660cb3f185bb93.tar.gz",
+      "hash": "1da439lfkwax1xc229ljp6mcz4whdnd6zdqv95xv05sb86g10kik"
     }
   },
   "version": 5

@@ -494,7 +494,35 @@ in {
       };
     })
     (lib.mkIf config.home.programs.sway-launcher-desktop.enable {
-      hjem.users.${config.user.name}.packages = with pkgs; [sway-launcher-desktop];
+      hjem.users.${config.user.name} = {
+        packages = with pkgs; [
+          fzf
+        ];
+        files.".config/scripts/sway-launcher-desktop.sh" = {
+          clobber = true;
+          executable = true;
+          text = ''
+            #!/usr/bin/env bash
+            # Simple launcher script using fzf
+            # Get all desktop applications
+            find /usr/share/applications ~/.local/share/applications -name "*.desktop" 2>/dev/null | \
+            while read -r desktop_file; do
+              name=$(grep -m 1 "^Name=" "$desktop_file" | cut -d'=' -f2)
+              exec_line=$(grep -m 1 "^Exec=" "$desktop_file" | cut -d'=' -f2-)
+              # Clean up exec line (remove %u, %f, etc.)
+              exec_clean=$(echo "$exec_line" | sed 's/ %[a-zA-Z]//g')
+              echo "$name|$exec_clean"
+            done | \
+            fzf --delimiter='|' --with-nth=1 --preview 'echo {2}' | \
+            cut -d'|' -f2 | \
+            while read -r cmd; do
+              if [ -n "$cmd" ]; then
+                setsid sh -c "$cmd" >/dev/null 2>&1 &
+              fi
+            done
+          '';
+        };
+      };
     })
     # imv config already inlined in default.nix
     # mpv config already inlined in default.nix

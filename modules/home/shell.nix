@@ -9,7 +9,7 @@
   zshCfg = config.home.shell.zsh;
   zellijCfg = config.home.shell.zellij;
   inherit (config.user) name homeDirectory nixosConfigDirectory tokensDirectory;
-  
+
   # Zellij IDE layout configuration
   ideLayout = ''
     layout {
@@ -33,7 +33,7 @@
         }
     }
   '';
-  
+
   zshConfig = {
     cat-fetch = true;
     history-memory = 10000;
@@ -74,25 +74,9 @@ in {
       };
     };
   };
-  
+
   config = lib.mkMerge [
-    (lib.mkIf catFetchCfg.enable {
-      hjem.users.${config.user.name}.files = {
-        ".config/zsh/.zshrc" = {
-          text = lib.mkAfter ''
-            print_cats() {
-                echo -e "\033[0;31m ⟋|､      \033[0;34m  ⟋|､      \033[0;35m  ⟋|､      \033[0;32m  ⟋|､
-            \033[0;31m(°､ ｡ 7    \033[0;34m(°､ ｡ 7    \033[0;35m(°､ ｡ 7    \033[0;32m(°､ ｡ 7
-            \033[0;31m |､  ~ヽ   \033[0;34m |､  ~ヽ   \033[0;35m |､  ~ヽ   \033[0;32m |､  ~ヽ
-            \033[0;31m じしf_,)〳\033[0;34m じしf_,)〳\033[0;35m じしf_,)〳\033[0;32m じしf_,)〳
-            \033[0;36m  [tomo]   \033[0;33m  [moon]   \033[0;32m  [ekko]   \033[0;35m  [bozo]\033[0m"
-            }
-            print_cats
-          '';
-          clobber = true;
-        };
-      };
-    })
+    # cat-fetch configuration moved to main zshrc to prevent conflicts
     (lib.mkIf aliasesCfg.enable {
       hjem.users.${name}.files = {
         ".config/zsh/aliases/android.zsh" = {
@@ -246,6 +230,84 @@ in {
                   shift
                   nix run "nixpkgs#$pkg" -- "$@"
               }
+
+              # Cat-fetch display (consolidated from cat-fetch module)
+              ${lib.optionalString config.home.shell.cat-fetch.enable ''
+                print_cats() {
+                    echo -e "\033[0;31m ⟋|､      \033[0;34m  ⟋|､      \033[0;35m  ⟋|､      \033[0;32m  ⟋|､
+                \033[0;31m(°､ ｡ 7    \033[0;34m(°､ ｡ 7    \033[0;35m(°､ ｡ 7    \033[0;32m(°､ ｡ 7
+                \033[0;31m |､  ~ヽ   \033[0;34m |､  ~ヽ   \033[0;35m |､  ~ヽ   \033[0;32m |､  ~ヽ
+                \033[0;31m じしf_,)〳\033[0;34m じしf_,)〳\033[0;35m じしf_,)〳\033[0;32m じしf_,)〳
+                \033[0;36m  [tomo]   \033[0;33m  [moon]   \033[0;32m  [ekko]   \033[0;35m  [bozo]\033[0m"
+                }
+                print_cats
+              ''}
+
+              # Zellij auto-start and aliases (consolidated from zellij module)
+              ${lib.optionalString (config.home.shell.zellij.enable && config.home.shell.zellij.autoStart) ''
+                if [[ -z "$ZELLIJ" && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" && -z "$NVIM" ]]; then
+                    exec zellij
+                fi
+              ''}
+              ${lib.optionalString config.home.shell.zellij.enable ''
+                alias ide='zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl'
+              ''}
+
+              # Tool aliases consolidated from tools.nix to prevent conflicts
+              ${lib.optionalString config.home.tools.spotdl.enable ''
+                alias spotm4a="uvx spotdl --format m4a --output '{title}'"
+                alias spotmp3="uvx spotdl --format mp3 --output '{title}'"
+              ''}
+              ${lib.optionalString config.home.tools.yt-dlp.enable ''
+                alias ytm4a="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format m4a --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
+                alias ytmp3="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format mp3 --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
+                alias ytmp4="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k -vf scale=-2:720' -o '%(title)s.%(ext)s'"
+                alias ytmp4s="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=480]+ba/b[height<=480]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 26 -preset faster -c:a aac -b:a 96k -vf scale=-2:480' -o '%(title)s.%(ext)s'"
+                alias ytwebm="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video webm --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libvpx-vp9 -crf 30 -b:v 0 -c:a libopus -vf scale=-2:720' -o '%(title)s.%(ext)s'"
+                alias ytdiscord="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 28 -preset faster -c:a aac -b:a 96k -vf scale=-2:min(720,ih) -fs 7.8M' -o '%(title)s_discord.%(ext)s'"
+              ''}
+              ${lib.optionalString config.home.tools.nh.enable ''
+                export NH_FLAKE="${config.user.nixosConfigDirectory}"
+                nhs() {
+                  clear
+                  local update=""
+                  local dry=""
+                  local OPTIND
+                  while getopts "du" opt; do
+                    case $opt in
+                      d) dry="--dry" ;;
+                      u) update="--update" ;;
+                      *) echo "Invalid option: -$OPTARG" >&2 ;;
+                    esac
+                  done
+                  shift $((OPTIND-1))
+                  nh os switch $update $dry "$@"
+                }
+                alias nhd="nhs -d"
+                alias nhu="nhs -u"
+                alias nhud="nhs -ud"
+                alias nhc="nh clean all"
+              ''}
+              ${lib.optionalString (config.home.tools.jj.enable && config.home.tools.jj.enableAliases) ''
+                alias jl='jj log -r recent'
+                alias jll='jj log -r ::@'
+                alias js='jj status'
+                alias jd='jj diff'
+                alias jc='jj commit'
+                alias jca='jj commit --amend'
+                alias jco='jj checkout'
+                alias jn='jj new'
+                alias je='jj edit'
+                alias jb='jj branch'
+                alias jrb='jj rebase'
+                alias jsp='jj split'
+                alias jsq='jj squash'
+              ''}
+              ${lib.optionalString config.home.tools.npins-build.enable ''
+                npins-build() {
+                    nix-build -E 'let sources = import ./npins; in (import sources.nixpkgs {}).callPackage ./. { inherit sources; }' "$@"
+                }
+              ''}
             '';
             clobber = true;
           };
@@ -308,16 +370,7 @@ in {
               simplified_ui true
             '';
           };
-          ".config/zsh/.zshrc" = {
-            clobber = true;
-            text = lib.mkBefore (lib.optionalString zellijCfg.autoStart ''
-              if [[ -z "$ZELLIJ" && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" \!= "vscode" && -z "$NVIM" ]]; then
-                  exec zellij
-              fi
-            '') + lib.mkAfter ''
-              alias ide='zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl'
-            '';
-          };
+          # zellij zshrc configuration moved to main zshrc to prevent conflicts
         };
       };
     })

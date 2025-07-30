@@ -10,7 +10,8 @@
   sshCfg = config.home.services.ssh;
   syncthingCfg = config.home.services.syncthing;
   nixosGitSyncCfg = config.home.services.nixosGitSync;
-  
+  hyprlandConfigWatcherCfg = config.home.services.hyprlandConfigWatcher;
+
   formatScript = pkgs.writeShellScript "format-nix-watcher" ''
     set -e
     WATCH_DIR="${formatNixCfg.watchDirectory}"
@@ -70,8 +71,31 @@ in {
         description = "Remote branch to push to";
       };
     };
+    # services/hyprland-config-watcher.nix (129 lines -> INLINED\!)
+    home.services.hyprlandConfigWatcher = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = config.home.ui.hyprland.enable or false;
+        description = "Enable Hyprland configuration watcher service (auto-enabled when Hyprland is enabled)";
+      };
+      configPath = lib.mkOption {
+        type = lib.types.str;
+        default = "${config.user.configDirectory}/hypr";
+        description = "Path to the Hyprland configuration directory to watch";
+      };
+      reloadDelay = lib.mkOption {
+        type = lib.types.int;
+        default = 3;
+        description = "Delay in seconds before reloading Hyprland after detecting changes";
+      };
+      startupDelay = lib.mkOption {
+        type = lib.types.int;
+        default = 5;
+        description = "Delay in seconds before starting to watch (wait for Hyprland to be ready)";
+      };
+    };
   };
-  
+
   config = lib.mkMerge [
     (lib.mkIf polkitAgentCfg.enable {
       hjem.users.${config.user.name}.packages = [pkgs.polkit_gnome];
@@ -201,26 +225,26 @@ in {
       systemd.user.services."nixos-git-sync" = {
         description = "Sync NixOS configuration changes after successful build";
         script = ''
-                        set -x
-                        sleep 2
-                        REPO_PATH="${nixosGitSyncCfg.repoPath}"
-                        if [ \! -d "$REPO_PATH" ]; then
-                          echo "Repository directory does not exist: $REPO_PATH"
-                          exit 1
-                        fi
-                        cd "$REPO_PATH"
-                        if \! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-                          git add .
-                          FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
-                          CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
-                          COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
-              Files changed:
-              $CHANGED_FILES"
-                          git commit -m "$COMMIT_MSG"
-                          git push origin ${nixosGitSyncCfg.remoteBranch} --force
-                        else
-                          echo "No changes to commit"
-                        fi
+                    set -x
+                    sleep 2
+                    REPO_PATH="${nixosGitSyncCfg.repoPath}"
+                    if [ \! -d "$REPO_PATH" ]; then
+                      echo "Repository directory does not exist: $REPO_PATH"
+                      exit 1
+                    fi
+                    cd "$REPO_PATH"
+                    if \! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                      git add .
+                      FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                      CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                      COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+          Files changed:
+          $CHANGED_FILES"
+                      git commit -m "$COMMIT_MSG"
+                      git push origin ${nixosGitSyncCfg.remoteBranch} --force
+                    else
+                      echo "No changes to commit"
+                    fi
         '';
         serviceConfig.Type = "oneshot";
         path = with pkgs; [git coreutils openssh];
@@ -228,6 +252,95 @@ in {
           SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent";
         };
         wantedBy = ["default.target"];
+      };
+    })
+    (lib.mkIf hyprlandConfigWatcherCfg.enable {
+      systemd.user.services."hyprland-config-watcher" = {
+        description = "Watch Hyprland config directory for symlink changes and reload";
+        script = ''
+          set -x
+          echo "Waiting ${toString hyprlandConfigWatcherCfg.startupDelay} seconds for Hyprland to be ready..."
+          sleep ${toString hyprlandConfigWatcherCfg.startupDelay}
+          reload_hyprland() {
+            echo "Detected config change, reloading Hyprland in ${toString hyprlandConfigWatcherCfg.reloadDelay} seconds..."
+            sleep ${toString hyprlandConfigWatcherCfg.reloadDelay}
+            local instance_sig
+            if [[ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]]; then
+              instance_sig="$HYPRLAND_INSTANCE_SIGNATURE"
+            else
+              instance_sig=$(ls /tmp/hypr/ 2>/dev/null | head -n 1)
+            fi
+            echo "Using Hyprland instance: $instance_sig"
+            if command -v hyprctl >/dev/null 2>&1; then
+              if [[ -n "$instance_sig" ]]; then
+                export HYPRLAND_INSTANCE_SIGNATURE="$instance_sig"
+              fi
+              if hyprctl reload 2>&1; then
+                echo "Hyprland reloaded successfully"
+                return 0
+              else
+                echo "hyprctl reload failed"
+              fi
+            fi
+            echo "Failed to reload Hyprland"
+            return 1
+          }
+          if [[ ! -d "${hyprlandConfigWatcherCfg.configPath}" ]]; then
+            echo "Config directory ${hyprlandConfigWatcherCfg.configPath} does not exist, creating it..."
+            mkdir -p "${hyprlandConfigWatcherCfg.configPath}"
+          fi
+          echo "Starting to watch ${hyprlandConfigWatcherCfg.configPath} for changes..."
+          inotifywait -m -r \
+            --event modify \
+            --event create \
+            --event delete \
+            --event move \
+            --event attrib \
+            --event delete_self \
+            --event move_self \
+            --format '%w%f %e %T' \
+            --timefmt '%Y-%m-%d %H:%M:%S' \
+            "${hyprlandConfigWatcherCfg.configPath}" 2>/dev/null | \
+          while read -r file event timestamp; do
+            echo "[$timestamp] Event: $event on $file"
+            if pgrep -f "reload_hyprland" >/dev/null; then
+              echo "Reload already in progress, skipping..."
+              continue
+            fi
+            case "$event" in
+              *MODIFY*|*CREATE*|*DELETE*|*MOVED*|*ATTRIB*)
+                if [[ "$file" =~ \.(conf|json|toml)$ ]] || \
+                   [[ "$(basename "$file")" == "hyprland.conf" ]] || \
+                   [[ -L "$file" ]] || \
+                   [[ "$event" =~ (ATTRIB|DELETE_SELF|MOVE_SELF) ]]; then
+                  echo "Triggering reload for: $file ($event)"
+                  reload_hyprland &
+                fi
+                ;;
+            esac
+          done
+        '';
+        serviceConfig = {
+          Type = "simple";
+          Restart = "always";
+          RestartSec = 5;
+          Environment = [
+            "XDG_RUNTIME_DIR=/run/user/${toString config.users.users.${config.user.name}.uid}"
+            "WAYLAND_DISPLAY=wayland-1"
+            "PATH=${lib.makeBinPath (with pkgs; [inotify-tools hyprland coreutils procps gnugrep util-linux])}:/run/current-system/sw/bin"
+          ];
+        };
+        path = with pkgs; [
+          inotify-tools
+          hyprland
+          coreutils
+          procps
+          gnugrep
+          util-linux
+        ];
+        wantedBy = ["default.target"];
+        after = ["default.target"];
+        partOf = ["default.target"];
       };
     })
   ];
