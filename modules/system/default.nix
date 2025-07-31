@@ -49,8 +49,8 @@
     # Core modules
     ./core
 
-    # Hardware modules
-    ./hardware
+    # Hardware modules -> CONSOLIDATED INTO default.nix! 🔥
+    # ./hardware
 
     # Networking modules (consolidated from ./networking/default.nix)
     # firewall.nix (12 lines -> INLINED!)

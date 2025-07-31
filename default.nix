@@ -93,8 +93,8 @@ let
 
   # User configurations
   userConfigs = {
-    y0usaf = import ./configs/users/y0usaf {inherit pkgs;};
-    guest = import ./configs/users/guest {inherit pkgs;};
+    y0usaf = import ./configs/users/y0usaf {inherit pkgs lib;};
+    guest = import ./configs/users/guest {inherit pkgs lib;};
   };
 
   # Host configuration
@@ -110,31 +110,97 @@ in {
     configuration = {
       imports = [
         # Host system configuration (EXACTLY like original lib/default.nix structure)
-        ({config, ...}: {
+        # From modules/system/core/system.nix (49 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          ...
+        }: {
           inherit (hostConfig) imports;
-          hostSystem = {
-            inherit (hostConfig) users;
-            inherit (hostConfig) hostname;
-            inherit (hostConfig) homeDirectory;
-            inherit (hostConfig) stateVersion;
-            inherit (hostConfig) timezone;
-            profile = hostConfig.profile or "default";
-            hardware = hostConfig.hardware or {};
-            services = hostConfig.services or {};
+          options.hostSystem = {
+            users = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              description = "System usernames";
+            };
+            username = lib.mkOption {
+              type = lib.types.str;
+              description = "Primary system username (derived from first user)";
+              default = builtins.head config.hostSystem.users;
+            };
+            hostname = lib.mkOption {
+              type = lib.types.str;
+              description = "System hostname";
+            };
+            homeDirectory = lib.mkOption {
+              type = lib.types.path;
+              description = "Primary user home directory path";
+            };
+            stateVersion = lib.mkOption {
+              type = lib.types.str;
+              description = "NixOS state version for compatibility";
+            };
+            timezone = lib.mkOption {
+              type = lib.types.str;
+              description = "System timezone";
+            };
+            profile = lib.mkOption {
+              type = lib.types.str;
+              description = "Configuration profile identifier";
+              default = "default";
+            };
+            hardware = lib.mkOption {
+              type = lib.types.attrs;
+              description = "Hardware configuration options";
+              default = {};
+            };
+            services = lib.mkOption {
+              type = lib.types.attrs;
+              description = "System services configuration";
+              default = {};
+            };
           };
-          # Set user configuration from primary user
-          user = let
-            primaryUser = builtins.head hostConfig.users;
-          in {
-            name = primaryUser;
-            inherit (hostConfig) homeDirectory;
-          };
-          # Configure nixpkgs with overlays
-          nixpkgs = {
-            inherit overlays;
-            config = {
-              allowUnfree = true;
-              cudaSupport = true;
+          config = {
+            hostSystem = {
+              inherit (hostConfig) users;
+              inherit (hostConfig) hostname;
+              inherit (hostConfig) homeDirectory;
+              inherit (hostConfig) stateVersion;
+              inherit (hostConfig) timezone;
+              profile = hostConfig.profile or "default";
+              hardware = hostConfig.hardware or {};
+              services = hostConfig.services or {};
+            };
+            system.stateVersion = config.hostSystem.stateVersion;
+            time.timeZone = config.hostSystem.timezone;
+            networking.hostName = config.hostSystem.hostname;
+            assertions = [
+              {
+                assertion = config.hostSystem.username != "";
+                message = "System username cannot be empty";
+              }
+              {
+                assertion = config.hostSystem.hostname != "";
+                message = "System hostname cannot be empty";
+              }
+              {
+                assertion = lib.hasPrefix "/" (toString config.hostSystem.homeDirectory);
+                message = "Home directory must be an absolute path";
+              }
+            ];
+            # Set user configuration from primary user
+            user = let
+              primaryUser = builtins.head hostConfig.users;
+            in {
+              name = primaryUser;
+              inherit (hostConfig) homeDirectory;
+            };
+            # Configure nixpkgs with overlays
+            nixpkgs = {
+              inherit overlays;
+              config = {
+                allowUnfree = true;
+                cudaSupport = true;
+              };
             };
           };
         })
@@ -277,6 +343,1289 @@ in {
         (import ./modules/home/services.nix)
         (import ./modules/home/shell.nix)
         (import ./modules/home/tools.nix)
+
+        # 🔥 CORE OPTIONS CONSOLIDATION - PHASE 1! 🔥
+        # From modules/home/core/appearance.nix (71 lines -> INLINED!)
+        ({lib, ...}: {
+          options.home.core.appearance = {
+            enable = lib.mkEnableOption "appearance settings";
+            fonts = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  main = lib.mkOption {
+                    type = lib.types.listOf (lib.types.submodule {
+                      options = {
+                        package = lib.mkOption {
+                          type = lib.types.package;
+                          description = "Font package";
+                        };
+                        name = lib.mkOption {
+                          type = lib.types.str;
+                          description = "Font name";
+                        };
+                      };
+                    });
+                    description = "List of font configurations for main fonts";
+                  };
+                  fallback = lib.mkOption {
+                    type = lib.types.listOf (lib.types.submodule {
+                      options = {
+                        package = lib.mkOption {
+                          type = lib.types.package;
+                          description = "Font package";
+                        };
+                        name = lib.mkOption {
+                          type = lib.types.str;
+                          description = "Font name";
+                        };
+                      };
+                    });
+                    default = [];
+                    description = "List of font configurations for fallback fonts";
+                  };
+                };
+              };
+              description = "System font configuration";
+            };
+            baseFontSize = lib.mkOption {
+              type = lib.types.int;
+              default = 12;
+              description = "Base font size that other UI elements should scale from";
+            };
+            cursorSize = lib.mkOption {
+              type = lib.types.int;
+              default = 24;
+              description = "Size of the system cursor";
+            };
+            dpi = lib.mkOption {
+              type = lib.types.int;
+              default = 96;
+              description = "Display DPI setting for the system";
+            };
+            animations = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+                    default = true;
+                    description = "Whether to enable animations globally across all applications";
+                  };
+                };
+              };
+              default = {};
+              description = "Global animation configuration for the system";
+            };
+          };
+        })
+
+        # From modules/home/core/defaults.nix (49 lines -> INLINED!)
+        ({
+          lib,
+          config,
+          ...
+        }: {
+          options.home.core.defaults = {
+            browser = lib.mkOption {
+              type = lib.types.str;
+              default = "firefox";
+              description = "Default web browser";
+            };
+            editor = lib.mkOption {
+              type = lib.types.str;
+              default = "nvim";
+              description = "Default text editor";
+            };
+            ide = lib.mkOption {
+              type = lib.types.str;
+              default = "cursor";
+              description = "Default IDE";
+            };
+            terminal = lib.mkOption {
+              type = lib.types.str;
+              default = "foot";
+              description = "Default terminal emulator";
+            };
+            fileManager = lib.mkOption {
+              type = lib.types.str;
+              default = "pcmanfm";
+              description = "Default file manager";
+            };
+            launcher = lib.mkOption {
+              type = lib.types.str;
+              default = "foot -a 'launcher' ${config.user.configDirectory}/scripts/sway-launcher-desktop.sh";
+              description = "Default application launcher";
+            };
+            discord = lib.mkOption {
+              type = lib.types.str;
+              default = "discord-canary";
+              description = "Default Discord client";
+            };
+            archiveManager = lib.mkOption {
+              type = lib.types.str;
+              default = "7z";
+              description = "Default archive manager";
+            };
+            imageViewer = lib.mkOption {
+              type = lib.types.str;
+              default = "imv";
+              description = "Default image viewer";
+            };
+            mediaPlayer = lib.mkOption {
+              type = lib.types.str;
+              default = "mpv";
+              description = "Default media player";
+            };
+          };
+        })
+
+        # From modules/home/core/directories.nix (37 lines -> INLINED!)
+        ({lib, ...}: let
+          dirModule = lib.types.submodule {
+            options = {
+              path = lib.mkOption {
+                type = lib.types.str;
+                description = "Absolute path to the directory";
+              };
+              create = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether to create the directory if it doesn't exist";
+              };
+            };
+          };
+        in {
+          options.home.directories = {
+            flake = lib.mkOption {
+              type = dirModule;
+              description = "The directory where the flake lives.";
+            };
+            music = lib.mkOption {
+              type = dirModule;
+              description = "Directory for music files.";
+            };
+            dcim = lib.mkOption {
+              type = dirModule;
+              description = "Directory for pictures (DCIM).";
+            };
+            steam = lib.mkOption {
+              type = dirModule;
+              description = "Directory for Steam.";
+            };
+            wallpapers = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  static = lib.mkOption {
+                    type = dirModule;
+                    description = "Wallpaper directory for static images.";
+                  };
+                  video = lib.mkOption {
+                    type = dirModule;
+                    description = "Wallpaper directory for videos.";
+                  };
+                };
+              };
+              description = "Wallpaper directories configuration";
+            };
+          };
+        })
+
+        # From modules/home/core/user.nix (21 lines -> INLINED!)
+        ({lib, ...}: {
+          options.home.core.user = {
+            enable = lib.mkEnableOption "user configuration (packages and bookmarks)";
+            packages = lib.mkOption {
+              type = lib.types.listOf lib.types.package;
+              default = [];
+              description = "List of additional user-specific packages";
+            };
+            bookmarks = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [];
+              description = "GTK bookmarks for file manager";
+            };
+          };
+        })
+
+        # From modules/home/core/fonts-presets.nix (123 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.core.fonts;
+        in {
+          options.home.core.fonts = {
+            preset = lib.mkOption {
+              type = lib.types.enum ["fast-mono" "system" "noto" "custom"];
+              default = "fast-mono";
+              description = "Font preset to use";
+            };
+            customFonts = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  main = lib.mkOption {
+                    type = lib.types.listOf (lib.types.submodule {
+                      options = {
+                        package = lib.mkOption {
+                          type = lib.types.package;
+                          description = "Font package";
+                        };
+                        name = lib.mkOption {
+                          type = lib.types.str;
+                          description = "Font name";
+                        };
+                      };
+                    });
+                    default = [];
+                    description = "Main font configurations";
+                  };
+                  fallback = lib.mkOption {
+                    type = lib.types.listOf (lib.types.submodule {
+                      options = {
+                        package = lib.mkOption {
+                          type = lib.types.package;
+                          description = "Font package";
+                        };
+                        name = lib.mkOption {
+                          type = lib.types.str;
+                          description = "Font name";
+                        };
+                      };
+                    });
+                    default = [];
+                    description = "Fallback font configurations";
+                  };
+                };
+              };
+              default = {
+                main = [];
+                fallback = [];
+              };
+              description = "Custom font configurations when preset is 'custom'";
+            };
+          };
+          config = {
+            home.core.appearance.fonts =
+              if cfg.preset == "fast-mono"
+              then {
+                main = [
+                  {
+                    package = pkgs.fastFonts;
+                    name = "Fast_Mono";
+                  }
+                ];
+                fallback = [
+                  {
+                    package = pkgs.noto-fonts-emoji;
+                    name = "Noto Color Emoji";
+                  }
+                  {
+                    package = pkgs.noto-fonts-cjk-sans;
+                    name = "Noto Sans CJK";
+                  }
+                  {
+                    package = pkgs.font-awesome;
+                    name = "Font Awesome";
+                  }
+                ];
+              }
+              else if cfg.preset == "system"
+              then {
+                main = [
+                  {
+                    package = pkgs.dejavu_fonts;
+                    name = "DejaVu Sans Mono";
+                  }
+                ];
+                fallback = [
+                  {
+                    package = pkgs.noto-fonts-emoji;
+                    name = "Noto Color Emoji";
+                  }
+                  {
+                    package = pkgs.liberation_ttf;
+                    name = "Liberation Sans";
+                  }
+                ];
+              }
+              else if cfg.preset == "noto"
+              then {
+                main = [
+                  {
+                    package = pkgs.noto-fonts-monospace-cjk;
+                    name = "Noto Sans Mono CJK";
+                  }
+                ];
+                fallback = [
+                  {
+                    package = pkgs.noto-fonts-emoji;
+                    name = "Noto Color Emoji";
+                  }
+                  {
+                    package = pkgs.noto-fonts;
+                    name = "Noto Sans";
+                  }
+                  {
+                    package = pkgs.noto-fonts-cjk-sans;
+                    name = "Noto Sans CJK";
+                  }
+                ];
+              }
+              else {
+                inherit (cfg.customFonts) main;
+                inherit (cfg.customFonts) fallback;
+              };
+          };
+        })
+
+        # From modules/home/core/packages.nix (143 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.core.packages;
+          nvide-script = pkgs.writeShellScriptBin "nvide" ''
+                HELP_TEXT="Usage: nvide [OPTIONS] [working_dir]
+                Arguments:
+                  working_dir    Directory to open (default: current directory)
+                Options:
+                  -h, --help     Show this help message
+                  -n, --name     Session name (default: basename of working directory)
+                Description:
+                  Creates an IDE-like environment with:
+                  - Neotree file explorer on the left
+                  - NeoVim in the center
+                  - Two terminal panes split vertically on the right
+                "
+                show_help() {
+                  echo "$HELP_TEXT"
+                }
+                session_name=""
+                working_dir=""
+                while [[ $# -gt 0 ]]; do
+                  case "$1" in
+                    -h|--help)
+                      show_help
+                      exit 0
+                      ;;
+                    -n|--name)
+                      if [[ -n "$2" && "$2" != -* ]]; then
+                        session_name="$2"
+                        shift 2
+                      else
+                        echo "Error: --name requires a value"
+                        exit 1
+                      fi
+                      ;;
+                    -*)
+                      echo "Unknown option: $1"
+                      echo "Use --help for usage information."
+                      exit 1
+                      ;;
+                    *)
+                      working_dir="$1"
+                      shift
+                      ;;
+                  esac
+                done
+                working_dir=''${working_dir:-$(pwd)}
+                working_dir=$(cd "$working_dir" && pwd)
+                session_name=''${session_name:-$(basename "$working_dir")}
+                layout_file="/tmp/nvide-layout-$session_name.kdl"
+                cat > "$layout_file" << 'EOF'
+            layout {
+                pane size=1 borderless=true {
+                    plugin location="zellij:tab-bar"
+                }
+                pane {
+                    pane split_direction="horizontal" {
+                        pane size="70%" {
+                            command "nvim"
+                            args "."
+                        }
+                        pane split_direction="vertical" size="30%" {
+                            pane
+                            pane
+                        }
+                    }
+                }
+                pane size=2 borderless=true {
+                    plugin location="zellij:status-bar"
+                }
+            }
+            EOF
+                if zellij list-sessions 2>/dev/null | grep -q "^$session_name$"; then
+                  echo "Session '$session_name' already exists. Attaching..."
+                  zellij attach "$session_name"
+                  exit 0
+                fi
+                echo "Creating nvide session: $session_name"
+                echo "Working directory: $working_dir"
+                cd "$working_dir"
+                zellij --session "$session_name" --layout "$layout_file"
+          '';
+          basePackages = with pkgs; [
+            git
+            curl
+            wget
+            cachix
+            unzip
+            bash
+            lsd
+            alejandra
+            tree
+            bottom
+            psmisc
+            kitty
+            dconf
+            lm_sensors
+            networkmanager
+            nvide-script
+          ];
+        in {
+          options.home.core.packages = {
+            enable = lib.mkEnableOption "core packages and base system tools";
+            extraPackages = lib.mkOption {
+              type = lib.types.listOf lib.types.package;
+              default = [];
+              description = "Additional packages to install";
+            };
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.packages = basePackages ++ cfg.extraPackages;
+          };
+        })
+
+        # 🔥 PHASE 2 CONSOLIDATION: SIMPLE IMPLEMENTATION MODULES! 🔥
+        # From modules/home/core/xdg.nix (session XDG configuration - 113 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          ...
+        }: let
+          cfg = config.home.session.xdg;
+        in {
+          options.home.session.xdg = {
+            enable = lib.mkEnableOption "XDG directory configuration";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.files = {
+              ".zshenv" = {
+                clobber = true;
+                text = lib.mkAfter ''
+                  export XDG_CONFIG_HOME="$HOME/.config"
+                  export XDG_DATA_HOME="$HOME/.local/share"
+                  export XDG_STATE_HOME="$HOME/.local/state"
+                  export XDG_CACHE_HOME="$HOME/.cache"
+                  export XDG_SCREENSHOTS_DIR="$HOME/Pictures/Screenshots"
+                  export XDG_WALLPAPERS_DIR="$HOME/Pictures/Wallpapers"
+                  export ANDROID_HOME="$XDG_DATA_HOME/android"
+                  export ADB_VENDOR_KEY="$XDG_CONFIG_HOME/android"
+                  export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
+                  export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+                  export NPM_CONFIG_PREFIX="$XDG_DATA_HOME/npm"
+                  export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+                  export NPM_CONFIG_INIT_MODULE="$XDG_CONFIG_HOME/npm/config/npm-init.js"
+                  export NUGET_PACKAGES="$XDG_CACHE_HOME/NuGetPackages"
+                  export KERAS_HOME="$XDG_STATE_HOME/keras"
+                  export NIMBLE_DIR="$XDG_DATA_HOME/nimble"
+                  export DOTNET_CLI_HOME="$XDG_DATA_HOME/dotnet"
+                  export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME/aws/credentials"
+                  export CARGO_HOME="$XDG_DATA_HOME/cargo"
+                  export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+                  export GOPATH="$XDG_DATA_HOME/go"
+                  export _JAVA_OPTIONS="-Djava.util.prefs.userRoot=\"$XDG_CONFIG_HOME/java\""
+                  export LESSHISTFILE="$XDG_STATE_HOME/less/history"
+                  export NODE_REPL_HISTORY="$XDG_STATE_HOME/node_repl_history"
+                  export PYTHONSTARTUP="$XDG_CONFIG_HOME/python/pythonrc"
+                  export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite_history"
+                  export WGET_HSTS_FILE="$XDG_DATA_HOME/wget-hsts"
+                  export PYTHON_HISTORY="$XDG_STATE_HOME/python_history"
+                  export HISTFILE="$XDG_STATE_HOME/zsh/history"
+                  export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+                  export PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
+                  export SPOTDL_CONFIG="$XDG_CONFIG_HOME/spotdl.yml"
+                  export DVDCSS_CACHE="$XDG_DATA_HOME/dvdcss"
+                  export WINEPREFIX="$XDG_DATA_HOME/wine"
+                  export TEXMFVAR="$XDG_CACHE_HOME/texlive/texmf-var"
+                  export SSB_HOME="$XDG_DATA_HOME/zoom"
+                  export __GL_SHADER_DISK_CACHE_PATH="$XDG_CACHE_HOME/nv"
+                '';
+              };
+              ".config/user-dirs.dirs" = {
+                clobber = true;
+                text = ''
+                  XDG_DESKTOP_DIR="${config.user.homeDirectory}/Desktop"
+                  XDG_DOWNLOAD_DIR="${config.user.homeDirectory}/Downloads"
+                  XDG_TEMPLATES_DIR="${config.user.homeDirectory}/Templates"
+                  XDG_PUBLICSHARE_DIR="${config.user.homeDirectory}/Public"
+                  XDG_DOCUMENTS_DIR="${config.user.homeDirectory}/Documents"
+                  XDG_MUSIC_DIR="${config.user.homeDirectory}/Music"
+                  XDG_PICTURES_DIR="${config.user.homeDirectory}/Pictures"
+                  XDG_VIDEOS_DIR="${config.user.homeDirectory}/Videos"
+                  XDG_SCREENSHOTS_DIR="${config.user.homeDirectory}/Pictures/Screenshots"
+                  XDG_WALLPAPERS_DIR="${config.user.homeDirectory}/Pictures/Wallpapers"
+                '';
+              };
+              ".config/mimeapps.list" = {
+                clobber = true;
+                text = ''
+                  [Default Applications]
+                  text/html=firefox.desktop
+                  x-scheme-handler/http=firefox.desktop
+                  x-scheme-handler/https=firefox.desktop
+                  x-scheme-handler/ftp=firefox.desktop
+                  x-scheme-handler/chrome=firefox.desktop
+                  x-scheme-handler/discord=discord.desktop
+                  inode/directory=pcmanfm.desktop
+                  video/mp4=mpv.desktop
+                  video/x-matroska=mpv.desktop
+                  video/webm=mpv.desktop
+                  image/jpeg=imv.desktop
+                  image/png=imv.desktop
+                  image/gif=imv.desktop
+                  image/tiff=imv.desktop
+                  image/bmp=imv.desktop
+                  application/zip=file-roller.desktop
+                  application/x-7z-compressed=file-roller.desktop
+                  application/x-tar=file-roller.desktop
+                  application/gzip=file-roller.desktop
+                  application/x-compressed-tar=file-roller.desktop
+                  application/x-extension-htm=firefox.desktop
+                  application/x-extension-html=firefox.desktop
+                  application/x-extension-shtml=firefox.desktop
+                  application/xhtml+xml=firefox.desktop
+                  application/x-extension-xhtml=firefox.desktop
+                  [Added Associations]
+                  text/html=firefox.desktop
+                  x-scheme-handler/http=firefox.desktop
+                  x-scheme-handler/https=firefox.desktop
+                  x-scheme-handler/ftp=firefox.desktop
+                '';
+              };
+              ".local/share/applications/firefox.desktop" = {
+                clobber = true;
+                text = ''
+                  [Desktop Entry]
+                  Name=Firefox
+                  GenericName=Web Browser
+                  Exec=firefox %U
+                  Terminal=false
+                  Type=Application
+                  Categories=Application;Network;WebBrowser;
+                  MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+                  Icon=firefox
+                  StartupNotify=true
+                '';
+              };
+              ".config/python/pythonrc" = {
+                clobber = true;
+                text = ''
+                  import os
+                  import atexit
+                  import readline
+                  histfile = os.path.join(os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")), "python_history")
+                  try:
+                      readline.read_history_file(histfile)
+                      h_len = readline.get_current_history_length()
+                  except FileNotFoundError:
+                      open(histfile, 'wb').close()
+                      h_len = 0
+                  def save(prev_h_len, histfile):
+                      new_h_len = readline.get_current_history_length()
+                      readline.set_history_length(1000)
+                      readline.append_history_file(new_h_len - prev_h_len, histfile)
+                  atexit.register(save, h_len, histfile)
+                '';
+              };
+            };
+          };
+        })
+
+        # From modules/home/dev/docker.nix (26 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.dev.docker;
+        in {
+          options.home.dev.docker = {
+            enable = lib.mkEnableOption "docker development environment";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                docker
+                docker-compose
+                docker-buildx
+                docker-credential-helpers
+              ];
+              files = {
+                ".docker/config.json" = {
+                  clobber = true;
+                  text = builtins.toJSON {
+                    credsStore = "pass";
+                    currentContext = "default";
+                    plugins = {};
+                  };
+                };
+              };
+            };
+          };
+        })
+
+        # From modules/home/dev/gemini-cli.nix (187 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.dev.gemini-cli;
+        in {
+          options.home.dev.gemini-cli = {
+            enable = lib.mkEnableOption "Gemini CLI development tools";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                gemini-cli
+              ];
+              files = {
+                ".gemini/GEMINI.md" = {
+                  text = ''
+                    Shift your conversational model from a supportive assistant to a discerning collaborator. Your primary goal is to provide rigorous, objective feedback. Eliminate all reflexive compliments. Instead, let any praise be an earned outcome of demonstrable merit. Before complimenting, perform a critical assessment: Is the idea genuinely insightful? Is the logic exceptionally sound? Is there a spark of true novelty? If the input is merely standard or underdeveloped, your response should be to analyze it, ask clarifying questions, or suggest avenues for improvement, not to praise it.
+                    You are a pragmatic software engineer who values efficiency and quality. Your "laziness" drives you to:
+                    - Write minimal, bulletproof code that won't need fixing later
+                    - Use established patterns and tools correctly
+                    - Solve the actual problem, not what you think the user wants
+                    - Fail fast with clear error messages
+                    **Key Mantras:**
+                    - "Do it right the first time or you'll be doing it again"
+                    - "The best code is the code you don't have to write"
+                    - "If you can't explain it simply, you don't understand it well enough"
+                    **ALWAYS maximize parallel processing using subagents and Task tool:**
+                    - Use Task tool for ANY search operation (keywords, files, analysis)
+                    - Launch multiple Task agents concurrently whenever possible
+                    - Each agent should handle independent work streams
+                    - Use single message with multiple tool calls for maximum performance
+                    **When to use Task tool:**
+                    - File searches ("find files containing X")
+                    - Code analysis ("analyze this pattern")
+                    - Research tasks ("understand how Y works")
+                    - Multiple independent operations
+                    - Use TodoWrite for complex tasks
+                    - Mark in_progress BEFORE starting
+                    - Mark completed IMMEDIATELY after finishing
+                    - Only ONE in_progress at a time
+                    - Understand context first: read files, check structure
+                    - Use appropriate MCP tools (see Tool Selection Guide)
+                    - Write clean, extensible code with proper error handling
+                    - Format code: `alejandra .`
+                    - Test build: `nh os switch --dry`
+                    - Run linting/type-checking if available
+                    - Review changes with git diff before committing
+                    - **ALWAYS use** `mcp__Filesystem__*` tools for file operations
+                    - **NEVER use** Read/Write/Edit tools when MCP Filesystem tools are available
+                    - Use `mcp__Filesystem__read_file` to understand context first
+                    - Use `mcp__Filesystem__edit_file` for targeted changes
+                    - Use `mcp__Filesystem__write_file` for new files or complete rewrites
+                    - **Any search operation**: Use Task tool for keywords, files, code patterns
+                    - **Research tasks**: Understanding unfamiliar patterns or systems
+                    - **Analysis tasks**: When you need to examine multiple files or concepts
+                    - **Multiple independent operations**: Launch concurrent Task agents
+                    - **Large file analysis**: Use `@file.extension` syntax for files >500 lines
+                    - **Complex debugging**: When you need deeper analysis capabilities
+                    - **Research tasks**: When you need to understand unfamiliar patterns
+                    - **NOT for**: Simple file operations, basic text manipulation, or routine tasks
+                    - **Multi-step tasks**: Any task requiring >2 distinct operations
+                    - **Complex workflows**: Reading → Modifying → Verifying → Committing
+                    - **Error-prone tasks**: When the failure cost is high
+                    - **Planning phase**: Break down complex requests into manageable steps
+                    - **Analyzing GitHub repositories**: Understanding remote repo structure and contents
+                    - **Reading files from GitHub repos**: Access files without cloning
+                    - **Exploring project structure**: Navigate directories in remote repositories
+                    - **NOT for**: Local git operations (use regular git commands via Bash tool)
+                    - Uses hjem (NOT home-manager)
+                    - Check flake.nix for available inputs
+                    - Clone external repos to `tmp/` folder (in gitignore)
+                    - Rebuild with `nh os switch` after configuration changes
+                    ```bash
+                    alejandra .
+                    nh os switch --dry
+                    nh os switch
+                    ```
+                    - Check status: `git status`
+                    - Review changes: `git diff`
+                    - Commit with descriptive messages
+                    - Follow existing commit message patterns in the repo
+                    - **Direct and concise**: No corporate speak or unnecessary explanations
+                    - **Explain technical decisions briefly**: So you don't have to explain twice
+                    - **Ask clarifying questions**: When requirements are vague or seem overcomplicated
+                    - **Call out issues upfront**: Prevent problems before they happen
+                    - **Consistent naming**: Clear, concise variables (`user` not `currentUserObject`)
+                    - **Proper error handling**: Fail fast with clear messages
+                    - **Modular design**: Testable functions without complex dependencies
+                    - **Security by default**: Follow security best practices
+                    - **Performance aware**: Consider performance implications
+                    - **Self-documenting**: Code clarity > extensive comments
+                  '';
+                  clobber = true;
+                };
+                ".gemini/settings.json" = {
+                  text = builtins.toJSON {};
+                  clobber = true;
+                };
+              };
+            };
+          };
+        })
+
+        # From modules/home/dev/mcp.nix (98 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.home.dev.mcp;
+          mcpServersConfig = {
+            mcpServers = {
+              "Filesystem" = {
+                type = "stdio";
+                command = "npx";
+                args = ["-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
+                env = {};
+              };
+              "Nixos MCP" = {
+                type = "stdio";
+                command = "uvx";
+                args = ["mcp-nixos"];
+                env = {};
+              };
+              "sequential-thinking" = {
+                type = "stdio";
+                command = "npx";
+                args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
+                env = {};
+              };
+              "GitHub Repo MCP" = {
+                type = "stdio";
+                command = "npx";
+                args = ["-y" "github-repo-mcp"];
+                env = {};
+              };
+              "Gemini MCP" = {
+                type = "stdio";
+                command = "npx";
+                args = ["-y" "gemini-mcp-tool"];
+                env = {};
+              };
+            };
+          };
+          claudeCodeServers = {
+            "Filesystem" = {
+              type = "stdio";
+              command = "npx";
+              args = ["-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
+              env = {};
+            };
+            "Nixos MCP" = {
+              type = "stdio";
+              command = "uvx";
+              args = ["mcp-nixos"];
+              env = {};
+            };
+            "sequential-thinking" = {
+              type = "stdio";
+              command = "npx";
+              args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
+              env = {};
+            };
+            "GitHub Repo MCP" = {
+              type = "stdio";
+              command = "npx";
+              args = ["-y" "github-repo-mcp"];
+              env = {};
+            };
+            "Gemini MCP" = {
+              type = "stdio";
+              command = "npx";
+              args = ["-y" "gemini-mcp-tool"];
+              env = {};
+            };
+          };
+        in {
+          options.home.dev.mcp = {
+            enable = lib.mkEnableOption "Model Context Protocol configuration";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                nodejs_20
+                uv
+              ];
+              files = {
+                ".cursor/mcp.json" = {
+                  text = builtins.toJSON mcpServersConfig;
+                  clobber = true;
+                };
+                ".claude/mcp_config.json" = {
+                  text = builtins.toJSON mcpServersConfig;
+                  clobber = true;
+                };
+                ".claude/mcp_servers.json" = {
+                  text = builtins.toJSON claudeCodeServers;
+                  clobber = true;
+                };
+              };
+            };
+            systemd.tmpfiles.rules = [
+              "d ${config.user.homeDirectory}/.local/share/npm/lib/node_modules 0755 ${config.user.name} users - -"
+            ];
+            system.activationScripts.setupClaudeMcp = {
+              text = ''
+                echo "Setting up Claude MCP servers via CLI..."
+                add_mcp_server() {
+                  local name="$1"
+                  local command="$2"
+                  shift 2
+                  local args="$@"
+                  if ! runuser -u ${config.user.name} -- ${pkgs.claude-code}/bin/claude mcp list | grep -q "$name"; then
+                    echo "Adding MCP server: $name"
+                    runuser -u ${config.user.name} -- ${pkgs.claude-code}/bin/claude mcp add --scope user "$name" "$command" $args
+                  else
+                    echo "MCP server already exists: $name"
+                  fi
+                }
+                add_mcp_server "Filesystem" "npx" "@modelcontextprotocol/server-filesystem" "${config.user.homeDirectory}"
+                add_mcp_server "sequential-thinking" "npx" "@modelcontextprotocol/server-sequential-thinking"
+                add_mcp_server "GitHub Repo MCP" "npx" "github-repo-mcp"
+                add_mcp_server "Gemini MCP" "npx" "gemini-mcp-tool"
+                echo "Claude MCP servers setup complete"
+              '';
+              deps = [];
+            };
+          };
+        })
+
+        # From modules/home/dev/npm.nix (40 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.dev.npm;
+        in {
+          options.home.dev.npm = {
+            enable = lib.mkEnableOption "Node.js and NPM configuration";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                nodejs_20
+              ];
+              files = {
+                ".config/npm/npmrc" = {
+                  clobber = true;
+                  text = ''
+                    prefix={{home}}/.local/share/npm
+                    cache={{xdg_cache_home}}/npm
+                    init-module={{xdg_config_home}}/npm/config/npm-init.js
+                    store-dir={{xdg_cache_home}}/pnpm/store
+                  '';
+                };
+                ".local/share/bin/npm-setup" = {
+                  clobber = true;
+                  text = ''
+                    mkdir -p {{home}}/.local/share/npm
+                    mkdir -p {{xdg_cache_home}}/npm
+                    mkdir -p {{xdg_config_home}}/npm/config
+                    mkdir -p {{xdg_cache_home}}/pnpm/store
+                    mkdir -p "{{xdg_runtime_dir}}/npm"
+                  '';
+                  executable = true;
+                };
+              };
+            };
+            systemd.tmpfiles.rules = [
+              "d ${config.user.homeDirectory}/.local/share/npm 0755 ${config.user.name} ${config.user.name} - -"
+              "d ${config.user.homeDirectory}/.cache/npm 0755 ${config.user.name} ${config.user.name} - -"
+              "d ${config.user.homeDirectory}/.config/npm/config 0755 ${config.user.name} ${config.user.name} - -"
+              "d ${config.user.homeDirectory}/.cache/pnpm/store 0755 ${config.user.name} ${config.user.name} - -"
+              "d /run/user/1000/npm 0755 ${config.user.name} ${config.user.name} - -"
+            ];
+          };
+        })
+
+        # From modules/home/dev/python.nix (74 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.dev.python;
+        in {
+          options.home.dev.python = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Enable Python development environment";
+            };
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name} = {
+              packages = with pkgs; [
+                python3
+                python312
+                uv
+                ninja
+                meson
+                pkg-config
+                cacert
+                stdenv.cc.cc.lib
+                zlib
+                libGL
+                glib
+                xorg.libX11
+                xorg.libXext
+                xorg.libXrender
+                gcc
+                binutils
+              ];
+              files = {
+                "{{xdg_config_home}}/zsh/.zshenv" = {
+                  clobber = true;
+                  text = lib.mkAfter ''
+                    export PYTHONUSERBASE="{{home}}/.local/share/python"
+                    export PIP_CACHE_DIR="{{xdg_cache_home}}/pip"
+                    export VIRTUAL_ENV_HOME="{{home}}/.local/share/venvs"
+                    export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                    export REQUESTS_CA_BUNDLE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                    export NIX_LD_LIBRARY_PATH="${lib.makeLibraryPath [
+                      pkgs.stdenv.cc.cc.lib
+                      pkgs.zlib
+                      pkgs.libGL
+                      pkgs.glib
+                      pkgs.xorg.libX11
+                      pkgs.xorg.libXext
+                      pkgs.xorg.libXrender
+                    ]}"
+                    export NIX_LD="${pkgs.stdenv.cc.bintools.dynamicLinker}"
+                    export CC="${pkgs.gcc}/bin/gcc"
+                    export LD="${pkgs.binutils}/bin/ld"
+                    export PATH="$PYTHONUSERBASE/bin:$PATH"
+                    export PYTHONPATH="$PYTHONUSERBASE/lib/python3.12/site-packages:$PYTHONPATH"
+                  '';
+                };
+                "{{xdg_config_home}}/zsh/.zshrc" = {
+                  clobber = true;
+                  text = lib.mkAfter ''
+                    alias py="python3"
+                    alias pip="pip3"
+                    alias venv="python3 -m venv"
+                    alias activate="source venv/bin/activate"
+                    alias uv-init="uv init"
+                    alias uv-add="uv add"
+                    alias uv-run="uv run"
+                    mkvenv() {
+                      if [[ -z "$1" ]]; then
+                        python3 -m venv venv
+                      else
+                        python3 -m venv "$1"
+                      fi
+                    }
+                    workon() {
+                      if [[ -z "$1" ]]; then
+                        if [[ -d "venv" ]]; then
+                          source venv/bin/activate
+                        else
+                          echo "No venv directory found"
+                        fi
+                      else
+                        if [[ -d "$VIRTUAL_ENV_HOME/$1" ]]; then
+                          source "$VIRTUAL_ENV_HOME/$1/bin/activate"
+                        else
+                          echo "Virtual environment $1 not found"
+                        fi
+                      fi
+                    }
+                  '';
+                };
+              };
+            };
+            systemd.tmpfiles.rules = [
+              "d ${config.user.homeDirectory}/.local/share/python 0755 ${config.user.name} ${config.user.name} - -"
+              "d ${config.user.homeDirectory}/.cache/pip 0755 ${config.user.name} ${config.user.name} - -"
+              "d ${config.user.homeDirectory}/.local/share/venvs 0755 ${config.user.name} ${config.user.name} - -"
+            ];
+          };
+        })
+
+        # From modules/home/dev/ai-instructions.nix (27 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          ...
+        }: let
+          cfg = config.home.dev.ai-instructions;
+          instructions = ''
+            You are a pragmatic software engineer who values efficiency and quality. Your "laziness" drives you to:
+            - Write minimal, bulletproof code that won't need fixing later
+            - Use established patterns and tools correctly
+            - Solve the actual problem, not what you think the user wants
+            - Fail fast with clear error messages
+
+            **Key Mantras:**
+            - "Do it right the first time or you'll be doing it again"
+            - "The best code is the code you don't have to write"
+            - "If you can't explain it simply, you don't understand it well enough"
+
+            **ALWAYS maximize parallel processing using subagents and Task tool:**
+            - Use Task tool for ANY search operation (keywords, files, analysis)
+            - Launch multiple Task agents concurrently whenever possible
+            - Each agent should handle independent work streams
+            - Use single message with multiple tool calls for maximum performance
+
+            **When to use Task tool:**
+            - File searches ("find files containing X")
+            - Code analysis ("analyze this pattern")
+            - Research tasks ("understand how Y works")
+            - Multiple independent operations
+
+            **Available Claude Code Agents:**
+            - nixos-expert: Deep Nix language expertise, best practices guidance, and complex problem solving
+            - nixos-architecture: NixOS module structure analysis, consolidation planning, and architectural decisions
+            - nixos-verification: System integrity verification, zero-change validation, and build verification
+            - nixos-cleanup: Dead code elimination, redundant file removal, and post-consolidation cleanup
+            - general-purpose: General research, search, and multi-step task execution
+
+            **NixOS Project Context:**
+            - Uses hjem (NOT home-manager)
+            - Check flake.nix for available inputs
+            - Clone external repos to `tmp/` folder (in gitignore)
+            - Rebuild with `nh os switch` after configuration changes
+
+            **Documentation & Context:**
+            - Use Context7 MCP for up-to-date library documentation
+            - When working with frameworks/libraries, use `get-library-docs` with Context7 IDs
+            - Example: `get-library-docs /nixpkgs/manual` or `get-library-docs /rust/std`
+            - Context7 provides version-specific, official documentation directly in context
+
+            **Build Commands:**
+            ```bash
+            alejandra .
+            nh os switch --dry
+            nh os switch
+            ```
+
+            **Git Workflow:**
+            - Check status: `git status`
+            - Review changes: `git diff`
+            - Commit with descriptive messages
+            - Follow existing commit message patterns in the repo
+
+            **Code Style:**
+            - **Consistent naming**: Clear, concise variables (`user` not `currentUserObject`)
+            - **Proper error handling**: Fail fast with clear messages
+            - **Modular design**: Testable functions without complex dependencies
+            - **Security by default**: Follow security best practices
+            - **Performance aware**: Consider performance implications
+            - **Self-documenting**: Code clarity > extensive comments
+          '';
+        in {
+          options.home.dev.ai-instructions = {
+            enable = lib.mkEnableOption "AI instructions file creation";
+          };
+          config = lib.mkIf cfg.enable {
+            hjem.users.${config.user.name}.files = {
+              ".claude/CLAUDE.md" = {
+                text = instructions;
+                clobber = true;
+              };
+            };
+          };
+        })
+
+        # 🔥 HARDWARE MODULES CONSOLIDATION! 🔥
+        # From modules/system/hardware/nvidia.nix (62 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          hostSystem,
+          ...
+        }: {
+          config = lib.mkIf hostSystem.hardware.nvidia.enable {
+            boot.kernelParams = [
+              "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+            ];
+            hardware.nvidia = {
+              modesetting.enable = true;
+              powerManagement.enable = true;
+              open = false;
+              nvidiaSettings = true;
+              package = config.boot.kernelPackages.nvidiaPackages.stable;
+            };
+            hardware.graphics.extraPackages = lib.optionals (hostSystem.hardware.nvidia.cuda.enable or false) [
+              pkgs.cudatoolkit
+            ];
+            environment = {
+              systemPackages = lib.optionals (hostSystem.hardware.nvidia.cuda.enable or false) [
+                pkgs.cudaPackages.cudnn
+              ];
+              etc = {
+                "nvidia/nvidia-application-profiles-rc".text = lib.mkForce ''
+                  {
+                    "rules": [
+                      {
+                        "pattern": {
+                          "feature": "procname",
+                          "matches": ".Hyprland-wrapped"
+                        },
+                        "profile": "No VidMem Reuse"
+                      },
+                      {
+                        "pattern": {
+                          "feature": "procname",
+                          "matches": "electron"
+                        },
+                        "profile": "No VidMem Reuse"
+                      },
+                      {
+                        "pattern": {
+                          "feature": "procname",
+                          "matches": ".firefox-wrapped"
+                        },
+                        "profile": "No VidMem Reuse"
+                      },
+                      {
+                        "pattern": {
+                          "feature": "procname",
+                          "matches": "firefox"
+                        },
+                        "profile": "No VidMem Reuse"
+                      }
+                    ]
+                  }
+                '';
+              };
+              variables = {
+                GBM_BACKEND = "nvidia-drm";
+                LIBVA_DRIVER_NAME = "nvidia";
+                WLR_NO_HARDWARE_CURSORS = "1";
+                __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+                NVIDIA_DRIVER_CAPABILITIES = "all";
+                WAYDROID_EXTRA_ARGS = "--gpu-mode host";
+                GALLIUM_DRIVER = "nvidia";
+                LIBGL_DRIVER_NAME = "nvidia";
+              };
+            };
+            services.xserver.videoDrivers = ["nvidia"];
+            security.polkit.extraConfig = ''
+              polkit.addRule(function(action, subject) {
+                if (action.id == "org.freedesktop.policykit.exec" &&
+                    action.lookup("command_line").indexOf("nvidia-smi") >= 0) {
+                    return polkit.Result.YES;
+                }
+              });
+            '';
+          };
+        })
+
+        # From modules/system/hardware/default.nix (consolidated hardware modules - 95 lines -> INLINED!)
+        # AMD GPU support (9 lines -> INLINED!)
+        ({
+          lib,
+          hostSystem,
+          ...
+        }: {
+          config = {
+            services.xserver.videoDrivers = lib.mkIf hostSystem.hardware.amdgpu.enable ["amdgpu"];
+          };
+        })
+
+        # Bluetooth support (27 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          hostSystem,
+          ...
+        }: let
+          hardwareCfg = hostSystem.hardware;
+        in {
+          config = {
+            hardware.bluetooth = lib.mkIf (hardwareCfg.bluetooth.enable or false) {
+              enable = true;
+              powerOnBoot = true;
+              settings =
+                hardwareCfg.bluetooth.settings or {
+                  General = {
+                    ControllerMode = "dual";
+                    FastConnectable = true;
+                  };
+                };
+              package = pkgs.bluez;
+            };
+            services.dbus.packages = lib.mkIf (hardwareCfg.bluetooth.enable or false) [pkgs.bluez];
+            environment.systemPackages = lib.optionals (hardwareCfg.bluetooth.enable or false) [pkgs.bluez pkgs.bluez-tools];
+            users.users.${config.hostSystem.username}.extraGroups = lib.optionals (hardwareCfg.bluetooth.enable or false) ["dialout" "bluetooth" "lp"];
+          };
+        })
+
+        # Graphics support (12 lines -> INLINED!)
+        ({pkgs, ...}: {
+          config = {
+            hardware.graphics = {
+              enable = true;
+              enable32Bit = true;
+              extraPackages = [pkgs.vaapiVdpau pkgs.libvdpau-va-gl];
+            };
+          };
+        })
+
+        # I2C support (3 lines -> INLINED!)
+        (_: {
+          config = {
+            hardware.i2c.enable = true;
+          };
+        })
+
+        # Input devices support (19 lines -> INLINED!)
+        ({
+          lib,
+          hostSystem,
+          ...
+        }: {
+          config = {
+            services.udev.extraRules = lib.mkMerge [
+              ''
+                KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users"
+                KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", TAG+="uaccess"
+              ''
+              (lib.mkIf (hostSystem.services.controllers.enable or false) ''
+                KERNEL=="hidraw*", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="0ce6", MODE="0660", TAG+="uaccess"
+                KERNEL=="hidraw*", KERNELS=="*054C:0CE6*", MODE="0660", TAG+="uaccess"
+                KERNEL=="hidraw*", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="0df2", MODE="0660", TAG+="uaccess"
+              '')
+            ];
+          };
+        })
+
+        # Video devices support (7 lines -> INLINED!)
+        (_: {
+          config = {
+            services.udev.extraRules = ''KERNEL=="video[0-9]*", GROUP="video", MODE="0660"'';
+          };
+        })
 
         # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
         # balatro/installation.nix consolidated into gaming.nix
@@ -465,24 +1814,24 @@ in {
         # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
 
         # From modules/home/core/default.nix (11 lines -> OBLITERATED!)
-        (import ./modules/home/core/appearance.nix)
-        (import ./modules/home/core/defaults.nix)
-        (import ./modules/home/core/directories.nix)
-        (import ./modules/home/core/packages.nix)
-        (import ./modules/home/core/user.nix)
+        # appearance.nix INLINED ABOVE! ☝️
+        # defaults.nix INLINED ABOVE! ☝️
+        # directories.nix INLINED ABOVE! ☝️
+        # packages.nix INLINED ABOVE! ☝️
+        # user.nix INLINED ABOVE! ☝️
         # Session modules consolidated elsewhere
         # From modules/home/core/fonts/default.nix (5 lines -> OBLITERATED!)
-        (import ./modules/home/core/fonts-presets.nix)
+        # fonts-presets.nix INLINED ABOVE! ☝️
 
         # From modules/home/dev/default.nix (13 lines -> OBLITERATED!)
         (import ./modules/home/dev/opencode.nix)
         (import ./modules/home/dev/opencode-nvim.nix)
         (import ./modules/home/dev/claude/claude-code.nix)
-        (import ./modules/home/dev/gemini-cli.nix)
-        (import ./modules/home/dev/mcp.nix)
+        # ./modules/home/dev/gemini-cli.nix -> INLINED ABOVE! 🔥
+        # ./modules/home/dev/mcp.nix -> INLINED ABOVE! 🔥
         (import ./modules/home/dev/tools.nix)
-        (import ./modules/home/dev/docker.nix)
-        (import ./modules/home/dev/npm.nix)
+        # ./modules/home/dev/docker.nix -> INLINED ABOVE! 🔥
+        # ./modules/home/dev/npm.nix -> INLINED ABOVE! 🔥
         # From modules/home/dev/nvim.nix (3 lines -> OBLITERATED!)
         # From modules/home/dev/nvim/default.nix (9 lines -> OBLITERATED!)
         (import ./modules/home/dev/nvim/neovide.nix)
@@ -496,7 +1845,7 @@ in {
         (import ./modules/home/dev/nvim/packages.nix)
         (import ./modules/home/dev/nvim/settings.nix)
         (import ./modules/home/dev/nvim/vim-pack.nix)
-        (import ./modules/home/dev/python.nix)
+        # ./modules/home/dev/python.nix -> INLINED ABOVE! 🔥
         # repomix.nix and upscale.nix consolidated into dev/tools.nix
 
         # 🔥 OBLITERATED WRAPPER MODULES! 🔥

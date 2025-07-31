@@ -1,4 +1,4 @@
-_: {
+{lib, ...}: {
   # User system configuration
   system = {
     isNormalUser = true;
@@ -39,7 +39,7 @@ _: {
     hyprland = {
       enable = true;
       flake.enable = true;
-      hy3.enable = false;
+      hy3.enable = lib.mkForce false;
     };
     wayland.enable = true;
   };
