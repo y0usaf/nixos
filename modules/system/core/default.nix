@@ -74,6 +74,6 @@
       hostSystem,
       ...
     }: {config = {services.ollama = lib.mkIf (hostSystem.services.ollama.enable or false) {enable = true;};};})
-    ./system.nix
+    # system.nix INLINED INTO default.nix! ☝️
   ];
 }

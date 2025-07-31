@@ -1,4 +1,4 @@
-_: {
+{lib, ...}: {
   # User system configuration
   system = {
     isNormalUser = true;
@@ -51,7 +51,7 @@ _: {
     hyprland = {
       enable = true;
       flake.enable = true;
-      hy3.enable = false;
+      hy3.enable = lib.mkDefault true;
     };
     niri.enable = true;
     quickshell.enable = true;
@@ -154,7 +154,7 @@ _: {
     #   marvelusersettings.enable = true;
     # };
     balatro = {
-      enable = true; # Re-enabled with npins sources
+      enable = true;
       enableLovelyInjector = true;
       enabledMods = ["steamodded" "talisman" "morespeeds" "cardsleeves" "multiplayer" "jokerdisplay" "pokermon" "aura" "handybalatro" "stickersalwaysshown"];
     };
