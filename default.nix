@@ -300,42 +300,7 @@ in {
         })
         # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
 
-        # From modules/home/ui/default.nix (16 lines -> OBLITERATED!)
-        (import ./modules/home/ui/ags.nix)
-        (import ./modules/home/ui/cursor.nix)
-        (import ./modules/home/ui/fonts.nix)
-        (import ./modules/home/ui/foot.nix)
-        (import ./modules/home/ui/gtk.nix)
-        # From modules/home/ui/hyprland/default.nix (6 lines -> OBLITERATED!)
-        (import ./modules/home/ui/hyprland/options.nix)
-        (import ./modules/home/ui/hyprland/config.nix)
-        (import ./modules/home/ui/mako.nix)
-        # From modules/home/ui/niri/default.nix + options.nix inline (5+19 lines -> INLINED!)
-        ({
-          config,
-          pkgs,
-          lib,
-          ...
-        }: let
-          cfg = config.home.ui.niri;
-        in {
-          # From modules/home/ui/niri/options.nix (5 lines -> INLINED!)
-          options.home.ui.niri = {
-            enable = lib.mkEnableOption "Niri wayland compositor";
-          };
-
-          imports = [
-            ./modules/home/ui/niri/config.nix
-          ];
-
-          config = lib.mkIf cfg.enable {
-            hjem.users.${config.user.name}.packages = with pkgs; [
-              xwayland-satellite
-            ];
-          };
-        })
-        (import ./modules/home/ui/qutebrowser.nix)
-        (import ./modules/home/ui/wayland-tools.nix)
+        # UI modules functionality now consolidated in ui.nix
 
         # 🔥 CONSOLIDATED MODULE IMPORTS! 🔥
         (import ./modules/home/gaming.nix)
@@ -343,6 +308,7 @@ in {
         (import ./modules/home/services.nix)
         (import ./modules/home/shell.nix)
         (import ./modules/home/tools.nix)
+        (import ./modules/home/ui.nix)
         (import ./modules/home/core.nix)
 
         # Dev modules functionality now consolidated in dev.nix
