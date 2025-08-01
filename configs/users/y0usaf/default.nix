@@ -148,11 +148,11 @@
       wii-u.enable = true;
       gcn-wii.enable = true;
     };
-    # marvel-rivals = {
-    #   engine.enable = true;
-    #   gameusersettings.enable = true;
-    #   marvelusersettings.enable = true;
-    # };
+    marvel-rivals = {
+      engine.enable = true;
+      gameusersettings.enable = true;
+      marvelusersettings.enable = true;
+    };
     balatro = {
       enable = true;
       enableLovelyInjector = true;

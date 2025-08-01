@@ -29,12 +29,7 @@
       name = "Talisman";
     };
     cryptid = {
-      src = pkgs.fetchFromGitHub {
-        owner = "SpectralPack";
-        repo = "Cryptid";
-        rev = "1da26300f239d77be0a9ffd24a75a9f7b6af724a";
-        hash = "sha256-gwehpW9HenUxbO1s2USnXSkgkOGRetoIvWEfPj3CFNc=";
-      };
+      src = balatrroSources.Cryptid;
       name = "Cryptid";
     };
     multiplayer = {
@@ -258,6 +253,10 @@ in {
         };
       };
     })
+
+    # Balatro mod sources as packages (needed for build system)
+    # The sources are already available as derivations through the npins system
+    # and are automatically included in the closure when used in files config
 
     # gaming/balatro/installation.nix
     (lib.mkIf balatroCfg.enable {
