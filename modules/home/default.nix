@@ -7,6 +7,6 @@
     ./services
     ./shell
     ./tools
-    ./ui
+    ./ui.nix
   ];
 }
