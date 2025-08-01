@@ -17,7 +17,7 @@
   # Import npins sources to maintain exact package closure equivalence with original system
   sources = import ../../npins;
 
-  # Balatro configuration from gaming/balatro/installation.nix  
+  # Balatro configuration from gaming/balatro/installation.nix
   balatrroSources = sources;
   availableMods = {
     steamodded = {
