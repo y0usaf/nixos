@@ -109,6 +109,8 @@ in {
     inherit system;
     configuration = {
       imports = [
+        # Hardware configuration with filesystem definitions
+        ./configs/hosts/y0usaf-desktop/hardware-configuration.nix
         # Host system configuration (EXACTLY like original lib/default.nix structure)
         # From modules/system/core/system.nix (49 lines -> INLINED!)
         ({
