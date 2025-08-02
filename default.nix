@@ -303,13 +303,5962 @@ in {
         # UI modules functionality now consolidated in ui.nix
 
         # 🔥 CONSOLIDATED MODULE IMPORTS! 🔥
-        (import ./modules/home/gaming.nix)
-        (import ./modules/home/programs.nix)
-        (import ./modules/home/services.nix)
-        (import ./modules/home/shell.nix)
-        (import ./modules/home/tools.nix)
-        (import ./modules/home/ui.nix)
-        (import ./modules/home/core.nix)
+        # From modules/home/gaming.nix (590 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          cfg = config.home.gaming.core;
+          controllersCfg = config.home.gaming.controllers;
+          emuWiiUCfg = config.home.gaming.emulation.wii-u;
+          emuGcnWiiCfg = config.home.gaming.emulation.gcn-wii;
+          wukongCfg = config.home.gaming.wukong;
+          balatroCfg = config.home.gaming.balatro;
+          marvelRivalsEngineCfg = config.home.gaming.marvel-rivals.engine;
+          marvelRivalsGameUserSettingsCfg = config.home.gaming.marvel-rivals.gameusersettings;
+          marvelRivalsMarvelUserSettingsCfg = config.home.gaming.marvel-rivals.marvelusersettings;
+
+          # Import npins sources to maintain exact package closure equivalence with original system
+          sources = import ./npins;
+
+          # Balatro configuration from gaming/balatro/installation.nix
+          balatrroSources = sources;
+          availableMods = {
+            steamodded = {
+              src = balatrroSources.smods;
+              name = "smods";
+            };
+            talisman = {
+              src = balatrroSources.Talisman;
+              name = "Talisman";
+            };
+            cryptid = {
+              src = balatrroSources.Cryptid;
+              name = "Cryptid";
+            };
+            multiplayer = {
+              src = balatrroSources.BalatroMultiplayer;
+              name = "BalatroMultiplayer";
+            };
+            cardsleeves = {
+              src = balatrroSources.CardSleeves;
+              name = "CardSleeves";
+            };
+            jokerdisplay = {
+              src = balatrroSources.JokerDisplay;
+              name = "JokerDisplay-1.8.4.1";
+            };
+            pokermon = {
+              src = balatrroSources.Pokermon;
+              name = "Pokermon";
+            };
+            stickersalwaysshown = {
+              src = balatrroSources."Balatro-Stickers-Always-Shown";
+              name = "StickersAlwaysShown";
+            };
+            handybalatro = {
+              src = balatrroSources.HandyBalatro;
+              name = "HandyBalatro";
+            };
+            aura = {
+              src = balatrroSources.Aura;
+              name = "Aura";
+            };
+            morespeeds = {
+              name = "MoreSpeeds.lua";
+            };
+          };
+          enabledMods = lib.filterAttrs (name: _mod: lib.elem name balatroCfg.enabledMods && name != "morespeeds") availableMods;
+          lovelyInjectorPackage = pkgs.fetchzip {
+            url = "https://github.com/ethangreen-dev/lovely-injector/releases/download/v0.7.1/lovely-x86_64-pc-windows-msvc.zip";
+            sha256 = "sha256-KjWSJugIfUOfWHZctEDKWGvNERXDzjW1+Ty5kJtEJlw=";
+            stripRoot = false;
+          };
+
+          # Marvel Rivals settings content
+          marvelUserSettingsContent = ''
+            {"MasterVolume": 70, "SoundEffectVolume": 100, "MusicVolume": 0, "VoiceVolume": 100, "UserControl": "{\"0\": \"{\\\"MouseHorizontalSensitivity\\\": 5.0, \\\"MouseVerticalSensitivity\\\": 5.0, \\\"CharControlInputMappings\\\": {\\\"6\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"J\\\"}}, \\\"24\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"B\\\"}}, \\\"36\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"None\\\"}}, \\\"46\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"X\\\"}}, \\\"47\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"Z\\\"}}}, \\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}], \\\"HpBarVisibleRule\\\": 1}\", \"1035\": \"{\\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldSprint\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 0, \\\"Key\\\": \\\"WallRunMode\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": \\\"TowardUp\\\"}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldSprint\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 0, \\\"Key\\\": \\\"WallRunMode\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": \\\"TowardUp\\\"}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"UseSimpleSwing\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"UseSimpleSwing\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}]}\", \"1045\": \"{\\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104541, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104541, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104542, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104542, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}]}\"}";'';
+        in {
+          options = {
+            # gaming/core.nix
+            home.gaming.core = {
+              enable = lib.mkEnableOption "core gaming packages";
+            };
+
+            # gaming/controllers.nix
+            home.gaming.controllers = {
+              enable = lib.mkEnableOption "gaming controller support";
+            };
+
+            # emulation/cemu.nix
+            home.gaming.emulation.wii-u = {
+              enable = lib.mkEnableOption "Wii U emulation via Cemu";
+            };
+
+            # emulation/dolphin.nix
+            home.gaming.emulation.gcn-wii = {
+              enable = lib.mkEnableOption "GameCube and Wii emulation via Dolphin";
+            };
+
+            # wukong/engine.nix
+            home.gaming.wukong = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable Black Myth: Wukong configuration";
+              };
+            };
+
+            # gaming/balatro/installation.nix
+            home.gaming.balatro = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable Balatro mod management";
+              };
+              enableLovelyInjector = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = ''
+                  Enable Lovely Injector - a runtime lua injector for LÖVE 2D games.
+                  This downloads and installs version.dll to enable mod loading in Balatro.
+                  Required for most Balatro mods to work.
+                '';
+              };
+              enabledMods = lib.mkOption {
+                type = lib.types.listOf (lib.types.enum (lib.attrNames availableMods));
+                default = [];
+                example = ["steamodded" "talisman" "cryptid" "multiplayer" "cardsleeves" "jokerdisplay" "pokermon" "stickersalwaysshown" "handybalatro" "aura" "morespeeds"];
+                description = ''
+                  List of mod names to enable. Available mods:
+                  - steamodded: Steamodded/smods (core modding framework)
+                  - talisman: SpectralPack/Talisman
+                  - cryptid: SpectralPack/Cryptid
+                  - multiplayer: Balatro-Multiplayer/BalatroMultiplayer
+                  - cardsleeves: larswijn/CardSleeves
+                  - jokerdisplay: nh6574/JokerDisplay (shows joker calculations)
+                  - pokermon: InertSteak/Pokermon (Pokemon-themed jokers)
+                  - stickersalwaysshown: SirMaiquis/Balatro-Stickers-Always-Shown (keeps stickers visible on jokers)
+                  - handybalatro: SleepyG11/HandyBalatro (Quality of Life controls and shortcuts)
+                  - aura: SpectralPack/Aura (visual enhancement mod)
+                  - morespeeds: MoreSpeeds.lua (custom speed options)
+                '';
+              };
+            };
+
+            # marvel-rivals/engine.nix
+            home.gaming.marvel-rivals.engine = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable Marvel Rivals engine configuration";
+              };
+            };
+
+            # marvel-rivals/gameusersettings.nix
+            home.gaming.marvel-rivals.gameusersettings = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable Marvel Rivals GameUserSettings.ini configuration";
+              };
+            };
+
+            # marvel-rivals/marvelusersettings.nix
+            home.gaming.marvel-rivals.marvelusersettings = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable Marvel Rivals MarvelUserSettings.ini configuration";
+              };
+            };
+          };
+
+          config = lib.mkMerge [
+            # gaming/core.nix + gaming/shader-cache.nix
+            (lib.mkIf cfg.enable {
+              hjem.users.y0usaf = {
+                packages = with pkgs; [
+                  steam
+                  protonup-qt
+                  gamemode
+                  protontricks
+                  prismlauncher
+                ];
+                # gaming/shader-cache.nix
+                files.".config/steam/steam_dev.cfg" = {
+                  text = ''
+                    unShaderBackgroundProcessingThreads ${toString config.nix.settings.max-jobs}
+                  '';
+                  clobber = true;
+                };
+              };
+            })
+
+            # gaming/controllers.nix
+            (lib.mkIf controllersCfg.enable {
+              hjem.users.y0usaf.packages = with pkgs; [
+                dualsensectl
+              ];
+            })
+
+            # emulation/cemu.nix
+            (lib.mkIf emuWiiUCfg.enable {
+              hjem.users.y0usaf.packages = [
+                pkgs.cemu
+              ];
+            })
+
+            # emulation/dolphin.nix
+            (lib.mkIf emuGcnWiiCfg.enable {
+              hjem.users.y0usaf.packages = [
+                pkgs.dolphin-emu
+              ];
+            })
+
+            # wukong/engine.nix
+            (lib.mkIf wukongCfg.enable {
+              hjem.users.y0usaf.files.".local/share/Steam/steamapps/compatdata/2358720/pfx/drive_c/users/steamuser/AppData/Local/b1/Saved/Config/Windows/Engine.ini" = {
+                clobber = true;
+                text = lib.generators.toINI {} {
+                  "SystemSettings" = {
+                    "r.DefaultFeature.AntiAliasing" = "0";
+                    "pp.VignetteIntensity" = "0.0";
+                    "r.SceneColorFringeQuality" = "0";
+                    "r.SceneColorFringe.Max" = "0";
+                    "r.DepthOfFieldQuality" = "0";
+                    "r.DepthOfField.DepthBlur.Amount" = "0";
+                    "r.Tonemapper.GrainQuantization" = "0";
+                    "r.FilmGrain" = "0";
+                    "r.Tonemapper.Quality" = "0";
+                    "r.BloomQuality" = "0";
+                    "r.MotionBlurQuality" = "0";
+                    "r.AmbientOcclusionLevels" = "0";
+                    "r.AmbientOcclusionStaticFraction" = "0";
+                    "r.LensFlareQuality" = "0";
+                    "r.SSR.Quality" = "0";
+                    "r.Tonemapper.Sharpen" = "1.0";
+                    "r.Atmosphere" = "0";
+                    "r.VolumetricFog" = "0";
+                    "r.VolumetricFog.Quality" = "0";
+                    "r.EyeAdaptation.MethodOverride" = "0";
+                    "r.DefaultFeature.LensFlare" = "0";
+                    "r.DefaultFeature.Bloom" = "0";
+                    "r.DefaultFeature.AutoExposure" = "0";
+                    "r.PostProcessAAQuality" = "0";
+                    "r.SSS.Quality" = "0";
+                    "r.SSS.Scale" = "0";
+                    "r.ChromaticAberrationStartOffset" = "0";
+                  };
+                  "/Script/Engine.InputSettings" = {
+                    ConsoleKey = "Tilde";
+                  };
+                };
+              };
+            })
+
+            # Balatro mod sources as packages (needed for build system)
+            # The sources are already available as derivations through the npins system
+            # and are automatically included in the closure when used in files config
+
+            # gaming/balatro/installation.nix
+            (lib.mkIf balatroCfg.enable {
+              hjem.users.${config.user.name}.files = lib.mkMerge [
+                # MoreSpeeds mod (inline Lua)
+                (lib.optionalAttrs (lib.elem "morespeeds" balatroCfg.enabledMods) {
+                  ".local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/MoreSpeeds.lua" = {
+                    clobber = true;
+                    text = ''
+                      --- STEAMODDED HEADER
+                      --- MOD_NAME: More Speed
+                      --- MOD_ID: MoreSpeed
+                      --- MOD_AUTHOR: [Steamo]
+                      --- MOD_DESCRIPTION: More Speed options!
+                      --- This mod is deprecated, use Nopeus instead: https://github.com/jenwalter666/JensBalatroCollection/tree/main/Nopeus
+                      ----------------------------------------------
+                      ------------MOD CODE -------------------------
+                      local setting_tabRef = G.UIDEF.settings_tab
+                      function G.UIDEF.settings_tab(tab)
+                          local setting_tab = setting_tabRef(tab)
+                          if tab == 'Game' then
+                              local speeds = create_option_cycle({label = localize('b_set_gamespeed'), scale = 0.8, options = {0.25, 0.5, 1, 2, 3, 4, 8, 16, 32, 64, 128, 1000}, opt_callback = 'change_gamespeed', current_option = (
+                                  G.SETTINGS.GAMESPEED == 0.25 and 1 or
+                                  G.SETTINGS.GAMESPEED == 0.5 and 2 or
+                                  G.SETTINGS.GAMESPEED == 1 and 3 or
+                                  G.SETTINGS.GAMESPEED == 2 and 4 or
+                                  G.SETTINGS.GAMESPEED == 3 and 5 or
+                                  G.SETTINGS.GAMESPEED == 4 and 6 or
+                                  G.SETTINGS.GAMESPEED == 8 and 7 or
+                                  G.SETTINGS.GAMESPEED == 16 and 8 or
+                                  G.SETTINGS.GAMESPEED == 32 and 9 or
+                                  G.SETTINGS.GAMESPEED == 64 and 10 or
+                                  G.SETTINGS.GAMESPEED == 128 and 11 or
+                                  G.SETTINGS.GAMESPEED == 1000 and 12 or
+                                  3 -- Default to 1 if none match, adjust as necessary
+                              )})
+                              local free_speed_text = {
+                                  n = G.UIT.R,
+                                  config = {
+                                      align = "cm",
+                                      id = "free_speed_text"
+                                  },
+                                  nodes = {
+                                      {
+                                          n = G.UIT.T,
+                                          config = {
+                                              align = "cm",
+                      scale = 0.3 * 1.5,
+                      text = "Free Speed",
+                      colour = G.C.UI.TEXT_LIGHT
+                                          }
+                                      }
+                                  }
+                              }
+                              local free_speed_box = {
+                                  n = G.UIT.R,
+                                  config = {
+                                      align = "cm",
+                                      padding = 0.05,
+                                      id = "free_speed_box"
+                                  },
+                                  nodes = {
+                                      create_text_input({
+                                          hooked_colour = G.C.RED,
+                                          colour = G.C.RED,
+                                          all_caps = true,
+                                          align = "cm",
+                                          w = 2,
+                                          max_length = 4,
+                                          prompt_text = 'Custom Speed',
+                                          ref_table = G.SETTINGS.COMP,
+                                          ref_value = 'name'
+                                      })
+                                  }
+                              }
+                              setting_tab.nodes[1] = speeds
+                              -- TODO fix this
+                              --table.insert(setting_tab.nodes, 2, free_speed_text)
+                              --table.insert(setting_tab.nodes, 3, free_speed_box)
+                          end
+                          return setting_tab
+                      end
+                      ----------------------------------------------
+                      ------------MOD CODE END----------------------
+                    '';
+                  };
+                })
+                # Mod installations
+                (lib.mapAttrs' (
+                    name: mod:
+                      lib.nameValuePair
+                      ".local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/${mod.name}"
+                      {
+                        clobber = true;
+                        source = mod.src;
+                      }
+                  )
+                  enabledMods)
+                # Lovely Injector installation
+                (lib.optionalAttrs balatroCfg.enableLovelyInjector {
+                  ".local/share/Steam/steamapps/common/Balatro/version.dll" = {
+                    clobber = true;
+                    source = "${lovelyInjectorPackage}/version.dll";
+                  };
+                })
+              ];
+            })
+
+            # marvel-rivals/engine.nix
+            (lib.mkIf marvelRivalsEngineCfg.enable {
+              hjem.users.${config.user.name}.files.".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/Engine.ini" = {
+                clobber = true;
+                text = lib.generators.toINI {} {
+                  "SystemSettings" = {
+                    "r.LevelStreamingDistanceScale" = "1";
+                    "r.ViewDistanceScale" = "1";
+                    "r.LandscapeLODBias" = "0";
+                    "r.LandscapeLODDistributionScale" = "1";
+                    "r.LandscapeLOD0DistributionScale" = "1";
+                    "r.LODFadeTime" = "2";
+                    "r.UITextureLODBias" = "-1";
+                    "r.Streaming.Boost" = "1";
+                    "r.TextureStreaming" = "1";
+                    "r.Streaming.ScaleTexturesByGlobalMyBias" = "1";
+                    "r.Streaming.LimitPoolSizeToVRAM" = "0";
+                    "r.DefaultFeature.AmbientOcclusion" = "False";
+                    "r.DefaultFeature.AmbientOcclusionStaticFraction" = "False";
+                    "r.DefaultFeature.AntiAliasing" = "0";
+                    "r.DefaultFeature.AutoExposure" = "True";
+                    "r.DefaultFeature.Bloom" = "False";
+                    "r.DefaultFeature.LensFlare" = "False";
+                    "r.DefaultFeature.MotionBlur" = "False";
+                    "r.DepthOfFieldQuality" = "0";
+                    "r.DistanceFieldAO" = "0";
+                    "r.EmitterSpawnRateScale" = "0";
+                    "r.FastBlurThreshold" = "0";
+                    "r.LensFlareQuality" = "0";
+                    "r.MaterialQualityLevel" = "1";
+                    "r.RefractionQuality" = "0";
+                    "r.SceneColorFormat" = "3";
+                    "r.SceneColorFringeQuality" = "0";
+                    "r.SeparateTranslucency" = "False";
+                    "r.Shadow.CSM.MaxCascades" = "1";
+                    "r.Shadow.CSM.TransitionScale" = "0";
+                    "r.Shadow.DistanceScale" = "0";
+                    "r.Shadow.MaxResolution" = "64";
+                    "r.Shadow.RadiusThreshold" = "0";
+                    "r.ShadowQuality" = "0";
+                    "r.SSR.Quality" = "0";
+                    "r.SSS.SampleSet" = "0";
+                    "r.SSS.Scale" = "0";
+                    "r.Fog" = "0";
+                    "r.PostProcessAAQuality" = "0";
+                    "r.MotionBlurQuality" = "0";
+                    "r.BlurGBuffer" = "0";
+                    "r.MaxAnisotropy" = "0";
+                    "r.BloomQuality" = "0";
+                    "r.LightFunction" = "0";
+                    "r.DetailMode" = "1";
+                    "r.TonemapperQuality" = "0";
+                    "r.MaterialQuality" = "1";
+                    "r.DepthOfField.MaxSize" = "0";
+                    "r.SwitchGridShadow" = "0";
+                    "r.Tonemapper.Sharpen" = "0.0";
+                    "r.AmbientOcclusionLevels" = "0";
+                    "r.VolumetricFog" = "0";
+                    "r.FogDensity" = "0";
+                    "r.Atmosphere" = "0";
+                    "r.ParticleLightQuality" = "0";
+                    "FX.MaxCPUParticlesPerEmitter" = "20";
+                    "FX.MaxGPUParticlesSpawnedPerFrame" = "0";
+                    "r.ParticleLODBias" = "3";
+                  };
+                  "/script/engine.renderersettings" = {
+                    "r.DefaultFeature.LensFlare" = "False";
+                    "r.DefaultFeature.DepthOfField" = "False";
+                    "r.DefaultFeature.AmbientOcclusion" = "False";
+                    "r.DefaultFeature.AmbientOcclusionStaticFraction" = "False";
+                    "r.BloomQuality" = "0";
+                    "r.MotionBlurQuality" = "0";
+                    "r.FastBlurThreshold" = "0";
+                    "r.TranslucencyVolumeBlur" = "0";
+                    "r.AmbientOcclusionLevels" = "0";
+                    "r.AmbientOcclusionRadiusScale" = "0";
+                    "r.DepthofFieldQuality" = "0";
+                    "r.DefaultFeature.AntiAliasing" = "0";
+                    "r.DefaultFeature.Bloom" = "False";
+                    "r.MobileHDR" = "False";
+                    "r.Shadow.MaxResolution" = "0";
+                    "r.Shadow.MaxCSMResolution" = "0";
+                    "r.Streaming.Boost" = "0.1";
+                    "r.SSR" = "0";
+                    "r.PostProcessAAQuality" = "0";
+                    "r.BlurGBuffer" = "0";
+                    "r.Fog" = "0";
+                    "r.TranslucentLightingVolume" = "0";
+                    "r.TriangleOrderOptimization" = "1";
+                    "r.Tonemapper.GrainQuantization" = "0";
+                    "r.TonemapperGamma" = "3";
+                    "r.Atmosphere" = "0";
+                    "r.EyeAdaptationQuality" = "1";
+                    "r.FullScreenMode" = "0";
+                    "r.IndirectLightingCache" = "0";
+                    "r.LightFunctionQuality" = "0";
+                    "r.LightShafts" = "0";
+                    "r.MaxCSMRadiusToAllowPerObjectShadows" = "0.01";
+                    "r.MipMapLODBias" = "1";
+                    "r.ReflectionEnvironment" = "0";
+                    "r.Shadow.RadiusThresholdRSM" = "0";
+                    "r.Shadow.TexelsPerPixel" = "0";
+                    "r.SimpleDynamicLighting" = "0";
+                    "r.UniformBufferPooling" = "1";
+                    "r.OptimizeForUAVPerformance" = "0";
+                    "r.Shadow.PerObject" = "1";
+                    "r.AllowLandscapeShadows" = "0";
+                    "r.AllowStaticLighting" = "0";
+                    "r.DFShadowScatterTileCulling" = "0";
+                    "r.ParallelShadows" = "0";
+                    "r.Shadow.FadeExponent" = "1";
+                    "r.Shadow.PreshadowExpand" = "-1";
+                    "r.Shadow.Preshadows" = "0";
+                    "r.TiledDeferredShading.MinimumCount" = "0";
+                    "r.AOApplyToStaticIndirect" = "0";
+                    "r.ContactShadows" = "0";
+                    "r.Shadow.PerObjectCastDistanceRadiusScale" = "0.001";
+                    "r.Shadow.CachePreshadow" = "1";
+                    "r.Shadow.CachedShadowsCastFromMovablePrimitives" = "0";
+                    "r.RayTracing.Translucency.Shadows" = "0";
+                    "r.LightMaxDrawDistanceScale" = "0.01";
+                    "r.CapsuleDirectShadows" = "0";
+                    "r.CapsuleIndirectShadows" = "0";
+                    "r.CapsuleMaxDirectOcclusionDistance" = "0";
+                    "r.CapsuleMaxIndirectOcclusionDistance" = "0";
+                    "r.CapsuleShadows" = "0";
+                    "r.Mobile.Shadow.CSMShaderCullingMethod" = "0";
+                    "r.Shadow.LightViewConvexHullCull" = "0";
+                    "r.Shadow.RectLightDepthBias" = "9";
+                    "r.Shadow.RectLightReceiverBias" = "0";
+                    "r.Shadow.TransitionScale" = "9";
+                  };
+                };
+              };
+            })
+
+            # marvel-rivals/gameusersettings.nix
+            (lib.mkIf marvelRivalsGameUserSettingsCfg.enable {
+              hjem.users.${config.user.name}.files.".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/GameUserSettings.ini" = {
+                clobber = true;
+                text = lib.generators.toINI {} {
+                  "Internationalization" = {
+                    Culture = "en";
+                  };
+                  "ScalabilityGroups" = {
+                    "sg.ViewDistanceQuality" = "1";
+                    "sg.ShadowQuality" = "0";
+                    "sg.PostProcessQuality" = "0";
+                    "sg.TextureQuality" = "0";
+                    "sg.EffectsQuality" = "0";
+                    "sg.FoliageQuality" = "0";
+                    "sg.ShadingQuality" = "0";
+                    "sg.ReflectionQuality" = "0";
+                    "sg.GlobalIlluminationQuality" = "0";
+                  };
+                  "/Script/Engine.GameUserSettings" = {
+                    bUseDesiredScreenHeight = "False";
+                  };
+                  "/Script/Marvel.MarvelGameUserSettings" = {
+                    AntiAliasingSuperSamplingMode = "4";
+                    SuperSamplingQuality = "4";
+                    CASSharpness = "0.000000";
+                    ScreenPercentage = "100.000000";
+                    VoiceLanguage = "";
+                    bNvidiaReflex = "False";
+                    bXeLowLatency = "False";
+                    bDlssFrameGeneration = "False";
+                    bFSRFrameGeneration = "False";
+                    bXeFrameGeneration = "False";
+                    MonitorIndex = "0";
+                    bEnableConsole120Fps = "False";
+                    bUseVSync = "False";
+                    bUseDynamicResolution = "False";
+                    ResolutionSizeX = "2543";
+                    ResolutionSizeY = "1428";
+                    LastUserConfirmedResolutionSizeX = "2543";
+                    LastUserConfirmedResolutionSizeY = "1428";
+                    WindowPosX = "6";
+                    WindowPosY = "6";
+                    FullscreenMode = "2";
+                    LastConfirmedFullscreenMode = "2";
+                    PreferredFullscreenMode = "1";
+                    Version = "22";
+                    AudioQualityLevel = "0";
+                    LastConfirmedAudioQualityLevel = "0";
+                    FrameRateLimit = "0.000000";
+                    DesiredScreenWidth = "2560";
+                    DesiredScreenHeight = "1440";
+                    LastUserConfirmedDesiredScreenWidth = "2560";
+                    LastUserConfirmedDesiredScreenHeight = "1440";
+                    LastRecommendedScreenWidth = "-1.000000";
+                    LastRecommendedScreenHeight = "-1.000000";
+                    LastCPUBenchmarkResult = "-1.000000";
+                    LastGPUBenchmarkResult = "-1.000000";
+                    LastGPUBenchmarkMultiplier = "1.000000";
+                    bUseHDRDisplayOutput = "False";
+                    HDRDisplayOutputNits = "1000";
+                    bAMDAntiLag2 = "False";
+                    DlssFrameGenerationCount = "1";
+                  };
+                  "CareerHighLight" = {
+                    HighLightVideoSavedPath = "C:\\users\\steamuser\\Videos\\MarvelRivals\\Highlights";
+                  };
+                };
+              };
+            })
+
+            # marvel-rivals/marvelusersettings.nix
+            (lib.mkIf marvelRivalsMarvelUserSettingsCfg.enable {
+              hjem.users.${config.user.name}.files = {
+                ".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Saved/Config/default/MarvelUserSetting.ini" = {
+                  clobber = true;
+                  text = marvelUserSettingsContent;
+                };
+                ".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Saved/Config/current/MarvelUserSetting.ini" = {
+                  clobber = true;
+                  text = marvelUserSettingsContent;
+                };
+              };
+            })
+          ];
+        })
+        # From modules/home/programs.nix (891 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          hostSystem,
+          ...
+        }: let
+          obsConfig = config.home.programs.obs;
+          firefoxConfig = config.home.programs.firefox;
+          androidConfig = config.home.programs.android;
+          username = config.user.name;
+
+          nvidiaCudaEnabled = hostSystem.hardware.nvidia.enable && (hostSystem.hardware.nvidia.cuda.enable or false);
+          obsPackage =
+            if nvidiaCudaEnabled
+            then pkgs.obs-studio.override {cudaSupport = true;}
+            else pkgs.obs-studio;
+
+          # Firefox configuration data
+          firefoxCommonSettings = {
+            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "gfx.webrender.all" =
+              if config.system.hardware.nvidia.enable or false
+              then false
+              else true;
+            "media.hardware-video-decoding.enabled" =
+              if config.system.hardware.nvidia.enable or false
+              then false
+              else true;
+            "media.ffmpeg.vaapi.enabled" =
+              if config.system.hardware.nvidia.enable or false
+              then false
+              else true;
+            "layers.acceleration.disabled" =
+              if config.system.hardware.nvidia.enable or false
+              then true
+              else false;
+            "browser.sessionstore.interval" = 15000;
+            "network.http.max-persistent-connections-per-server" = 10;
+            "browser.cache.disk.enable" = false;
+            "browser.cache.memory.enable" = true;
+            "browser.cache.memory.capacity" = 1048576;
+            "browser.sessionhistory.max_entries" = 50;
+            "network.prefetch-next" = true;
+            "network.dns.disablePrefetch" = false;
+            "network.predictor.enabled" = true;
+            "browser.tabs.drawInTitlebar" = true;
+            "browser.theme.toolbar-theme" = 0;
+            "devtools.chrome.enabled" = true;
+            "devtools.debugger.remote-enabled" = true;
+            "devtools.debugger.prompt-connection" = false;
+            "browser.enabledE10S" = false;
+            "browser.theme.dark-private-windows" = false;
+            "dom.webcomponents.enabled" = true;
+            "layout.css.shadow-parts.enabled" = true;
+          };
+
+          firefoxUserJs = lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (
+              key: value: let
+                jsValue =
+                  if builtins.isBool value
+                  then
+                    (
+                      if value
+                      then "true"
+                      else "false"
+                    )
+                  else if builtins.isInt value
+                  then toString value
+                  else if builtins.isString value
+                  then ''"${value}"''
+                  else toString value;
+              in ''user_pref("${key}", ${jsValue});''
+            )
+            firefoxCommonSettings
+          );
+
+          firefoxPolicies = builtins.toJSON {
+            policies = {
+              DisableTelemetry = true;
+              DisableFirefoxStudies = true;
+              EnableTrackingProtection = {
+                Value = true;
+                Locked = false;
+              };
+              ExtensionSettings = {
+                "*" = {
+                  installation_mode = "allowed";
+                  allowed_types = ["extension" "theme"];
+                };
+              };
+            };
+          };
+
+          firefoxUserChrome = ''
+            /* Disable all animations */
+            * {
+              animation: none;
+              transition: none;
+              scroll-behavior: auto;
+              padding: 0;
+              margin: 0;
+            }
+            :root {
+                /* Base sizing variables */
+                --tab-font-size: 0.8em;
+                --max-tab-width: none;
+                --show-titlebar-buttons: none;
+                --tab-height: 12pt;
+                --toolbar-icon-size: calc(var(--tab-height) / 1.5);
+                /* Spacing variables */
+                --uc-spacing-small: 1pt;
+                --uc-spacing-medium: 2pt;
+                --uc-spacing-large: 4pt;
+                /* Layout variables */
+                --uc-bottom-toolbar-height: 12pt;
+                --uc-navbar-width: 75vw;
+                --uc-urlbar-width: 50vw;
+                --uc-urlbar-bottom-offset: calc(var(--uc-bottom-toolbar-height) + var(--uc-spacing-medium));
+                /* Animation control */
+                --uc-animation-duration: 0.001s;
+                --uc-transition-duration: 0.001s;
+            }
+            /* Disable specific Firefox animations */
+            @media (prefers-reduced-motion: no-preference) {
+              * {
+                animation-duration: var(--uc-animation-duration);
+                transition-duration: var(--uc-transition-duration);
+              }
+            }
+            /* Disable smooth scrolling */
+            html {
+              scroll-behavior: auto;
+            }
+            /* Disable tab animations */
+            .tabbrowser-tab {
+              transition: none;
+            }
+            /* Disable toolbar animations */
+            :root[tabsintitlebar]
+                transition: none;
+            }
+            /* Rest of your existing CSS */
+            .titlebar-buttonbox-container {
+                display: var(--show-titlebar-buttons)
+            }
+            :root:not([customizing])
+                margin-left: var(--uc-spacing-small);
+                margin-right: var(--uc-spacing-small);
+                border-radius: 0;
+                padding: 0;
+                min-height: 0;
+            }
+            .tabbrowser-tab * {
+                margin: 0;
+                border-radius: 0;
+            }
+            .tabbrowser-tab {
+                height: var(--tab-height);
+                font-size: var(--tab-font-size);
+                min-height: 0;
+                align-items: center;
+                margin-bottom: var(--uc-spacing-medium);
+            }
+            .tab-icon-image {
+                height: auto;
+                width: var(--toolbar-icon-size);
+                margin-right: var(--uc-spacing-medium);
+            }
+                min-height: 0;
+            }
+            :root:not([customizing])
+            :root:not([customizing])
+            :root:not([customizing])
+            :root:not([customizing])
+                -moz-appearance: none;
+                padding-top: 0;
+                padding-bottom: 0;
+                -moz-box-align: stretch;
+                margin: 0;
+            }
+                background-color: var(--toolbarbutton-hover-background);
+            }
+                padding: 0;
+                transform: scale(0.6);
+                background-color: transparent;
+            }
+            @media (-moz-os-version: windows-win10) {
+                :root[sizemode=maximized]
+                    padding-top: calc(var(--uc-spacing-large) + var(--uc-spacing-medium));
+                }
+            }
+                position: fixed;
+                bottom: 0;
+                width: var(--uc-navbar-width);
+                height: var(--uc-bottom-toolbar-height);
+                max-height: var(--uc-bottom-toolbar-height);
+                margin: calc(-1 * var(--uc-spacing-small)) auto 0;
+                border-top: none;
+                left: 0;
+                right: 0;
+                z-index: 3;
+            }
+                margin-bottom: var(--uc-bottom-toolbar-height);
+            }
+                --uc-flex-justify: center
+            }
+            scrollbox[orient=horizontal]>slot {
+                justify-content: var(--uc-flex-justify, initial)
+            }
+                height: var(--tab-height);
+            }
+                min-height: var(--tab-height);
+            }
+                min-height: 0;
+            }
+                height: auto;
+            }
+            .searchbar-search-icon,
+            .urlbar-page-action {
+                height: auto;
+                width: var(--toolbar-icon-size);
+                padding: 0;
+            }
+            .toolbarbutton-1 {
+                padding: 0 var(--uc-spacing-medium);
+            }
+            .toolbarbutton-1,
+            .toolbarbutton-icon {
+                -moz-appearance: none;
+                padding-inline: var(--uc-spacing-small);
+                -moz-box-align: stretch;
+                margin: 0;
+            }
+            .titlebar-button,
+            .toolbaritem-combined-buttons {
+                -moz-appearance: none;
+                padding-top: 0;
+                padding-bottom: 0;
+                padding-inline: var(--uc-spacing-small);
+                -moz-box-align: stretch;
+                margin: 0;
+            }
+            .tab-close-button,
+            .urlbar-icon,
+            .urlbar-page-action {
+                -moz-appearance: none;
+                padding-inline: var(--uc-spacing-small);
+                -moz-box-align: stretch;
+                margin: 0;
+            }
+            .urlbar-page-action {
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+            .tab-close-button,
+            .titlebar-button > image,
+            .toolbarbutton-icon,
+            .urlbar-icon,
+            .urlbar-page-action > image {
+                padding: 0;
+                width: var(--toolbar-icon-size);
+                height: auto;
+            }
+                -moz-appearance: none;
+                background: none;
+                border: none;
+                box-shadow: none;
+            }
+            :root[tabsintitlebar]
+                padding-right: 0;
+                padding-left: 0;
+            }
+            :root[tabsintitlebar]
+                padding-right: 0;
+                padding-left: 0;
+            }
+                display: none;
+            }
+                height: calc(100vh - var(--uc-bottom-toolbar-height));
+            }
+                max-height: calc(100vh - var(--uc-bottom-toolbar-height));
+            }
+            @media screen and (max-width: 1000px) {
+                    width: 100vw;
+                }
+                :root {
+                    --uc-navbar-width: 100vw;
+                }
+            }
+            .tab-content {
+                padding-inline-start: var(--uc-spacing-small);
+                padding-inline-end: var(--uc-spacing-small);
+            }
+            .tab-label {
+                margin-inline-end: 0;
+            }
+            .tab-icon-sound {
+                margin-inline-start: var(--uc-spacing-small);
+            }
+            :root[customizing]
+                position: initial;
+                width: initial;
+                background: var(--toolbar-bgcolor);
+            }
+            :root[customizing]
+                margin-bottom: 0;
+            }
+                --toolbarbutton-border-radius: 0;
+                --urlbar-icon-border-radius: 0;
+                backdrop-filter: blur(10px);
+                background-color: transparent \!important;
+            }
+                --toolbarbutton-border-radius: 0;
+                --urlbar-icon-border-radius: 0;
+            }
+          '';
+        in {
+          options = {
+            # programs/obs.nix (28 lines -> INLINED\!)
+            home.programs.obs = {
+              enable = lib.mkEnableOption "OBS Studio";
+            };
+            # programs/firefox/* (5 files -> CONSOLIDATED\!)
+            home.programs.firefox = {
+              enable = lib.mkEnableOption "Firefox browser with optimized settings";
+            };
+            # programs/android.nix (50 lines -> INLINED\!)
+            home.programs.android = {
+              enable = lib.mkEnableOption "android tools and waydroid";
+            };
+            # Missing options that were removed during consolidation - adding back for compatibility
+            home.programs.discord = {
+              enable = lib.mkEnableOption "Discord communication";
+            };
+            home.programs.obsidian = {
+              enable = lib.mkEnableOption "Obsidian note-taking app";
+            };
+            # vesktop already inlined in default.nix
+            home.programs.webapps = {
+              enable = lib.mkEnableOption "Web applications";
+            };
+            home.programs.sway-launcher-desktop = {
+              enable = lib.mkEnableOption "Sway launcher desktop";
+            };
+            # imv already inlined in default.nix
+            # mpv already inlined in default.nix
+            # pcmanfm already inlined in default.nix
+            # qbittorrent already inlined in default.nix
+            # stremio already inlined in default.nix
+            home.programs.bambu = {
+              enable = lib.mkEnableOption "Bambu tools";
+            };
+          };
+
+          config = lib.mkMerge [
+            (lib.mkIf obsConfig.enable {
+              hjem.users.${config.user.name}.packages = with pkgs; [
+                obsPackage
+                obs-studio-plugins.obs-backgroundremoval
+                obs-studio-plugins.obs-vkcapture
+                obs-studio-plugins.obs-pipewire-audio-capture
+                # inputs.obs-image-reaction.packages.${pkgs.system}.default # TODO: Fix for npins
+                v4l-utils
+              ];
+            })
+            (lib.mkIf firefoxConfig.enable {
+              hjem.users.${username} = {
+                packages = with pkgs; [
+                  firefox
+                ];
+                files = {
+                  ".profile" = {
+                    text = lib.mkAfter ''
+                      export MOZ_ENABLE_WAYLAND=1
+                      export MOZ_USE_XINPUT2=1
+                    '';
+                    clobber = true;
+                  };
+                  ".mozilla/firefox/${username}.default/user.js" = {
+                    text = firefoxUserJs;
+                    clobber = true;
+                  };
+                  ".mozilla/firefox/${username}.default-release/user.js" = {
+                    text = firefoxUserJs;
+                    clobber = true;
+                  };
+                  ".mozilla/firefox/policies/policies.json" = {
+                    text = firefoxPolicies;
+                    clobber = true;
+                  };
+                  ".mozilla/firefox/${username}.default/chrome/userChrome.css" = {
+                    text = firefoxUserChrome;
+                    clobber = true;
+                  };
+                  ".mozilla/firefox/${username}.default-release/chrome/userChrome.css" = {
+                    text = firefoxUserChrome;
+                    clobber = true;
+                  };
+                };
+              };
+            })
+            (lib.mkIf androidConfig.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  waydroid
+                  android-tools
+                  scrcpy
+                ];
+                files = {
+                  ".android_env" = {
+                    clobber = true;
+                    text = ''
+                      export ANDROID_HOME="$XDG_DATA_HOME/android"
+                      export ADB_VENDOR_KEY="$XDG_CONFIG_HOME/android"
+                    '';
+                  };
+                };
+              };
+              systemd.user.services = {
+                waydroid-container = {
+                  Unit = {
+                    Description = "Waydroid Container";
+                    After = ["graphical-session.target"];
+                    PartOf = ["graphical-session.target"];
+                    Requires = ["waydroid-container.service"];
+                  };
+                  Service = {
+                    Type = "simple";
+                    Environment = [
+                      "WAYDROID_EXTRA_ARGS=--gpu-mode host"
+                      "LIBGL_DRIVER_NAME=nvidia"
+                      "GBM_BACKEND=nvidia-drm"
+                      "__GLX_VENDOR_LIBRARY_NAME=nvidia"
+                    ];
+                    ExecStartPre = "${pkgs.coreutils}/bin/sleep 2";
+                    ExecStart = "${pkgs.waydroid}/bin/waydroid session start";
+                    ExecStop = "${pkgs.waydroid}/bin/waydroid session stop";
+                    Restart = "on-failure";
+                    RestartSec = "5s";
+                  };
+                  Install = {
+                    WantedBy = ["graphical-session.target"];
+                  };
+                };
+              };
+            })
+            # Basic implementations for missing options - add packages when enabled
+            (lib.mkIf config.home.programs.discord.enable {
+              hjem.users.${config.user.name}.packages = with pkgs; [
+                # Use discord-canary as specified in user defaults, with vencord integration
+                (discord-canary.override {
+                  withOpenASAR = true;
+                  withVencord = true;
+                })
+              ];
+            })
+            (lib.mkIf config.home.programs.obsidian.enable {
+              hjem.users.${config.user.name}.packages = with pkgs; [obsidian];
+            })
+            # vesktop config already inlined in default.nix
+            (lib.mkIf config.home.programs.webapps.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  ungoogled-chromium
+                ];
+                files = {
+                  ".local/share/applications/keybard.desktop" = {
+                    text = ''
+                      [Desktop Entry]
+                      Name=Keybard
+                      Exec=${lib.getExe pkgs.chromium} --app=https://captdeaf.github.io/keybard %U
+                      Terminal=false
+                      Type=Application
+                      Categories=Utility;System;
+                      Comment=Keyboard testing utility
+                    '';
+                    clobber = true;
+                  };
+                  ".local/share/applications/google-meet.desktop" = {
+                    text = ''
+                      [Desktop Entry]
+                      Name=Google Meet
+                      Exec=${lib.getExe pkgs.chromium} --app=https://meet.google.com %U
+                      Terminal=false
+                      Type=Application
+                      Categories=Network;VideoConference;Chat;
+                      Comment=Video conferencing by Google
+                    '';
+                    clobber = true;
+                  };
+                };
+              };
+            })
+            (lib.mkIf config.home.programs.sway-launcher-desktop.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  fzf
+                ];
+                files.".config/scripts/sway-launcher-desktop.sh" = {
+                  clobber = true;
+                  executable = true;
+                  text = ''
+                    #!/usr/bin/env bash
+                    # terminal application launcher for sway, using fzf
+                    # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
+                    # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
+                    shopt -s nullglob globstar
+                    set -o pipefail
+                    # Ensure file descriptor 3 is available for debug output
+                    exec 3>/dev/null 2>/dev/null || true
+                    # shellcheck disable=SC2154
+                    trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+                    IFS=$'\n\t'
+                    DEL=$'\34'
+
+                    FZF_COMMAND="''${FZF_COMMAND:=fzf}"
+                    TERMINAL_COMMAND="''${TERMINAL_COMMAND:="$TERMINAL -e"}"
+                    GLYPH_COMMAND="''${GLYPH_COMMAND-  }"
+                    GLYPH_DESKTOP="''${GLYPH_DESKTOP-  }"
+                    CONFIG_DIR="''${XDG_CONFIG_HOME:-${config.user.homeDirectory}/.config}/sway-launcher-desktop"
+                    PROVIDERS_FILE="''${PROVIDERS_FILE:=providers.conf}"
+                    if [[ "''${PROVIDERS_FILE#/}" == "''${PROVIDERS_FILE}" ]]; then
+                      # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
+                      PROVIDERS_FILE="''${CONFIG_DIR}/''${PROVIDERS_FILE}"
+                    fi
+                    if [[ ! -v PREVIEW_WINDOW ]]; then
+                        PREVIEW_WINDOW=up:2:noborder
+                    fi
+
+                    # Provider config entries are separated by the field separator \034 and have the following structure:
+                    # list_cmd,preview_cmd,launch_cmd,purge_cmd
+                    declare -A PROVIDERS
+                    if [ -f "''${PROVIDERS_FILE}" ]; then
+                      eval "$(awk -F= '
+                      BEGINFILE{ provider=""; }
+                      /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
+                      /^(launch|list|preview|purge)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
+                      ENDFILE{
+                        for (key in providers){
+                          if(!("list_cmd" in providers[key])){continue;}
+                          if(!("launch_cmd" in providers[key])){continue;}
+                          if(!("preview_cmd" in providers[key])){continue;}
+                          if(!("purge_cmd" in providers[key])){providers[key]["purge_cmd"] = "exit 0";}
+                          for (entry in providers[key]){
+                           gsub(/[\x27,\047]/,"\x27\"\x27\"\x27", providers[key][entry])
+                          }
+                          print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\034" providers[key]["purge_cmd"] "\x27\n"
+                        }
+                      }' "''${PROVIDERS_FILE}")"
+                      if [[ ! -v HIST_FILE ]]; then
+                        HIST_FILE="''${XDG_CACHE_HOME:-${config.user.homeDirectory}/.cache}/''${0##*/}-''${PROVIDERS_FILE##*/}-history.txt"
+                      fi
+                    else
+                      PROVIDERS['desktop']="''${0} list-entries''${DEL}''${0} describe-desktop \"{1}\"''${DEL}''${0} run-desktop '{1}' {2}''${DEL}test -f '{1}' || exit 43"
+                      PROVIDERS['command']="''${0} list-commands''${DEL}''${0} describe-command \"{1}\"''${DEL}''${TERMINAL_COMMAND} {1}''${DEL}command -v '{1}' || exit 43"
+                      if [[ ! -v HIST_FILE ]]; then
+                        HIST_FILE="''${XDG_CACHE_HOME:-${config.user.homeDirectory}/.cache}/''${0##*/}-history.txt"
+                      fi
+                    fi
+                    PROVIDERS['user']="exit''${DEL}exit''${DEL}{1}" # Fallback provider that simply executes the exact command if there were no matches
+
+                    if [[ -n "''${HIST_FILE}" ]]; then
+                      mkdir -p "''${HIST_FILE%/*}" && touch "$HIST_FILE"
+                      readarray HIST_LINES <"$HIST_FILE"
+                    fi
+
+                    function describe() {
+                      # shellcheck disable=SC2086
+                      readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[''${1}]}
+                      # shellcheck disable=SC2086
+                      [ -n "''${PROVIDER_ARGS[1]}" ] && eval "''${PROVIDER_ARGS[1]//\\{1\\}/''${2}}"
+                    }
+                    function describe-desktop() {
+                      description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
+                      echo -e "\033[33m$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")\033[0m"
+                      echo "''${description:-No description}"
+                    }
+                    function describe-command() {
+                      readarray arr < <(whatis -l "$1" 2>/dev/null)
+                      description="''${arr[0]}"
+                      description="''${description#* - }"
+                      echo -e "\033[33m''${1}\033[0m"
+                      echo "''${description:-No description}"
+                    }
+
+                    function provide() {
+                      # shellcheck disable=SC2086
+                      readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[$1]}
+                      eval "''${PROVIDER_ARGS[0]}"
+                    }
+                    function list-commands() {
+                      IFS=: read -ra path <<<"$PATH"
+                      for dir in "''${path[@]}"; do
+                        printf '%s\n' "$dir/"* |
+                          awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "\034command\034\033[31m" pre "\033[0m" $NF;}'
+                      done | sort -u
+                    }
+                    function list-entries() {
+                      # Get locations of desktop application folders according to spec
+                      # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+                      IFS=':' read -ra DIRS <<<"''${XDG_DATA_HOME-${config.user.homeDirectory}/.local/share}:''${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+                      for i in "''${!DIRS[@]}"; do
+                        if [[ ! -d "''${DIRS[i]}" ]]; then
+                          unset -v 'DIRS[$i]'
+                        else
+                          DIRS[$i]="''${DIRS[i]}/applications/**/*.desktop"
+                        fi
+                      done
+
+                      # shellcheck disable=SC2068
+                      entries ''${DIRS[@]} | sort -k2
+                    }
+                    function entries() {
+                      # shellcheck disable=SC2068
+                      awk -v pre="$GLYPH_DESKTOP" -F= '
+                        function desktopFileID(filename){
+                          sub("^.*applications/", "", filename);
+                          sub("/", "-", filename);
+                          return filename
+                        }
+                        BEGINFILE{
+                          application=0;
+                          hidden=0;
+                          block="";
+                          a=0
+
+                          id=desktopFileID(FILENAME)
+                          if(id in fileIds){
+                            nextfile;
+                          }else{
+                            fileIds[id]=0
+                          }
+                        }
+                        /^\[Desktop Entry\]/{block="entry"}
+                        /^Type=Application/{application=1}
+                        /^\[Desktop Action/{
+                          sub("^\\[Desktop Action ", "");
+                          sub("\\]$", "");
+                          block="action";
+                          a++;
+                          actions[a,"key"]=$0
+                        }
+                        /^\[X-/{
+                          sub("^\\[X-", "");
+                          sub("\\]$", "");
+                          block="action";
+                          a++;
+                          actions[a,"key"]=$0
+                        }
+                        /^Name=/{ (block=="action")? actions[a,"name"]=$2 : name=$2 }
+                        /^NoDisplay=true/{ (block=="action")? actions[a,"hidden"]=1 : hidden=1 }
+                        ENDFILE{
+                          if (application){
+                              if (!hidden)
+                                  print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
+                              if (a>0)
+                                  for (i=1; i<=a; i++)
+                                      if (!actions[i, "hidden"])
+                                          print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
+                          }
+                        }' \
+                        $@ </dev/null
+                      # the empty stdin is needed in case no *.desktop files
+                    }
+                    function run-desktop() {
+                      CMD="$("''${0}" generate-command "$@" 2>&3)"
+                      echo "Generated Launch command from .desktop file: ''${CMD}" >&3
+                      eval "''${CMD}"
+                    }
+                    function generate-command() {
+                      # Define the search pattern that specifies the block to search for within the .desktop file
+                      PATTERN="^\\\\[Desktop Entry\\\\]"
+                      if [[ -n $2 ]]; then
+                        PATTERN="^\\\\[Desktop Action ''${2}\\\\]"
+                      fi
+                      echo "Searching for pattern: ''${PATTERN}" >&3
+                      # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
+                      # 2. We see the specified pattern: start search
+                      # 3. We see an Exec= line during search: remove field codes and set variable
+                      # 3. We see a Path= line during search: set variable
+                      # 4. Finally, build command line
+                      awk -v pattern="''${PATTERN}" -v terminal_cmd="''${TERMINAL_COMMAND}" -F= '
+                        BEGIN{a=0;exec=0;path=0}
+                           /^\[Desktop/{
+                            if(a){ a=0 }
+                           }
+                          $0 ~ pattern{ a=1 }
+                          /^Terminal=/{
+                            sub("^Terminal=", "");
+                            if ($0 == "true") { terminal=1 }
+                          }
+                          /^Exec=/{
+                            if(a && !exec){
+                              sub("^Exec=", "");
+                              gsub(" ?%[cDdFfikmNnUuv]", "");
+                              exec=$0;
+                            }
+                          }
+                          /^Path=/{
+                            if(a && !path){ path=$2 }
+                           }
+                        END{
+                          if(path){ printf "cd " path " && " }
+                          printf "exec "
+                          if (terminal){ printf terminal_cmd " " }
+                          print exec
+                        }' "$1"
+                    }
+
+                    function shouldAutostart() {
+                        local condition="$(cat $1 | grep "AutostartCondition" | cut -d'=' -f2)"
+                        local filename="''${XDG_CONFIG_HOME-${config.user.homeDirectory}/.config}/''${condition#* }"
+                        case $condition in
+                            if-exists*)
+                                [[ -e $filename ]]
+                                ;;
+                            unless-exists*)
+                                [[ ! -e $filename ]]
+                                ;;
+                            *)
+                                return 0
+                                ;;
+                        esac
+                    }
+
+                    function autostart() {
+                      for application in $(list-autostart); do
+                          if shouldAutostart "$application" ; then
+                              (exec setsid /bin/sh -c "$(run-desktop "''${application}")" &>/dev/null &)
+                          fi
+                      done
+                    }
+
+                    function list-autostart() {
+                      # Get locations of desktop application folders according to spec
+                      # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+                      IFS=':' read -ra DIRS <<<"''${XDG_CONFIG_HOME-${config.user.homeDirectory}/.config}:''${XDG_CONFIG_DIRS-/etc/xdg}"
+                      for i in "''${!DIRS[@]}"; do
+                        if [[ ! -d "''${DIRS[i]}" ]]; then
+                          unset -v 'DIRS[$i]'
+                        else
+                          DIRS[$i]="''${DIRS[i]}/autostart/*.desktop"
+                        fi
+                      done
+
+                      # shellcheck disable=SC2068
+                      awk -v pre="$GLYPH_DESKTOP" -F= '
+                        function desktopFileID(filename){
+                          sub("^.*autostart/", "", filename);
+                          sub("/", "-", filename);
+                          return filename
+                        }
+                        BEGINFILE{
+                          application=0;
+                          block="";
+                          disabled=0;
+                          a=0
+
+                          id=desktopFileID(FILENAME)
+                          if(id in fileIds){
+                            nextfile;
+                          }else{
+                            fileIds[id]=0
+                          }
+                        }
+                        /^\[Desktop Entry\]/{block="entry"}
+                        /^Type=Application/{application=1}
+                        /^Name=/{ iname=$2 }
+                        /^Hidden=true/{disabled=1}
+                        ENDFILE{
+                          if (application && !disabled){
+                              print FILENAME;
+                          }
+                        }' \
+                        ''${DIRS[@]} </dev/null
+                    }
+
+                    purge() {
+                     # shellcheck disable=SC2188
+                     > "''${HIST_FILE}"
+                     declare -A PURGE_CMDS
+                     for PROVIDER_NAME in "''${!PROVIDERS[@]}"; do
+                       readarray -td ''${DEL} PROVIDER_ARGS <<<''${PROVIDERS[''${PROVIDER_NAME}]}
+                       PURGE_CMD=''${PROVIDER_ARGS[3]}
+                       [ -z "''${PURGE_CMD}" ] && PURGE_CMD='test -f "{1}" || exit 43'
+                       PURGE_CMDS[$PROVIDER_NAME]="''${PURGE_CMD%$'\n'}"
+                      done
+                      for HIST_LINE in "''${HIST_LINES[@]#*' '}"; do
+                        readarray -td $'\034' HIST_ENTRY <<<''${HIST_LINE}
+                        ENTRY=''${HIST_ENTRY[1]}
+                        readarray -td ' ' FILTER <<<''${PURGE_CMDS[$ENTRY]//\{1\}/''${HIST_ENTRY[0]}}
+                        (eval "''${FILTER[@]}" 1>/dev/null) # Run filter command discarding output. We only want the exit status
+                        if [[ $? -ne 43 ]]; then
+                          echo "1 ''${HIST_LINE[@]%$'\n'}" >> "''${HIST_FILE}"
+                        fi
+                      done
+                    }
+
+                    case "$1" in
+                    describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide | purge)
+                      "$@"
+                      exit
+                      ;;
+                    esac
+                    echo "Starting launcher instance with the following providers:" "''${!PROVIDERS[@]}" >&3
+
+                    FZFPIPE=$(mktemp -u)
+                    mkfifo "$FZFPIPE"
+                    trap 'rm "$FZFPIPE"' EXIT INT
+
+                    # Append Launcher History, removing usage count
+                    (printf '%s' "''${HIST_LINES[@]#* }" >>"$FZFPIPE") &
+
+                    # Iterate over providers and run their list-command
+                    for PROVIDER_NAME in "''${!PROVIDERS[@]}"; do
+                      (bash -c "''${0} provide ''${PROVIDER_NAME}" >>"$FZFPIPE") &
+                    done
+
+                    readarray -t COMMAND_STR <<<$(
+                      ''${FZF_COMMAND} --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
+                        --print-query \
+                        --preview "$0 describe {2} {1}" \
+                        --preview-window="''${PREVIEW_WINDOW}" \
+                        --no-multi --cycle \
+                        --prompt="''${GLYPH_PROMPT-# }" \
+                        --header="" --no-info --margin="1,2" \
+                        --color='16,gutter:-1' \
+                        <"$FZFPIPE"
+                    ) || exit 1
+                    # Get the last line of the fzf output. If there were no matches, it contains the query which we'll treat as a custom command
+                    # If there were matches, it contains the selected item
+                    COMMAND_STR=$(printf '%s\n' "''${COMMAND_STR[@]: -1}")
+                    # We still need to format the query to conform to our fallback provider.
+                    # We check for the presence of field separator character to determine if we're dealing with a custom command
+                    if [[ $COMMAND_STR != *$'\034'* ]]; then
+                        COMMAND_STR="''${COMMAND_STR}"$'\034user\034'"''${COMMAND_STR}"$'\034'
+                        SKIP_HIST=1 # I chose not to include custom commands in the history. If this is a bad idea, open an issue please
+                    fi
+
+                    [ -z "$COMMAND_STR" ] && exit 1
+
+                    if [[ -n "''${HIST_FILE}" && ! "$SKIP_HIST" ]]; then
+                      # update history
+                      for i in "''${!HIST_LINES[@]}"; do
+                        if [[ "''${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
+                          HIST_COUNT=''${HIST_LINES[i]%% *}
+                          HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"$'\n'
+                          match=1
+                          break
+                        fi
+                      done
+                      if ! ((match)); then
+                        HIST_LINES+=("1 $COMMAND_STR"$'\n')
+                      fi
+
+                      printf '%s' "''${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
+                    fi
+
+                    # shellcheck disable=SC2086
+                    readarray -d $'\034' -t PARAMS <<<''${COMMAND_STR}
+                    # shellcheck disable=SC2086
+                    readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[''${PARAMS[1]}]}
+                    # Substitute {1}, {2} etc with the correct values
+                    COMMAND=''${PROVIDER_ARGS[2]//\{1\}/''${PARAMS[0]}}
+                    COMMAND=''${COMMAND//\{2\}/''${PARAMS[3]}}
+                    COMMAND=''${COMMAND%%[[:space:]]}
+
+                    if [ -t 1 ]; then
+                      echo "Launching command: ''${COMMAND}" >&3
+                      setsid /bin/sh -c "''${COMMAND}" >&/dev/null </dev/null &
+                      sleep 0.01
+                    else
+                      echo "''${COMMAND}"
+                    fi
+                  '';
+                };
+              };
+            })
+            # imv config already inlined in default.nix
+            # mpv config already inlined in default.nix
+            # pcmanfm config already inlined in default.nix
+            # qbittorrent config already inlined in default.nix
+            # stremio config already inlined in default.nix
+            (lib.mkIf config.home.programs.bambu.enable {
+              hjem.users.${config.user.name}.packages = with pkgs; [bambu-studio];
+            })
+          ];
+        })
+        # From modules/home/services.nix (348 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          polkitAgentCfg = config.home.services.polkitAgent;
+          polkitGnomeCfg = config.home.services.polkitGnome;
+          formatNixCfg = config.home.services.formatNix;
+          sshCfg = config.home.services.ssh;
+          syncthingCfg = config.home.services.syncthing;
+          nixosGitSyncCfg = config.home.services.nixosGitSync;
+          hyprlandConfigWatcherCfg = config.home.services.hyprlandConfigWatcher;
+
+          formatScript = pkgs.writeShellScript "format-nix-watcher" ''
+            set -e
+            WATCH_DIR="${formatNixCfg.watchDirectory}"
+            cd "$WATCH_DIR"
+
+            echo "Starting Nix file watcher on $WATCH_DIR..."
+
+            ${pkgs.inotify-tools}/bin/inotifywait -m -r -e modify,create,move \
+              --include='.*\.nix$' \
+              "$WATCH_DIR" | while read path action file; do
+
+              if [[ "$file" =~ \.nix$ ]]; then
+                echo "Detected $action on $file, formatting..."
+                ${pkgs.alejandra}/bin/alejandra "$path$file"
+                echo "✅ Formatted $file"
+              fi
+            done
+          '';
+        in {
+          options = {
+            # services/polkit-agent.nix (27 lines -> INLINED\!)
+            home.services.polkitAgent = {
+              enable = lib.mkEnableOption "polkit authentication agent";
+            };
+            # services/polkit-gnome.nix (27 lines -> INLINED\!)
+            home.services.polkitGnome = {
+              enable = lib.mkEnableOption "polkit GNOME authentication agent";
+            };
+            # services/format-nix.nix (47 lines -> INLINED\!)
+            home.services.formatNix = {
+              enable = lib.mkEnableOption "automatic Nix file formatting with alejandra";
+              watchDirectory = lib.mkOption {
+                type = lib.types.str;
+                default = config.user.nixosConfigDirectory;
+                description = "Directory to watch for Nix file changes";
+              };
+            };
+            # services/ssh.nix (49 lines -> INLINED\!)
+            home.services.ssh = {
+              enable = lib.mkEnableOption "SSH configuration module";
+            };
+            # services/syncthing.nix (58 lines -> INLINED\!)
+            home.services.syncthing = {
+              enable = lib.mkEnableOption "Syncthing service";
+            };
+            # services/nixos-git-sync.nix (56 lines -> INLINED\!)
+            home.services.nixosGitSync = {
+              enable = lib.mkEnableOption "NixOS configuration git sync service";
+              repoPath = lib.mkOption {
+                type = lib.types.str;
+                default = config.user.nixosConfigDirectory;
+                description = "Path to the NixOS configuration repository";
+              };
+              remoteBranch = lib.mkOption {
+                type = lib.types.str;
+                default = "main";
+                description = "Remote branch to push to";
+              };
+            };
+            # services/hyprland-config-watcher.nix (129 lines -> INLINED\!)
+            home.services.hyprlandConfigWatcher = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = config.home.ui.hyprland.enable or false;
+                description = "Enable Hyprland configuration watcher service (auto-enabled when Hyprland is enabled)";
+              };
+              configPath = lib.mkOption {
+                type = lib.types.str;
+                default = "${config.user.configDirectory}/hypr";
+                description = "Path to the Hyprland configuration directory to watch";
+              };
+              reloadDelay = lib.mkOption {
+                type = lib.types.int;
+                default = 3;
+                description = "Delay in seconds before reloading Hyprland after detecting changes";
+              };
+              startupDelay = lib.mkOption {
+                type = lib.types.int;
+                default = 5;
+                description = "Delay in seconds before starting to watch (wait for Hyprland to be ready)";
+              };
+            };
+          };
+
+          config = lib.mkMerge [
+            (lib.mkIf polkitAgentCfg.enable {
+              hjem.users.${config.user.name}.packages = [pkgs.polkit_gnome];
+              systemd.user.services.polkit-gnome-authentication-agent-1 = {
+                description = "polkit-gnome-authentication-agent-1";
+                wantedBy = ["graphical-session.target"];
+                after = ["graphical-session.target"];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+                  Restart = "on-failure";
+                  RestartSec = 1;
+                  TimeoutStopSec = 10;
+                };
+              };
+            })
+            (lib.mkIf polkitGnomeCfg.enable {
+              hjem.users.${config.user.name}.packages = [pkgs.polkit_gnome];
+              systemd.user.services.polkit-gnome-authentication-agent-1 = {
+                description = "polkit-gnome-authentication-agent-1";
+                wantedBy = ["graphical-session.target"];
+                after = ["graphical-session.target"];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+                  Restart = "on-failure";
+                  RestartSec = 1;
+                  TimeoutStopSec = 10;
+                };
+              };
+            })
+            (lib.mkIf formatNixCfg.enable {
+              hjem.users.${config.user.name}.packages = [pkgs.alejandra pkgs.inotify-tools];
+              systemd.user.services.format-nix-watcher = {
+                description = "Watch and format Nix files on change";
+                after = ["graphical-session.target"];
+                wantedBy = ["default.target"];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart = formatScript;
+                  Restart = "always";
+                  RestartSec = "5";
+                };
+              };
+            })
+            (lib.mkIf sshCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  openssh
+                ];
+                files = {
+                  ".ssh/config" = {
+                    clobber = true;
+                    text = ''
+                      ForwardAgent yes
+                      AddKeysToAgent yes
+                      ServerAliveInterval 60
+                      ServerAliveCountMax 5
+                      ControlMaster auto
+                      ControlPath %d/.ssh/master-%r@%h:%p
+                      ControlPersist 10m
+                      SetEnv TERM=xterm-256color
+                      Host github.com
+                          HostName github.com
+                          User git
+                          IdentityFile ${config.user.tokensDirectory}/id_rsa_${config.user.name}
+                    '';
+                  };
+                  "{{xdg_config_home}}/zsh/.zshenv" = {
+                    clobber = true;
+                    text = lib.mkAfter ''
+                      export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+                    '';
+                  };
+                };
+              };
+              systemd.user.services.ssh-agent = {
+                description = "SSH key agent";
+                wantedBy = ["default.target"];
+                serviceConfig = {
+                  Type = "forking";
+                  Environment = "SSH_AUTH_SOCK=%t/ssh-agent";
+                  ExecStart = "${pkgs.openssh}/bin/ssh-agent -a $SSH_AUTH_SOCK";
+                  ExecStartPost = "${pkgs.coreutils}/bin/systemctl --user set-environment SSH_AUTH_SOCK=$SSH_AUTH_SOCK";
+                };
+              };
+            })
+            (lib.mkIf syncthingCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  syncthing
+                ];
+                files.".config/syncthing/.keep" = {
+                  clobber = true;
+                  text = '''';
+                };
+              };
+              systemd.user.services.syncthing = {
+                enable = true;
+                wantedBy = ["default.target"];
+                after = ["network.target"];
+                serviceConfig = {
+                  ExecStart = "${pkgs.syncthing}/bin/syncthing serve --no-browser --no-restart --logflags=0";
+                  Restart = "on-failure";
+                  RestartSec = "5s";
+                  WorkingDirectory = config.user.homeDirectory;
+                  StateDirectory = "syncthing";
+                  StateDirectoryMode = "0700";
+                  ProtectSystem = "strict";
+                  ProtectHome = "read-only";
+                  ReadWritePaths = [config.user.homeDirectory];
+                  NoNewPrivileges = true;
+                  PrivateTmp = true;
+                  ProtectKernelTunables = true;
+                  ProtectKernelModules = true;
+                  ProtectControlGroups = true;
+                  RestrictRealtime = true;
+                  RestrictSUIDSGID = true;
+                  LockPersonality = true;
+                  RestrictAddressFamilies = ["AF_UNIX" "AF_INET" "AF_INET6"];
+                  SystemCallFilter = "@system-service";
+                  SystemCallErrorNumber = "EPERM";
+                };
+              };
+            })
+            (lib.mkIf nixosGitSyncCfg.enable {
+              systemd.user.services."nixos-git-sync" = {
+                description = "Sync NixOS configuration changes after successful build";
+                script = ''
+                            set -x
+                            sleep 2
+                            REPO_PATH="${nixosGitSyncCfg.repoPath}"
+                            if [ \! -d "$REPO_PATH" ]; then
+                              echo "Repository directory does not exist: $REPO_PATH"
+                              exit 1
+                            fi
+                            cd "$REPO_PATH"
+                            if \! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                              git add .
+                              FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                              CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                              COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+                  Files changed:
+                  $CHANGED_FILES"
+                              git commit -m "$COMMIT_MSG"
+                              git push origin ${nixosGitSyncCfg.remoteBranch} --force
+                            else
+                              echo "No changes to commit"
+                            fi
+                '';
+                serviceConfig.Type = "oneshot";
+                path = with pkgs; [git coreutils openssh];
+                environment = {
+                  SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent";
+                };
+                wantedBy = ["default.target"];
+              };
+            })
+            (lib.mkIf hyprlandConfigWatcherCfg.enable {
+              systemd.user.services."hyprland-config-watcher" = {
+                description = "Watch Hyprland config directory for symlink changes and reload";
+                script = ''
+                  set -x
+                  echo "Waiting ${toString hyprlandConfigWatcherCfg.startupDelay} seconds for Hyprland to be ready..."
+                  sleep ${toString hyprlandConfigWatcherCfg.startupDelay}
+                  reload_hyprland() {
+                    echo "Detected config change, reloading Hyprland in ${toString hyprlandConfigWatcherCfg.reloadDelay} seconds..."
+                    sleep ${toString hyprlandConfigWatcherCfg.reloadDelay}
+                    local instance_sig
+                    if [[ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]]; then
+                      instance_sig="$HYPRLAND_INSTANCE_SIGNATURE"
+                    else
+                      instance_sig=$(ls /tmp/hypr/ 2>/dev/null | head -n 1)
+                    fi
+                    echo "Using Hyprland instance: $instance_sig"
+                    if command -v hyprctl >/dev/null 2>&1; then
+                      if [[ -n "$instance_sig" ]]; then
+                        export HYPRLAND_INSTANCE_SIGNATURE="$instance_sig"
+                      fi
+                      if hyprctl reload 2>&1; then
+                        echo "Hyprland reloaded successfully"
+                        return 0
+                      else
+                        echo "hyprctl reload failed"
+                      fi
+                    fi
+                    echo "Failed to reload Hyprland"
+                    return 1
+                  }
+                  if [[ ! -d "${hyprlandConfigWatcherCfg.configPath}" ]]; then
+                    echo "Config directory ${hyprlandConfigWatcherCfg.configPath} does not exist, creating it..."
+                    mkdir -p "${hyprlandConfigWatcherCfg.configPath}"
+                  fi
+                  echo "Starting to watch ${hyprlandConfigWatcherCfg.configPath} for changes..."
+                  inotifywait -m -r \
+                    --event modify \
+                    --event create \
+                    --event delete \
+                    --event move \
+                    --event attrib \
+                    --event delete_self \
+                    --event move_self \
+                    --format '%w%f %e %T' \
+                    --timefmt '%Y-%m-%d %H:%M:%S' \
+                    "${hyprlandConfigWatcherCfg.configPath}" 2>/dev/null | \
+                  while read -r file event timestamp; do
+                    echo "[$timestamp] Event: $event on $file"
+                    if pgrep -f "reload_hyprland" >/dev/null; then
+                      echo "Reload already in progress, skipping..."
+                      continue
+                    fi
+                    case "$event" in
+                      *MODIFY*|*CREATE*|*DELETE*|*MOVED*|*ATTRIB*)
+                        if [[ "$file" =~ \.(conf|json|toml)$ ]] || \
+                           [[ "$(basename "$file")" == "hyprland.conf" ]] || \
+                           [[ -L "$file" ]] || \
+                           [[ "$event" =~ (ATTRIB|DELETE_SELF|MOVE_SELF) ]]; then
+                          echo "Triggering reload for: $file ($event)"
+                          reload_hyprland &
+                        fi
+                        ;;
+                    esac
+                  done
+                '';
+                serviceConfig = {
+                  Type = "simple";
+                  Restart = "always";
+                  RestartSec = 5;
+                  Environment = [
+                    "XDG_RUNTIME_DIR=/run/user/${toString config.users.users.${config.user.name}.uid}"
+                    "WAYLAND_DISPLAY=wayland-1"
+                    "PATH=${lib.makeBinPath (with pkgs; [inotify-tools hyprland coreutils procps gnugrep util-linux])}:/run/current-system/sw/bin"
+                  ];
+                };
+                path = with pkgs; [
+                  inotify-tools
+                  hyprland
+                  coreutils
+                  procps
+                  gnugrep
+                  util-linux
+                ];
+                wantedBy = ["default.target"];
+                after = ["default.target"];
+                partOf = ["default.target"];
+              };
+            })
+          ];
+        })
+        # From modules/home/shell.nix (379 lines -> INLINED!)
+        ({
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          catFetchCfg = config.home.shell.cat-fetch;
+          aliasesCfg = config.home.shell.aliases;
+          zshCfg = config.home.shell.zsh;
+          zellijCfg = config.home.shell.zellij;
+          inherit (config.user) name homeDirectory nixosConfigDirectory tokensDirectory;
+
+          # Zellij IDE layout configuration
+          ideLayout = ''
+            layout {
+                cwd "${config.user.homeDirectory}"
+                tab name="Tab
+                    pane split_direction="vertical" {
+                        pane size="25%" command="bash" {
+                            args "-c" "while true; do echo 'File browser pane - implement file browser here'; sleep 60; done"
+                        }
+                        pane command="/nix/store/10niqvrkxcxv7m9svqg9sw03pq2f9c79-neovim-unwrapped-0.11.1/bin/nvim" size="50%" {
+                            args "--cmd" "lua" "vim.g.loaded_node_provider=0;vim.g.loaded_perl_provider=0;vim.g.loaded_python_provider=0;vim.g.python3_host_prog='/nix/store/nw09bl4zh8ydf2h32qrxrp22b619v2m2-neovim-0.11.1/bin/nvim-python3';vim.g.ruby_host_prog='/nix/store/nw09bl4zh8ydf2h32qrxrp22b619v2m2-neovim-0.11.1/bin/nvim-ruby'" "--cmd" "set" "packpath^=/nix/store/vil1bkzh8fyccnkg30anpvzv0m79fdhj-vim-pack-dir" "--cmd" "set" "rtp^=/nix/store/vil1bkzh8fyccnkg30anpvzv0m79fdhj-vim-pack-dir"
+                        }
+                        pane size="50%" {
+                            pane command="claude" cwd="nixos" focus=true size="50%"
+                            pane command="/nix/store/0jr78nw5jw3paq9fhgvcldi2bva98wjq-lazygit-0.53.0/bin/lazygit" cwd="nixos" size="50%"
+                        }
+                    }
+                }
+                new_tab_template {
+                    pane
+                }
+            }
+          '';
+
+          zshConfig = {
+            cat-fetch = true;
+            history-memory = 10000;
+            history-storage = 10000;
+            enableFancyPrompt = true;
+            zellij = {
+              enable = false;
+            };
+          };
+        in {
+          options = {
+            # shell/cat-fetch.nix (28 lines -> INLINED\!)
+            home.shell.cat-fetch = {
+              enable = lib.mkEnableOption "cat fetch display on shell startup";
+            };
+            # shell/aliases.nix (89 lines -> INLINED\!)
+            home.shell.aliases = {
+              enable = lib.mkEnableOption "Enable base aliases";
+            };
+            # shell/zsh.nix (175 lines -> INLINED\!)
+            home.shell.zsh = {
+              enable = lib.mkEnableOption "zsh shell configuration";
+            };
+            # shell/zellij.nix + zellij-ide.nix -> INLINED\!
+            home.shell.zellij = {
+              enable = lib.mkEnableOption "zellij terminal multiplexer";
+              autoStart = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Automatically start zellij when opening zsh";
+              };
+              layouts = {
+                ide = lib.mkOption {
+                  type = lib.types.str;
+                  default = "";
+                  description = "IDE layout configuration";
+                };
+              };
+            };
+          };
+
+          config = lib.mkMerge [
+            # cat-fetch configuration moved to main zshrc to prevent conflicts
+            (lib.mkIf aliasesCfg.enable {
+              hjem.users.${name}.files = {
+                ".config/zsh/aliases/android.zsh" = {
+                  text = ''alias adb="HOME=\"$XDG_DATA_HOME/android\" adb"'';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/download.zsh" = {
+                  text = ''alias wget="wget --hsts-file=\"$XDG_DATA_HOME/wget-hsts\""'';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/version-control.zsh" = {
+                  text = ''alias svn="svn --config-dir \"$XDG_CONFIG_HOME/subversion\"" alias hmpush="git -C ${nixosConfigDirectory} push origin main --force" alias hmpull="git -C ${nixosConfigDirectory} fetch origin && git -C ${nixosConfigDirectory} reset --hard origin/main" '';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/javascript.zsh" = {
+                  text = ''alias yarn="yarn --use-yarnrc \"$XDG_CONFIG_HOME/yarn/config\""'';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/media.zsh" = {
+                  text = ''alias mocp="mocp -M \"$XDG_CONFIG_HOME/moc\" -O MOCDir=\"$XDG_CONFIG_HOME/moc\""'';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/navigation.zsh" = {
+                  text = ''alias cat="bat" alias cattree="${nixosConfigDirectory}/lib/scripts/cattree.sh" alias l.="lsd -A | grep -E \"^\\.\"" alias la="lsd -A --color=always --group-dirs=first --icon=always" alias ll="lsd -l --color=always --group-dirs=first --icon=always" alias ls="lsd -lA --color=always --group-dirs=first --icon=always" alias lt="lsd -A --tree --color=always --group-dirs=first --icon=always" '';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/system.zsh" = {
+                  text = ''alias userctl="systemctl --user" alias hmfail="journalctl -u home-manager-${name}.service -n 20 --no-pager" alias pkgs="nix-store --query --requisites /run/current-system | cut -d- -f2- | sort | uniq | grep -i" alias pkgcount="nix-store --query --requisites /run/current-system | cut -d- -f2- | sort | uniq | wc -l" alias hwconfig="sudo nixos-generate-config --show-hardware-config" alias gpupower="sudo nvidia-smi -pl" '';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/search.zsh" = {
+                  text = ''alias grep="grep --color=auto" alias dir="dir --color=auto" alias egrep="grep -E --color=auto" alias fgrep="grep -F --color=auto" '';
+                  clobber = true;
+                };
+                ".config/zsh/aliases/development.zsh" = {
+                  text = ''alias lintcheck="clear; statix check .; deadnix ." alias lintfix="clear; statix fix .; deadnix ." alias ide="zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl" alias opencode="${homeDirectory}/.npm-global/bin/opencode" '';
+                  clobber = true;
+                };
+              };
+            })
+            (lib.mkIf zshCfg.enable {
+              environment.variables.ZDOTDIR = "${config.user.configDirectory}/zsh";
+              programs.zsh.enable = true;
+              hjem.users.${name} = {
+                packages = with pkgs; [
+                  zsh
+                  bat
+                  lsd
+                  tree
+                ];
+                files = {
+                  ".config/zsh/.zshenv" = {
+                    text = let
+                      tokenFunctionScript = ''
+                        export_vars_from_files() {
+                            local dir_path=$1
+                            # Skip opencode-related API keys to prefer oauth
+                            local skip_for_opencode=("ANTHROPIC_API_KEY" "OPENAI_API_KEY")
+
+                            for file_path in "$dir_path"/*.txt; do
+                                if [[ -f $file_path ]]; then
+                                    var_name=$(basename "$file_path" .txt)
+
+                                    # Skip API keys that conflict with opencode oauth
+                                    if [[ " ''${skip_for_opencode[@]} " =~ " $var_name " ]]; then
+                                        continue
+                                    fi
+
+                                    export $var_name=$(cat "$file_path")
+                                fi
+                            done
+                        }
+                        export_vars_from_files "${tokensDirectory}"
+
+                        # Set default applications
+                        export TERMINAL="${config.home.core.defaults.terminal}"
+                        export BROWSER="${config.home.core.defaults.browser}"
+                        export EDITOR="${config.home.core.defaults.editor}"
+                      '';
+                    in
+                      tokenFunctionScript;
+                    clobber = true;
+                  };
+                  ".config/zsh/.zprofile" = {
+                    text = ''
+                      if [[ $- == *i* ]]; then
+                        case "$(hostname)" in
+                          "${config.user.name}-desktop")
+                            sudo nvidia-smi -pl 150
+                            ;;
+                          "${config.user.name}-laptop")
+                            ;;
+                        esac
+                      fi
+                    '';
+                    clobber = true;
+                  };
+                  ".config/zsh/.zshrc" = {
+                    text = ''
+                      # Set default applications
+                      export TERMINAL="${config.home.core.defaults.terminal}"
+                      export BROWSER="${config.home.core.defaults.browser}"
+                      export EDITOR="${config.home.core.defaults.editor}"
+
+                      # Source all files in the aliases directory
+                      for alias_file in ''${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/aliases/*.zsh; do
+                        source "$alias_file"
+                      done
+
+                      HISTSIZE=${toString zshConfig.history-memory}
+                      SAVEHIST=${toString zshConfig.history-storage}
+                       HISTFILE="${homeDirectory}/.local/state/zsh/history"
+                      setopt HIST_IGNORE_DUPS
+                      setopt HIST_IGNORE_ALL_DUPS
+                      setopt HIST_IGNORE_SPACE
+                      setopt HIST_EXPIRE_DUPS_FIRST
+                      setopt SHARE_HISTORY
+                      setopt EXTENDED_HISTORY
+                      ${lib.optionalString zshConfig.enableFancyPrompt ''
+                        PS1='%F{blue}%~ %(?.%F{green}.%F{red})%#%f '
+                      ''}
+                      zstyle ':completion:*' menu select
+                      zstyle ':completion:*' matcher-list \
+                          'm:{a-zA-Z}={A-Za-z}' \
+                          'r:|[._-]=* r:|=*' \
+                          'l:|=* r:|=*'
+                      if [ "$(hostname)" = "${config.user.name}-laptop" ]; then
+                          fanspeed() {
+                              if [ -z "$1" ]; then
+                                  echo "Usage: fanspeed <percentage>"
+                                  return 1
+                              fi
+                              local speed="$1"
+                              asusctl fan-curve -m quiet -D "30c:$speed,40c:$speed,50c:$speed,60c:$speed,70c:$speed,80c:$speed,90c:$speed,100c:$speed" -e true -f gpu
+                              asusctl fan-curve -m quiet -D "30c:$speed,40c:$speed,50c:$speed,60c:$speed,70c:$speed,80c:$speed,90c:$speed,100c:$speed" -e true -f cpu
+                          }
+                      fi
+                      temppkg() {
+                          if [ -z "$1" ]; then
+                              echo "Usage: temppkg package_name"
+                              return 1
+                          fi
+                          nix-shell -p "$1" --run "exec $SHELL"
+                      }
+                      temprun() {
+                          if [ -z "$1" ]; then
+                              echo "Usage: temprun package_name [args...]"
+                              return 1
+                          fi
+                          local pkg="$1"
+                          shift
+                          nix run "nixpkgs#$pkg" -- "$@"
+                      }
+
+                      # Cat-fetch display (consolidated from cat-fetch module)
+                      ${lib.optionalString config.home.shell.cat-fetch.enable ''
+                        print_cats() {
+                            echo -e "\033[0;31m ⟋|､      \033[0;34m  ⟋|､      \033[0;35m  ⟋|､      \033[0;32m  ⟋|､
+                        \033[0;31m(°､ ｡ 7    \033[0;34m(°､ ｡ 7    \033[0;35m(°､ ｡ 7    \033[0;32m(°､ ｡ 7
+                        \033[0;31m |､  ~ヽ   \033[0;34m |､  ~ヽ   \033[0;35m |､  ~ヽ   \033[0;32m |､  ~ヽ
+                        \033[0;31m じしf_,)〳\033[0;34m じしf_,)〳\033[0;35m じしf_,)〳\033[0;32m じしf_,)〳
+                        \033[0;36m  [tomo]   \033[0;33m  [moon]   \033[0;32m  [ekko]   \033[0;35m  [bozo]\033[0m"
+                        }
+                        print_cats
+                      ''}
+
+                      # Zellij auto-start and aliases (consolidated from zellij module)
+                      ${lib.optionalString (config.home.shell.zellij.enable && config.home.shell.zellij.autoStart) ''
+                        if [[ -z "$ZELLIJ" && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" && -z "$NVIM" ]]; then
+                            exec zellij
+                        fi
+                      ''}
+                      ${lib.optionalString config.home.shell.zellij.enable ''
+                        alias ide='zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl'
+                      ''}
+
+                      # Tool aliases consolidated from tools.nix to prevent conflicts
+                      ${lib.optionalString config.home.tools.spotdl.enable ''
+                        alias spotm4a="uvx spotdl --format m4a --output '{title}'"
+                        alias spotmp3="uvx spotdl --format mp3 --output '{title}'"
+                      ''}
+                      ${lib.optionalString config.home.tools.yt-dlp.enable ''
+                        alias ytm4a="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format m4a --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
+                        alias ytmp3="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format mp3 --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
+                        alias ytmp4="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k -vf scale=-2:720' -o '%(title)s.%(ext)s'"
+                        alias ytmp4s="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=480]+ba/b[height<=480]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 26 -preset faster -c:a aac -b:a 96k -vf scale=-2:480' -o '%(title)s.%(ext)s'"
+                        alias ytwebm="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video webm --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libvpx-vp9 -crf 30 -b:v 0 -c:a libopus -vf scale=-2:720' -o '%(title)s.%(ext)s'"
+                        alias ytdiscord="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -f 'bv*[height<=720]+ba/b[height<=720]' --recode-video mp4 --embed-metadata --add-metadata --postprocessor-args 'ffmpeg:-c:v libx264 -crf 28 -preset faster -c:a aac -b:a 96k -vf scale=-2:min(720,ih) -fs 7.8M' -o '%(title)s_discord.%(ext)s'"
+                      ''}
+                      ${lib.optionalString config.home.tools.nh.enable ''
+                        export NH_FLAKE="${config.user.nixosConfigDirectory}"
+                        nhs() {
+                          clear
+                          local update=""
+                          local dry=""
+                          local OPTIND
+                          while getopts "du" opt; do
+                            case $opt in
+                              d) dry="--dry" ;;
+                              u) update="--update" ;;
+                              *) echo "Invalid option: -$OPTARG" >&2 ;;
+                            esac
+                          done
+                          shift $((OPTIND-1))
+                          nh os switch $update $dry "$@"
+                        }
+                        alias nhd="nhs -d"
+                        alias nhu="nhs -u"
+                        alias nhud="nhs -ud"
+                        alias nhc="nh clean all"
+                      ''}
+                      ${lib.optionalString (config.home.tools.jj.enable && config.home.tools.jj.enableAliases) ''
+                        alias jl='jj log -r recent'
+                        alias jll='jj log -r ::@'
+                        alias js='jj status'
+                        alias jd='jj diff'
+                        alias jc='jj commit'
+                        alias jca='jj commit --amend'
+                        alias jco='jj checkout'
+                        alias jn='jj new'
+                        alias je='jj edit'
+                        alias jb='jj branch'
+                        alias jrb='jj rebase'
+                        alias jsp='jj split'
+                        alias jsq='jj squash'
+                      ''}
+                      ${lib.optionalString config.home.tools.npins-build.enable ''
+                        npins-build() {
+                            nix-build -E 'let sources = import ./npins; in (import sources.nixpkgs {}).callPackage ./. { inherit sources; }' "$@"
+                        }
+                      ''}
+                    '';
+                    clobber = true;
+                  };
+                };
+              };
+            })
+            (lib.mkIf zellijCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  zellij
+                ];
+                files = {
+                  ".config/zellij/config.kdl" = {
+                    clobber = true;
+                    text = ''
+                      hide_session_name false
+                      on_force_close "quit"
+                      pane_frames true
+                      rounded_corners true
+                      session_serialization false
+                      show_startup_tips false
+                      simplified_ui false
+                    '';
+                  };
+                  ".config/zellij/layouts/music.kdl" = {
+                    clobber = true;
+                    text = ''
+                      layout alias="music" {
+                          default_tab_template {
+                              pane size=1 borderless=true {
+                                  plugin location="zellij:tab-bar"
+                              }
+                              children
+                              pane size=2 borderless=true {
+                                  plugin location="zellij:status-bar"
+                              }
+                          }
+                          tab name="Music" {
+                              pane split_direction="vertical" {
+                                  pane command="cmus"
+                                  pane command="cava"
+                              }
+                          }
+                      }
+                    '';
+                  };
+                  ".config/zellij/layouts/ide.kdl" = {
+                    clobber = true;
+                    text = ideLayout;
+                  };
+                  ".config/zellij/config-ide.kdl" = {
+                    clobber = true;
+                    text = ''
+                      hide_session_name false
+                      on_force_close "quit"
+                      pane_frames true
+                      rounded_corners true
+                      session_serialization false
+                      show_startup_tips false
+                      simplified_ui true
+                    '';
+                  };
+                  # zellij zshrc configuration moved to main zshrc to prevent conflicts
+                };
+              };
+            })
+          ];
+        })
+        # From modules/home/tools.nix (312 lines -> INLINED!)
+        ({
+          config,
+          pkgs,
+          lib,
+          ...
+        }: let
+          spotdlCfg = config.home.tools.spotdl;
+          ytdlpCfg = config.home.tools.yt-dlp;
+          nhCfg = config.home.tools.nh;
+          jjCfg = config.home.tools.jj;
+          gitCfg = config.home.tools.git;
+          npinsCfg = config.home.tools.npins-build;
+        in {
+          options = {
+            # tools/spotdl.nix (28 lines -> INLINED\!)
+            home.tools.spotdl = {
+              enable = lib.mkEnableOption "SpotDL music downloading tools";
+            };
+            # tools/yt-dlp.nix (35 lines -> INLINED\!)
+            home.tools.yt-dlp = {
+              enable = lib.mkEnableOption "YouTube-DLP media conversion tools";
+            };
+            # tools/nh.nix (46 lines -> INLINED\!)
+            home.tools.nh = {
+              enable = lib.mkEnableOption "nh (Nix Helper) shell integration";
+              flake = lib.mkOption {
+                type = with lib.types; nullOr (either singleLineStr path);
+                default = null;
+                description = ''
+                  The path that will be used for the NH_FLAKE environment variable.
+                  NH_FLAKE is used by nh as the default flake for performing actions,
+                  like 'nh os switch'. If not set, nh will look for a flake in the current
+                  directory or prompt for the flake path.
+                '';
+              };
+            };
+            # tools/jj.nix (83 lines -> INLINED\!)
+            home.tools.jj = {
+              enable = lib.mkEnableOption "jujutsu version control system";
+              name = lib.mkOption {
+                type = lib.types.str;
+                description = "Jujutsu username.";
+              };
+              email = lib.mkOption {
+                type = lib.types.str;
+                description = "Jujutsu email address.";
+              };
+              editor = lib.mkOption {
+                type = lib.types.str;
+                default = "nvim";
+                description = "Default editor for jujutsu.";
+              };
+              enableAliases = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Enable common jujutsu aliases.";
+              };
+            };
+            # tools/git.nix -> INLINED\!
+            home.tools.git = {
+              enable = lib.mkEnableOption "git configuration";
+              name = lib.mkOption {
+                type = lib.types.str;
+                description = "Git username.";
+              };
+              email = lib.mkOption {
+                type = lib.types.str;
+                description = "Git email address.";
+              };
+              nixos-git-sync = {
+                enable = lib.mkEnableOption "NixOS configuration git sync service";
+                nixosRepoUrl = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Git repository URL for NixOS configuration";
+                };
+                remoteBranch = lib.mkOption {
+                  type = lib.types.str;
+                  default = "main";
+                  description = "Remote branch to push to";
+                };
+              };
+            };
+            # tools/npins-build.nix -> INLINED\!
+            home.tools.npins-build = {
+              enable = lib.mkEnableOption "npins-build helper script";
+            };
+          };
+
+          config = lib.mkMerge [
+            (lib.mkIf spotdlCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  ffmpeg
+                ];
+                # zsh aliases moved to shell.nix to prevent conflicts
+              };
+            })
+            (lib.mkIf ytdlpCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  yt-dlp-light
+                  ffmpeg
+                ];
+                # zsh aliases moved to shell.nix to prevent conflicts
+              };
+            })
+            (lib.mkIf nhCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  nh
+                ];
+                # zsh aliases moved to shell.nix to prevent conflicts
+              };
+            })
+            (lib.mkIf jjCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [
+                  jujutsu
+                ];
+                files = {
+                  ".config/jj/config.toml" = {
+                    text = ''
+                      [user]
+                      name = "${jjCfg.name}"
+                      email = "${jjCfg.email}"
+                      [ui]
+                      default-command = "status"
+                      editor = "${jjCfg.editor}"
+                      diff-editor = "${jjCfg.editor}"
+                      [git]
+                      auto-local-branch = true
+                      push-branch-prefix = ""
+                      [revset-aliases]
+                      "mine" = "author(${jjCfg.email})"
+                      "recent" = "heads(::@ & recent(5))"
+                      ${lib.optionalString jjCfg.enableAliases ''
+                        [aliases]
+                        l = ["log", "-r", "recent"]
+                        ll = ["log", "-r", "::@"]
+                        s = ["status"]
+                        d = ["diff"]
+                        c = ["commit"]
+                        ca = ["commit", "--amend"]
+                        co = ["checkout"]
+                        n = ["new"]
+                        e = ["edit"]
+                        b = ["branch"]
+                        rb = ["rebase"]
+                        sp = ["split"]
+                        sq = ["squash"]
+                      ''}
+                    '';
+                    clobber = true;
+                  };
+                };
+                # zsh aliases moved to shell.nix to prevent conflicts
+              };
+            })
+            (lib.mkIf gitCfg.enable {
+              hjem.users.${config.user.name} = {
+                packages = with pkgs; [git-lfs];
+                files = {
+                  ".local/share/bin/nixos-git-sync" = {
+                    executable = true;
+                    text = ''
+                              #!/usr/bin/env bash
+                              set -x
+                              sleep 2
+                              REPO_PATH="${config.user.nixosConfigDirectory}"
+                              if [ ! -d "$REPO_PATH" ]; then
+                                echo "Repository directory does not exist: $REPO_PATH"
+                                exit 1
+                              fi
+                              cd "$REPO_PATH"
+                              if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                                git add .
+                                FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                                CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                                COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+                      Files changed:
+                      $CHANGED_FILES"
+                                git commit -m "$COMMIT_MSG"
+                                git push origin ${gitCfg.nixos-git-sync.remoteBranch} --force
+                              else
+                                echo "No changes to commit"
+                              fi
+                    '';
+                    clobber = true;
+                  };
+                  ".local/share/bin/setup-nixos-repo" = {
+                    executable = true;
+                    text = ''
+                      #!/usr/bin/env bash
+                      set -e
+                      REPO_DIR="${config.user.nixosConfigDirectory}"
+                      REPO_URL="${gitCfg.nixos-git-sync.nixosRepoUrl}"
+
+                      if [ ! -d "$REPO_DIR" ]; then
+                        echo "Setting up NixOS repository at $REPO_DIR"
+                        git clone "$REPO_URL" "$REPO_DIR"
+                        cd "$REPO_DIR"
+                      else
+                        echo "Repository already exists at $REPO_DIR"
+                        cd "$REPO_DIR"
+                        git remote set-url origin "$REPO_URL"
+                        git pull origin ${gitCfg.nixos-git-sync.remoteBranch} || true
+                      fi
+
+                      echo "Repository setup complete"
+                    '';
+                    clobber = true;
+                  };
+                  "gitconfig" = {
+                    text = ''
+                      [user]
+                          name = ${gitCfg.name}
+                          email = ${gitCfg.email}
+                      [core]
+                          editor = nvim
+                          autocrlf = false
+                      [init]
+                          defaultBranch = main
+                      [push]
+                          default = simple
+                      [pull]
+                          rebase = false
+                      [diff]
+                          tool = nvimdiff
+                          colorMoved = default
+                      [merge]
+                          tool = nvimdiff
+                      [difftool "nvimdiff"]
+                          cmd = nvim -d "$LOCAL" "$REMOTE"
+                      [mergetool "nvimdiff"]
+                          cmd = nvim -d "$LOCAL" "$REMOTE" "$MERGED" -c '$wincmd w' -c 'wincmd J'
+                      [alias]
+                          st = status
+                          co = checkout
+                          br = branch
+                          ci = commit
+                          ca = commit --amend
+                          unstage = reset HEAD --
+                          last = log -1 HEAD
+                          visual = \!gitk
+                          amend = commit --amend --no-edit
+                          graph = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+                          tree = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
+                          oops = commit --amend --no-edit
+                          wip = commit -am "WIP"
+                          unwip = reset HEAD~1
+                      [credential]
+                          helper = store
+                      [color]
+                          ui = auto
+                      [color "diff"]
+                          meta = yellow bold
+                          commit = green bold
+                          frag = magenta bold
+                          old = red bold
+                          new = green bold
+                          whitespace = red reverse
+                      [color "diff-highlight"]
+                          oldNormal = red bold
+                          oldHighlight = red bold 52
+                          newNormal = green bold
+                          newHighlight = green bold 22
+                    '';
+                    clobber = true;
+                  };
+                };
+              };
+            })
+            (lib.mkIf npinsCfg.enable {
+              hjem.users.${config.user.name}.packages = with pkgs; [npins];
+              # npins-build function moved to shell.nix to prevent conflicts
+            })
+            (lib.mkIf gitCfg.nixos-git-sync.enable {
+              systemd.user.services."nixos-git-sync" = {
+                description = "Sync NixOS configuration changes after successful build";
+                script = ''
+                            set -x
+                            sleep 2
+                            REPO_PATH="${config.user.nixosConfigDirectory}"
+                            if [ ! -d "$REPO_PATH" ]; then
+                              echo "Repository directory does not exist: $REPO_PATH"
+                              exit 1
+                            fi
+                            cd "$REPO_PATH"
+                            if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                              git add .
+                              FORMATTED_DATE=$(date '+%d/%m/%y@%H:%M:%S')
+                              CHANGED_FILES=$(git diff --cached --name-status | sed 's/^\(.*\)\t\(.*\)$/- [\1] \2/')
+                              COMMIT_MSG="🤖 Auto Update: $FORMATTED_DATE
+                  Files changed:
+                  $CHANGED_FILES"
+                              git commit -m "$COMMIT_MSG"
+                              git push origin ${gitCfg.nixos-git-sync.remoteBranch} --force
+                            else
+                              echo "No changes to commit"
+                            fi
+                '';
+                serviceConfig.Type = "oneshot";
+                path = with pkgs; [git coreutils openssh];
+                environment = {
+                  SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent";
+                };
+                wantedBy = ["default.target"];
+              };
+            })
+          ];
+        })
+        # From modules/home/ui.nix (1666 lines -> INLINED\!)
+
+        (
+          {
+            config,
+            lib,
+            pkgs,
+            inputs,
+            hostSystem,
+            ...
+          }: let
+            # Main UI component options
+            agsCfg = config.home.ui.ags;
+
+            cursorCfg = config.home.ui.cursor;
+
+            fontsCfg = config.home.ui.fonts;
+
+            footCfg = config.home.ui.foot;
+
+            gtkCfg = config.home.ui.gtk;
+
+            hyprlandCfg = config.home.ui.hyprland;
+
+            makoCfg = config.home.ui.mako;
+
+            niriCfg = config.home.ui.niri;
+
+            qutebrowserCfg = config.home.ui.qutebrowser;
+
+            wallustCfg = config.home.ui.wallust;
+
+            quickshellCfg = config.home.ui.quickshell;
+
+            waylandCfg = config.home.ui.wayland;
+
+            username = config.user.name;
+
+            inherit (config.home.core) defaults;
+
+            # Cursor configuration
+
+            hyprThemeName = "DeepinDarkV20-hypr";
+
+            x11ThemeName = "DeepinDarkV20-x11";
+
+            hyprcursorPackage = pkgs.phinger-cursors;
+
+            xcursorPackage = pkgs.phinger-cursors;
+
+            # Font configuration
+
+            mainFontPackages = map (x: x.package) config.home.core.appearance.fonts.main;
+
+            mainFontNames = map (x: x.name) config.home.core.appearance.fonts.main;
+
+            fallbackPackages = map (x: x.package) config.home.core.appearance.fonts.fallback;
+
+            fallbackNames = map (x: x.name) config.home.core.appearance.fonts.fallback;
+
+            fontXmlConfig = ''
+
+              <?xml version="1.0"?>
+
+              <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+
+              <fontconfig>
+
+                <!-- Disable all fonts by default -->
+
+                <selectfont>
+
+                  <rejectfont>
+
+                    <pattern>
+
+                      <patelt name="family">
+
+                        <string>*</string>
+
+                      </patelt>
+
+                    </pattern>
+
+                  </rejectfont>
+
+                </selectfont>
+
+                <!-- Explicitly enable only our chosen fonts -->
+
+                <selectfont>
+
+                  <acceptfont>
+
+                    <pattern>
+
+                      <patelt name="family">
+
+                        <string>${builtins.elemAt mainFontNames 0}</string>
+
+                      </patelt>
+
+                    </pattern>
+
+                    ${lib.concatMapStrings (name: ''
+
+                  <pattern>
+
+                    <patelt name="family">
+
+                      <string>${name}</string>
+
+                    </patelt>
+
+                  </pattern>
+
+                '')
+                fallbackNames}
+
+                  </acceptfont>
+
+                </selectfont>
+
+                <!-- Set main font as default -->
+
+                <match>
+
+                  <test name="family">
+
+                    <string>*</string>
+
+                  </test>
+
+                  <edit name="family" mode="prepend">
+
+                    <string>${builtins.elemAt mainFontNames 0}</string>
+
+                  </edit>
+
+                </match>
+
+                <!-- Fallback font configuration -->
+
+                <alias>
+
+                  <family>monospace</family>
+
+                  <prefer>
+
+                    <family>${builtins.elemAt mainFontNames 0}</family>
+
+                    ${lib.concatMapStrings (name: "<family>${name}</family>") fallbackNames}
+
+                  </prefer>
+
+                </alias>
+
+                <!-- Font rendering options -->
+
+                <match target="font">
+
+                  <edit name="antialias" mode="assign"><bool>true</bool></edit>
+
+                  <edit name="hinting" mode="assign"><bool>true</bool></edit>
+
+                  <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
+
+                  <edit name="rgba" mode="assign"><const>rgb</const></edit>
+
+                  <edit name="autohint" mode="assign"><bool>true</bool></edit>
+
+                  <edit name="lcdfilter" mode="assign"><const>lcdlight</const></edit>
+
+                  <edit name="dpi" mode="assign"><double>${toString config.home.core.appearance.dpi}</double></edit>
+
+                </match>
+
+              </fontconfig>
+
+            '';
+
+            # Foot terminal configuration
+
+            computedFontSize = toString (config.home.core.appearance.baseFontSize * 1.33);
+
+            mainFontName = (builtins.elemAt config.home.core.appearance.fonts.main 0).name;
+
+            fallbackFontNames = map (x: x.name) config.home.core.appearance.fonts.fallback;
+
+            mainFontConfig =
+              "${mainFontName}:size=${computedFontSize}, "
+              + lib.concatStringsSep ", " (map (name: "${name}:size=${computedFontSize}") fallbackFontNames);
+
+            footConfig = {
+              main = {
+                term = "xterm-256color";
+
+                font = mainFontConfig;
+
+                dpi-aware = "yes";
+              };
+
+              cursor = {
+                style = "underline";
+
+                blink = "no";
+              };
+
+              mouse = {
+                hide-when-typing = "no";
+
+                alternate-scroll-mode = "yes";
+              };
+
+              colors = {
+                alpha = 0;
+
+                background = "000000";
+
+                foreground = "ffffff";
+
+                regular0 = "000000";
+
+                regular1 = "ff0000";
+
+                regular2 = "00ff00";
+
+                regular3 = "ffff00";
+
+                regular4 = "1e90ff";
+
+                regular5 = "ff00ff";
+
+                regular6 = "00ffff";
+
+                regular7 = "ffffff";
+
+                bright0 = "808080";
+
+                bright1 = "ff0000";
+
+                bright2 = "00ff00";
+
+                bright3 = "ffff00";
+
+                bright4 = "1e90ff";
+
+                bright5 = "ff00ff";
+
+                bright6 = "00ffff";
+
+                bright7 = "ffffff";
+              };
+
+              key-bindings = {
+                clipboard-copy = "Control+c XF86Copy";
+
+                clipboard-paste = "Control+v XF86Paste";
+              };
+            };
+
+            # GTK configuration
+
+            mainFontNameGtk = (builtins.elemAt config.home.core.appearance.fonts.main 0).name;
+
+            inherit (config.home.core.appearance) baseFontSize;
+
+            dpiStr = toString config.home.core.appearance.dpi;
+
+            inherit (config.home.core.user) bookmarks;
+
+            scaleFactor = gtkCfg.scale;
+
+            shadowSize = "0.05rem";
+
+            shadowRadius = "0.05rem";
+
+            shadowColor = "rgba(0, 0, 0, 0.3)";
+
+            shadowOffsets = [
+              "${shadowSize} 0 ${shadowRadius} ${shadowColor}"
+
+              "-${shadowSize} 0 ${shadowRadius} ${shadowColor}"
+
+              "0 ${shadowSize} ${shadowRadius} ${shadowColor}"
+
+              "0 -${shadowSize} ${shadowRadius} ${shadowColor}"
+
+              "${shadowSize} ${shadowSize} ${shadowRadius} ${shadowColor}"
+
+              "-${shadowSize} ${shadowSize} ${shadowRadius} ${shadowColor}"
+
+              "${shadowSize} -${shadowSize} ${shadowRadius} ${shadowColor}"
+
+              "-${shadowSize} -${shadowSize} ${shadowRadius} ${shadowColor}"
+            ];
+
+            repeatedShadow = lib.concatStringsSep ",\n" (lib.concatLists (lib.genList (_: shadowOffsets) 4));
+
+            whiteColor = "white";
+
+            transparentColor = "transparent";
+
+            menuBackground = "rgba(0, 0, 0, 0.8)";
+
+            hoverBg = "rgba(100, 149, 237, 0.1)";
+
+            selectedBg = "rgba(100, 149, 237, 0.5)";
+
+            gtk3Settings = {
+              Settings = {
+                gtk-application-prefer-dark-theme = 1;
+
+                gtk-cursor-theme-name = "DeepinDarkV20-x11";
+
+                gtk-cursor-theme-size = toString (builtins.floor (24 * scaleFactor));
+
+                gtk-font-name = "${mainFontNameGtk} ${toString baseFontSize}";
+
+                gtk-xft-antialias = 1;
+
+                gtk-xft-dpi = dpiStr;
+
+                gtk-xft-hinting = 1;
+
+                gtk-xft-hintstyle = "hintslight";
+
+                gtk-xft-rgba = "rgb";
+              };
+            };
+
+            gtk4Settings = {
+              Settings = {
+                gtk-application-prefer-dark-theme = 1;
+
+                gtk-cursor-theme-name = "DeepinDarkV20-x11";
+
+                gtk-cursor-theme-size = toString (builtins.floor (24 * scaleFactor));
+
+                gtk-font-name = "${mainFontNameGtk} ${toString baseFontSize}";
+              };
+            };
+
+            gtkCss = ''
+
+              /* Global element styling */
+
+              * {
+
+                font-family: "${mainFontNameGtk}";
+
+                color: ${whiteColor};
+
+                background: ${transparentColor};
+
+                outline-width: 0;
+
+                outline-offset: 0;
+
+                text-shadow: ${repeatedShadow};
+
+              }
+
+              /* Hover state for all elements */
+
+              *:hover {
+
+                background: ${hoverBg};
+
+              }
+
+              /* Selected state for all elements */
+
+              *:selected {
+
+                background: ${selectedBg};
+
+              }
+
+              /* Button styling */
+
+              button {
+
+                border-radius: 0.15rem;
+
+                min-height: 1rem;
+
+                padding: 0.05rem 0.25rem;
+
+              }
+
+              /* Menu background styling */
+
+              menu {
+
+                background: ${menuBackground};
+
+              }
+
+            '';
+
+            bookmarksContent = lib.concatStringsSep "\n" bookmarks;
+
+            # Hyprland toHyprconf generator functions
+
+            generators = let
+              inherit
+                (builtins)
+                all
+                isAttrs
+                isList
+                removeAttrs
+                ;
+
+              inherit (lib.attrsets) filterAttrs mapAttrsToList;
+
+              inherit (lib.generators) toKeyValue;
+
+              inherit (lib.lists) foldl replicate;
+
+              inherit
+                (lib.strings)
+                concatStrings
+                concatStringsSep
+                concatMapStringsSep
+                hasPrefix
+                ;
+
+              inherit (lib.types) package;
+
+              sectionOrderingRules = {
+                animations = ["bezier" "animation"];
+              };
+
+              toHyprconf = {
+                attrs,
+                indentLevel ? 0,
+                importantPrefixes ? ["$"],
+              }: let
+                initialIndent = concatStrings (replicate indentLevel "  ");
+
+                toHyprconf' = indent: attrs: let
+                  sections = filterAttrs (_: v: isAttrs v || (isList v && all isAttrs v)) attrs;
+
+                  mkSection = n: attrs:
+                    if isList attrs
+                    then (concatMapStringsSep "\n" (a: mkSection n a) attrs)
+                    else let
+                      hasOrderingRules = builtins.hasAttr n sectionOrderingRules;
+
+                      processedAttrs =
+                        if hasOrderingRules
+                        then let
+                          orderingRule = sectionOrderingRules.${n};
+
+                          allKeys = builtins.attrNames attrs;
+
+                          orderedKeys = builtins.filter (key: builtins.elem key orderingRule) allKeys;
+
+                          unorderedKeys = builtins.filter (key: !(builtins.elem key orderingRule)) allKeys;
+
+                          sortedOrderedKeys = builtins.filter (ruleKey: builtins.elem ruleKey orderedKeys) orderingRule;
+
+                          finalKeyOrder = sortedOrderedKeys ++ unorderedKeys;
+
+                          orderedAttrs = lib.listToAttrs (map (key: {
+                              name = key;
+
+                              value = attrs.${key};
+                            })
+                            finalKeyOrder);
+                        in
+                          orderedAttrs
+                        else attrs;
+                    in ''
+
+                      ${indent}${n} {
+
+                      ${toHyprconf' "  ${indent}" processedAttrs}${indent}}
+
+                    '';
+
+                  mkFields = toKeyValue {
+                    listsAsDuplicateKeys = true;
+
+                    inherit indent;
+                  };
+
+                  allFields = filterAttrs (_: v: !(isAttrs v || (isList v && all isAttrs v))) attrs;
+
+                  isImportantField = n: _:
+                    foldl (acc: prev:
+                      if hasPrefix prev n
+                      then true
+                      else acc)
+                    false
+                    importantPrefixes;
+
+                  isEarlyField = n: _: n == "bezier";
+
+                  importantFields = filterAttrs isImportantField allFields;
+
+                  earlyFields = filterAttrs isEarlyField (removeAttrs allFields (mapAttrsToList (n: _: n) importantFields));
+
+                  regularFields = removeAttrs allFields (mapAttrsToList (n: _: n) (importantFields // earlyFields));
+                in
+                  mkFields importantFields
+                  + mkFields earlyFields
+                  + concatStringsSep "\n" (mapAttrsToList mkSection sections)
+                  + mkFields regularFields;
+              in
+                toHyprconf' initialIndent attrs;
+
+              pluginsToHyprconf = plugins: importantPrefixes:
+                toHyprconf {
+                  attrs = {
+                    plugin = let
+                      mkEntry = entry:
+                        if package.check entry
+                        then "${entry}/lib/lib${entry.pname}.so"
+                        else entry;
+                    in
+                      map mkEntry plugins;
+                  };
+
+                  inherit importantPrefixes;
+                };
+            in {
+              inherit toHyprconf pluginsToHyprconf;
+            };
+
+            # Hyprland core configuration
+
+            hyprlandCoreConfig = {
+              "$active_colour" = "ffffffff";
+
+              "$transparent" = "ffffff00";
+
+              "$inactive_colour" = "333333ff";
+
+              general = {
+                gaps_in = 10;
+
+                gaps_out = 5;
+
+                border_size = 1;
+
+                "col.active_border" = "rgba($active_colour)";
+
+                "col.inactive_border" = "rgba($inactive_colour)";
+
+                layout =
+                  if hyprlandCfg.hy3.enable
+                  then "hy3"
+                  else if hyprlandCfg.group.enable
+                  then "group"
+                  else "dwindle";
+              };
+
+              dwindle = {
+                single_window_aspect_ratio = "1.77 1.0";
+
+                single_window_aspect_ratio_tolerance = 0.1;
+              };
+
+              input = {
+                kb_layout = "us";
+
+                follow_mouse = 1;
+
+                sensitivity = -1.0;
+
+                force_no_accel = true;
+
+                mouse_refocus = false;
+              };
+
+              decoration = {
+                rounding = 0;
+
+                blur = {
+                  enabled = true;
+
+                  size = 10;
+
+                  passes = 3;
+
+                  ignore_opacity = true;
+
+                  popups = true;
+                };
+              };
+
+              render = {
+                cm_enabled = 0;
+              };
+
+              bezier = [
+                "in-out,.65,-0.01,0,.95"
+
+                "woa,0,0,0,1"
+              ];
+
+              animations = {
+                enabled =
+                  if config.home.core.appearance.animations.enable
+                  then 1
+                  else 0;
+
+                animation = [
+                  "windows,1,2,woa,popin"
+
+                  "border,1,10,default"
+
+                  "fade,1,10,default"
+
+                  "workspaces,1,5,in-out,slide"
+                ];
+              };
+
+              misc = {
+                disable_hyprland_logo = true;
+
+                disable_splash_rendering = true;
+              };
+
+              debug.disable_logs = false;
+
+              env =
+                [
+                  "HYPRCURSOR_THEME,DeepinDarkV20-hypr"
+
+                  "HYPRCURSOR_SIZE,${toString config.home.core.appearance.cursorSize}"
+
+                  "XCURSOR_THEME,DeepinDarkV20-x11"
+
+                  "XCURSOR_SIZE,${toString config.home.core.appearance.cursorSize}"
+                ]
+                ++ lib.optionals hostSystem.hardware.nvidia.enable [
+                  "LIBVA_DRIVER_NAME,nvidia"
+
+                  "GBM_BACKEND,nvidia-drm"
+
+                  "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+                ];
+            };
+
+            # Hyprland keybindings configuration
+
+            hyprlandKeybindingsConfig = {
+              "$mod" = "ALT";
+
+              "$mod2" = "SUPER";
+
+              "$term" = defaults.terminal;
+
+              "$filemanager" = defaults.fileManager;
+
+              "$browser" = defaults.browser;
+
+              "$discord" = defaults.discord;
+
+              "$launcher" = defaults.launcher;
+
+              "$ide" = defaults.ide;
+
+              "$notepad" = "${defaults.terminal} -e ${defaults.editor}";
+
+              "$obs" = "obs";
+
+              bind = lib.lists.flatten [
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL, G, togglegroup")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, G, lockgroups, toggle")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL, J, changegroupactive, b")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL, K, changegroupactive, f")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, J, moveintogroup, b")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, K, moveintogroup, f")
+
+                (lib.optional hyprlandCfg.group.enable "$mod CTRL, H, moveoutofgroup")
+
+                [
+                  "$mod, Q, killactive"
+
+                  "$mod, M, exit"
+
+                  "$mod, F, fullscreen"
+
+                  "$mod, TAB, layoutmsg, orientationnext"
+
+                  "$mod, space, togglefloating"
+
+                  "$mod, P, pseudo"
+                ]
+
+                [
+                  "$mod, T, exec, $term"
+
+                  "$mod, E, exec, $filemanager"
+
+                  "$mod, R, exec, $launcher"
+
+                  "$mod, O, exec, $notepad"
+
+                  "$mod, 1, exec, $ide"
+
+                  "$mod, 2, exec, $browser"
+
+                  "$mod, 3, exec, vesktop"
+
+                  "$mod, 4, exec, steam"
+
+                  "$mod, 5, exec, $obs"
+                ]
+
+                [
+                  "$mod SHIFT, S, swapactiveworkspaces, DP-4 HDMI-A-2"
+
+                  "$mod, S, movecurrentworkspacetomonitor, +1"
+                ]
+
+                (lib.lists.forEach ["h" "j" "k" "l"] (key: let
+                  direction =
+                    {
+                      "k" = "u";
+
+                      "h" = "l";
+
+                      "j" = "d";
+
+                      "l" = "r";
+                    }
+
+                    .${
+                      key
+                    };
+                in [
+                  "$mod, ${key}, movefocus, ${direction}"
+
+                  "$mod SHIFT, ${key}, movewindow, ${direction}"
+                ]))
+
+                (lib.lists.forEach (lib.range 1 9) (i: let
+                  num = toString i;
+                in [
+                  "$mod2, ${num}, workspace, ${num}"
+
+                  "$mod2 SHIFT, ${num}, movetoworkspacesilent, ${num}"
+                ]))
+
+                [
+                  "Ctrl$mod2,Delete, exec, gnome-system-monitor"
+
+                  "$mod Shift, M, exec, shutdown now"
+
+                  "Ctrl$mod2Shift, M, exec, reboot"
+
+                  "Ctrl,Period,exec,smile"
+                ]
+
+                [
+                  "$mod, G, exec, grim -g \"$(slurp -d)\" - | wl-copy -t image/png"
+
+                  "$mod SHIFT, G, exec, grim - | wl-copy -t image/png"
+
+                  "$mod, GRAVE, exec, hyprpicker | wl-copy"
+                ]
+
+                [
+                  "$mod SHIFT, C, exec, killall swaybg; for monitor in $(hyprctl monitors -j | jq -r '.[].name'); do wall=$(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1); swaybg -o $monitor -i $wall -m fill & done"
+                ]
+              ];
+
+              bindm = [
+                "$mod, mouse:272, movewindow"
+
+                "$mod, mouse:273, resizewindow"
+              ];
+            };
+
+            # Hyprland integrations configuration
+
+            agsEnabled = config.home.ui.ags.enable or false;
+
+            quickshellEnabled = config.home.ui.quickshell.enable or false;
+
+            hyprlandIntegrationsConfig = {
+              # Monitor configuration
+
+              monitor = [
+                "DP-4,highres@highrr,0x0,1"
+
+                "DP-3,highres@highrr,0x0,1"
+
+                "DP-2,5120x1440@239.76,0x0,1"
+
+                "DP-1,5120x1440@239.76,0x0,1"
+
+                "eDP-1,1920x1080@300.00,0x0,1"
+              ];
+
+              # Window rules and layer rules
+
+              "$firefox-pip" = "class:^(firefox)$, title:^(Picture-in-Picture)";
+
+              "$kitty" = "class:^(kitty)$";
+
+              windowrulev2 = [
+                "float, center, size 300 600, class:^(launcher)"
+
+                "float, center, class:^(hyprland-share-picker)"
+
+                "float, $firefox-pip"
+
+                "opacity 0.75 override, $firefox-pip"
+
+                "noborder, $firefox-pip"
+
+                "size 30% 30%, $firefox-pip"
+
+                "workspace special:lovely, title:^(Lovely.*)"
+              ];
+
+              layerrule = [
+                "blur, notifications"
+              ];
+
+              # Exec-once integrations
+
+              "exec-once" =
+                lib.optionals agsEnabled [
+                  "exec ags run"
+                ]
+                ++ lib.optionals quickshellEnabled [
+                  "exec quickshell"
+                ]
+                ++ [
+                  # Initial wallpaper setup
+
+                  "for monitor in $(hyprctl monitors -j | jq -r '.[].name'); do wall=$(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1); swaybg -o $monitor -i $wall -m fill & done"
+                ];
+
+              # Keybindings
+
+              bind =
+                lib.optionals agsEnabled [
+                  "$mod, W, exec, ags request showStats"
+
+                  "$mod2, TAB, exec, ags request toggleWorkspaces"
+                ]
+                ++ lib.optionals quickshellEnabled [
+                  "$mod2, TAB, exec, quickshell ipc call workspaces toggle"
+                ];
+
+              bindr = lib.optionals agsEnabled [
+                "$mod, W, exec, ags request hideStats"
+              ];
+            };
+          in {
+            options.home.ui = {
+              # AGS options
+
+              ags = {
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+
+                  default = false;
+
+                  description = "Enable AGS v2 (Astal Framework)";
+                };
+              };
+
+              # Cursor options
+
+              cursor = {
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+
+                  default = false;
+
+                  description = "Enable cursor theme configuration";
+                };
+              };
+
+              # Fonts options
+
+              fonts = {
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+
+                  default = false;
+
+                  description = "Enable font configuration with string substitution";
+                };
+              };
+
+              # Foot options
+
+              foot = {
+                enable = lib.mkEnableOption "foot terminal emulator";
+              };
+
+              # GTK options
+
+              gtk = {
+                enable = lib.mkEnableOption "GTK theming and configuration using hjem";
+
+                scale = lib.mkOption {
+                  type = lib.types.float;
+
+                  default = 1.0;
+
+                  description = "Scaling factor for GTK applications (e.g., 1.0, 1.25, 1.5, 2.0)";
+
+                  example = 1.5;
+                };
+              };
+
+              # Hyprland options
+
+              hyprland = {
+                enable = lib.mkEnableOption "Hyprland window manager";
+
+                flake = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+
+                    default = true;
+
+                    description = "Whether to use Hyprland from flake inputs instead of nixpkgs";
+                  };
+                };
+
+                hy3 = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+
+                    default = true;
+
+                    description = "Whether to enable the hy3 tiling layout plugin";
+                  };
+                };
+
+                group = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+
+                    default = false;
+
+                    description = "Whether to enable the group layout mode";
+                  };
+                };
+              };
+
+              # Mako options
+
+              mako = {
+                enable = lib.mkEnableOption "Mako notification daemon";
+              };
+
+              # Niri options
+
+              niri = {
+                enable = lib.mkEnableOption "Niri window manager";
+              };
+
+              # Qutebrowser options
+
+              qutebrowser = {
+                enable = lib.mkEnableOption "qutebrowser web browser";
+              };
+
+              # Wayland tools options
+
+              wallust.enable = lib.mkEnableOption "wallust color generation";
+
+              quickshell.enable = lib.mkOption {
+                type = lib.types.bool;
+
+                default = false;
+
+                description = "Enable Quickshell desktop shell";
+              };
+
+              wayland.enable = lib.mkEnableOption "Wayland configuration";
+            };
+
+            config = lib.mkMerge [
+              # AGS configuration
+
+              (lib.mkIf agsCfg.enable {
+                hjem.users.${username} = {
+                  packages = [
+                    pkgs.ags
+                  ];
+
+                  files = {
+                    ".config/ags/app.tsx" = {
+                      clobber = true;
+
+                      text = ''
+
+                        import { App, Astal, Gtk } from "astal/gtk3"
+
+                        import { Variable, exec, subprocess } from "astal"
+
+                        // ============================================================================
+
+                        // UTILITY FUNCTIONS
+
+                        // ============================================================================
+
+                        // Safe command execution helper for AGS v2
+
+                        function safeExec(command: string, defaultValue: string = 'N/A'): string {
+
+                            try {
+
+                                const result = exec(["bash", "-c", command]);
+
+                                return result.trim() || defaultValue;
+
+                            } catch (error) {
+
+                                console.log(`Failed to execute command: ''${command}`, error);
+
+                                return defaultValue;
+
+                            }
+
+                        }
+
+                        // Timer-based time updates (more efficient than polling)
+
+                        function setupTimeUpdates(currentTime: any, currentDate: any) {
+
+                            const updateTime = () => {
+
+                                currentTime.set(safeExec('date "+%H:%M:%S"'));
+
+                            };
+
+                            const updateDate = () => {
+
+                                currentDate.set(safeExec('date "+%d/%m/%y"'));
+
+                            };
+
+                            // Update immediately
+
+                            updateTime();
+
+                            updateDate();
+
+                            // Update time every second using setTimeout instead of polling
+
+                            const timeInterval = setInterval(updateTime, 1000);
+
+                            // Update date at midnight and then every 24 hours
+
+                            const now = new Date();
+
+                            const tomorrow = new Date(now);
+
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+
+                            tomorrow.setHours(0, 0, 0, 0);
+
+                            const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+                            setTimeout(() => {
+
+                                updateDate();
+
+                                // Then update every 24 hours
+
+                                setInterval(updateDate, 24 * 60 * 60 * 1000);
+
+                            }, msUntilMidnight);
+
+                        }
+
+                        // Event-driven package count monitoring
+
+                        function setupPackageMonitoring(packageCount: any) {
+
+                            const updatePackageCount = () => {
+
+                                const count = safeExec("which nix-store >/dev/null 2>&1 && nix-store -q --requisites /run/current-system/sw 2>/dev/null | wc -l || echo 'N/A'").trim();
+
+                                packageCount.set(count);
+
+                            };
+
+                            updatePackageCount();
+
+                            // Monitor for system rebuilds and package operations
+
+                            subprocess([
+
+                                "bash",
+
+                                "-c",
+
+                                `
+
+                                while true; do
+
+                                    inotifywait -e modify,create,delete /nix/var/nix/profiles/system* 2>/dev/null || sleep 30
+
+                                    echo "package_change"
+
+                                done
+
+                                `
+
+                            ], (output: string) => {
+
+                                if (output.includes('package_change')) {
+
+                                    updatePackageCount();
+
+                                }
+
+                            });
+
+                        }
+
+                        // Helper functions for SystemStats component
+
+                        function padLabel(label: string, longestLabel: number): string {
+
+                            return label + ' '.repeat(longestLabel - label.length);
+
+                        }
+
+                        function horizontalBorder(char1: string, char2: string, char3: string, longestLabel: number): string {
+
+                            return char1 + "─".repeat(longestLabel + 4) + char3;
+
+                        }
+
+                        // Cache GPU availability check
+
+                        const hasNvidiaGpu = (() => {
+
+                            try {
+
+                                exec(["bash", "-c", "which nvidia-smi >/dev/null 2>&1"]);
+
+                                return true;
+
+                            } catch {
+
+                                return false;
+
+                            }
+
+                        })();
+
+                        // ============================================================================
+
+                        // STYLES
+
+                        // ============================================================================
+
+                        const styles = `
+
+                        /* Base font size */
+
+                        * {
+
+                            font-size: 14px;
+
+                            font-family: monospace;
+
+                        }
+
+                        /* System Stats Widget Styles */
+
+                        .system-stats-window {
+
+                            background: transparent;
+
+                        }
+
+                        .system-stats {
+
+                            background: transparent;
+
+                            padding: 0.5em;
+
+                            margin: 0.5em;
+
+                            font-family: monospace;
+
+                            font-size: 1rem;
+
+                        }
+
+                        .system-stats * {
+
+                            margin: 0;
+
+                            padding: 0;
+
+                            background: transparent;
+
+                            border: none;
+
+                            box-shadow: none;
+
+                            text-shadow:
+
+                                0.05rem 0 0.05rem
+
+                                -0.05rem 0 0.05rem
+
+                                0 0.05rem 0.05rem
+
+                                0 -0.05rem 0.05rem
+
+                                0.05rem 0.05rem 0.05rem
+
+                                -0.05rem 0.05rem 0.05rem
+
+                                0.05rem -0.05rem 0.05rem
+
+                                -0.05rem -0.05rem 0.05rem
+
+                            font-family: inherit;
+
+                            font-size: inherit;
+
+                            font-weight: inherit;
+
+                            color: inherit;
+
+                        }
+
+                        /* Rainbow color assignments */
+
+                        .stats-time { color:
+
+                        .stats-date { color:
+
+                        .stats-shell { color:
+
+                        .stats-uptime { color:
+
+                        .stats-pkgs { color:
+
+                        .stats-memory { color:
+
+                        .stats-cpu { color:
+
+                        .stats-gpu { color:
+
+                        .stats-colors { color:
+
+                        .stats-white { color:
+
+                        .stats-red { color:
+
+                        .stats-orange { color:
+
+                        .stats-yellow { color:
+
+                        .stats-green { color:
+
+                        .stats-blue-green { color:
+
+                        .stats-cyan { color:
+
+                        .stats-blue { color:
+
+                        .stats-magenta { color:
+
+                        /* Workspaces Widget Styles */
+
+                        .workspaces-top, .workspaces-bottom {
+
+                            background: transparent;
+
+                        }
+
+                        .workspaces {
+
+                            background: transparent;
+
+                            margin: 0;
+
+                            padding: 0;
+
+                        }
+
+                        .workspaces *,
+
+                        .workspaces {
+
+                            margin: 0;
+
+                            padding: 0;
+
+                            background: transparent;
+
+                            border: none;
+
+                            box-shadow: none;
+
+                            color: white;
+
+                        }
+
+                        .workspace-btn {
+
+                            margin: 0;
+
+                            padding: 0;
+
+                            background-color:
+
+                            border-radius: 0;
+
+                            min-width: 20px;
+
+                            min-height: 20px;
+
+                        }
+
+                        .workspace-btn label {
+
+                            background: transparent;
+
+                            color: rgba(255, 255, 255, 0.4);
+
+                            font-size: 0.8rem;
+
+                            padding: 0.25em;
+
+                        }
+
+                        .workspace-btn.active label {
+
+                            color: rgba(255, 255, 255, 1.0);
+
+                        }
+
+                        .workspace-btn.occupied label {
+
+                            color: rgba(255, 255, 255, 0.8);
+
+                        }
+
+                        .workspace-btn.inactive label {
+
+                            color: rgba(255, 255, 255, 0.5);
+
+                        }
+
+                        .workspace-btn.urgent label {
+
+                            color:
+
+                        }
+
+                        `
+
+                        // ============================================================================
+
+                        // SYSTEM STATS MODULE
+
+                        // ============================================================================
+
+                        // Show/hide control variables
+
+                        const systemStatsVisible = Variable(true);
+
+                        const systemStatsLayer = Variable(Astal.Layer.BOTTOM);
+
+                        // System monitoring variables with optimized polling intervals
+
+                        const cpuTemp = Variable('N/A').poll(250, () => {
+
+                            return safeExec("sensors 2>/dev/null | grep -E 'Tctl|Package id 0' | head -1 | awk '{print $2}' | sed 's/+//' || echo 'N/A'");
+
+                        });
+
+                        const gpuTemp = Variable('N/A').poll(250, () => {
+
+                            if (!hasNvidiaGpu) return 'N/A';
+
+                            const temp = safeExec("nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null || echo 'N/A'");
+
+                            return temp !== "N/A" && temp !== "" ? temp + "C" : "N/A";
+
+                        });
+
+                        const memoryInfo = Variable({ used: 'N/A', total: 'N/A' }).poll(2000, () => {
+
+                            try {
+
+                                const output = exec(["bash", "-c", "free -h | grep '^Mem:' | awk '{print $3 \"/\" $2}'"]);
+
+                                const parts = output.trim().split('/');
+
+                                return { used: parts[0] || 'N/A', total: parts[1] || 'N/A' };
+
+                            } catch {
+
+                                return { used: 'N/A', total: 'N/A' };
+
+                            }
+
+                        });
+
+                        const uptime = Variable('N/A').poll(60000, () => {
+
+                            return safeExec("uptime | sed 's/.*up *//' | sed 's/,.*user.*//' | sed 's/^ *//' | sed 's/ *$//' | sed 's/ day/d/' | sed 's/ days/d/'").trim();
+
+                        });
+
+                        // Timer-based time updates
+
+                        const currentTime = Variable('00:00:00');
+
+                        const currentDate = Variable('00/00/00');
+
+                        // Event-driven package count
+
+                        const packageCount = Variable('N/A');
+
+                        // Shell name never changes during session - set once
+
+                        const shellName = Variable(safeExec("basename \"$SHELL\""));
+
+                        // Initialize monitoring
+
+                        setupTimeUpdates(currentTime, currentDate);
+
+                        setupPackageMonitoring(packageCount);
+
+                        // Static data for SystemStats component (moved outside to prevent recreation)
+
+                        const statsLabels = ['time', 'date', 'shell', 'uptime', 'pkgs', 'memory', 'cpu', 'gpu', 'colors'];
+
+                        const longestLabel = Math.max(...statsLabels.map(l => l.length));
+
+                        // System Stats Widget Component
+
+                        function SystemStats() {
+
+                            return <window
+
+                                className="system-stats-window"
+
+                                layer={systemStatsLayer()}
+
+                                exclusivity={Astal.Exclusivity.IGNORE}
+
+                                visible={systemStatsVisible()}
+
+                                application={App}>
+
+                                <box className="system-stats" vertical>
+
+                                    {/* NixOS Logo */}
+
+                                    <label
+
+                                        className="stats-white"
+
+                                        label="   _  ___      ____  ____&
+
+                                    />
+
+                                    {/* Top border */}
+
+                                    <label
+
+                                        className="stats-white"
+
+                                        halign={Gtk.Align.START}
+
+                                        label={horizontalBorder("╭", "─", "╮", longestLabel)}
+
+                                    />
+
+                                    {/* Stats rows */}
+
+                                    {statsLabels.map(currentLabel =>
+
+                                        <box key={currentLabel}>
+
+                                            <label className="stats-white" halign={Gtk.Align.START} label="│ " />
+
+                                            <label className={`stats-''${currentLabel}`} halign={Gtk.Align.START} label="• " />
+
+                                            <label className="stats-white" halign={Gtk.Align.START} label={`''${padLabel(currentLabel, longestLabel)} │ `} />
+
+                                            <label
+
+                                                className={`stats-''${currentLabel}`}
+
+                                                halign={Gtk.Align.START}
+
+                                                label={(() => {
+
+                                                    switch(currentLabel) {
+
+                                                        case 'time': return currentTime();
+
+                                                        case 'date': return currentDate();
+
+                                                        case 'shell': return shellName();
+
+                                                        case 'uptime': return uptime();
+
+                                                        case 'pkgs': return packageCount();
+
+                                                        case 'memory': return `''${memoryInfo.get().used}/''${memoryInfo.get().total}`;
+
+                                                        case 'cpu': return cpuTemp();
+
+                                                        case 'gpu': return gpuTemp();
+
+                                                        case 'colors': return "";
+
+                                                        default: return "";
+
+                                                    }
+
+                                                })()}
+
+                                            />
+
+                                            {/* Color dots for colors row */}
+
+                                            {currentLabel === 'colors' && [
+
+                                                <label key="red" className="stats-red" label="• " />,
+
+                                                <label key="orange" className="stats-orange" label="• " />,
+
+                                                <label key="yellow" className="stats-yellow" label="• " />,
+
+                                                <label key="green" className="stats-green" label="• " />,
+
+                                                <label key="blue-green" className="stats-blue-green" label="• " />,
+
+                                                <label key="cyan" className="stats-cyan" label="• " />,
+
+                                                <label key="blue" className="stats-blue" label="• " />,
+
+                                                <label key="magenta" className="stats-magenta" label="• " />,
+
+                                                <label key="white" className="stats-white" label="• " />
+
+                                            ]}
+
+                                        </box>
+
+                                    )}
+
+                                    {/* Bottom border */}
+
+                                    <label
+
+                                        className="stats-white"
+
+                                        halign={Gtk.Align.START}
+
+                                        label={horizontalBorder("╰", "─", "╯", longestLabel)}
+
+                                    />
+
+                                </box>
+
+                            </window>
+
+                        }
+
+                        // ============================================================================
+
+                        // WORKSPACES MODULE
+
+                        // ============================================================================
+
+                        // Show/hide control variable
+
+                        const workspacesVisible = Variable(true);
+
+                        // Hyprland workspace management with real-time events
+
+                        const workspaces = Variable<any[]>([]);
+
+                        const activeWorkspace = Variable<number>(1);
+
+                        // Create a single derived variable for workspace state to optimize subscriptions
+
+                        const workspaceState = Variable.derive([workspaces, activeWorkspace], (ws, active) => ({
+
+                            workspaces: ws,
+
+                            activeWorkspace: active
+
+                        }));
+
+                        // Helper function to switch workspace using hyprctl
+
+                        function switchWorkspace(workspaceId: number) {
+
+                            try {
+
+                                exec(["hyprctl", "dispatch", "workspace", workspaceId.toString()]);
+
+                            } catch (error) {
+
+                                console.error("Failed to switch workspace:", error);
+
+                            }
+
+                        }
+
+                        // Initialize workspace data
+
+                        function initializeWorkspaces() {
+
+                            try {
+
+                                const output = exec(["bash", "-c", "hyprctl workspaces -j 2>/dev/null || echo '[]'"]);
+
+                                workspaces.set(JSON.parse(output));
+
+                            } catch {
+
+                                workspaces.set([]);
+
+                            }
+
+                            try {
+
+                                const output = exec(["bash", "-c", "hyprctl activeworkspace -j 2>/dev/null || echo '{\"id\":1}'"]);
+
+                                const parsed = JSON.parse(output);
+
+                                activeWorkspace.set(parsed.id || 1);
+
+                            } catch {
+
+                                activeWorkspace.set(1);
+
+                            }
+
+                        }
+
+                        // Update workspace list when needed
+
+                        function updateWorkspaceList() {
+
+                            try {
+
+                                const output = exec(["bash", "-c", "hyprctl workspaces -j 2>/dev/null || echo '[]'"]);
+
+                                workspaces.set(JSON.parse(output));
+
+                            } catch {
+
+                                // Keep existing workspaces if update fails
+
+                            }
+
+                        }
+
+                        // Set up real-time Hyprland event monitoring
+
+                        function setupHyprlandEvents() {
+
+                            const hyprlandSignature = exec(["bash", "-c", "echo $HYPRLAND_INSTANCE_SIGNATURE"]).trim();
+
+                            if (!hyprlandSignature) {
+
+                                console.error("HYPRLAND_INSTANCE_SIGNATURE not found - not running under Hyprland");
+
+                                return;
+
+                            }
+
+                            // Get current user ID dynamically for portability
+
+                            const userId = exec(["bash", "-c", "id -u"]).trim();
+
+                            const socketPath = `/run/user/''${userId}/hypr/''${hyprlandSignature}/.socket2.sock`;
+
+                            // Real-time event monitoring using nc
+
+                            subprocess([
+
+                                "bash",
+
+                                "-c",
+
+                                `nc -U "''${socketPath}" 2>/dev/null || { echo "Failed to connect to Hyprland socket"; exit 1; }`
+
+                            ], (output) => {
+
+                                const lines = output.split('\\n').filter(line => line.trim());
+
+                                for (const line of lines) {
+
+                                    if (line.startsWith('workspace>>')) {
+
+                                        // Active workspace changed
+
+                                        const workspaceId = parseInt(line.split('>>')[1]) || 1;
+
+                                        activeWorkspace.set(workspaceId);
+
+                                    }
+
+                                    else if (line.startsWith('createworkspace>>')) {
+
+                                        // New workspace created
+
+                                        updateWorkspaceList();
+
+                                    }
+
+                                    else if (line.startsWith('destroyworkspace>>')) {
+
+                                        // Workspace destroyed
+
+                                        updateWorkspaceList();
+
+                                    }
+
+                                    else if (line.startsWith('openwindow>>') || line.startsWith('closewindow>>')) {
+
+                                        // Window opened/closed - might affect workspace occupancy
+
+                                        updateWorkspaceList();
+
+                                    }
+
+                                }
+
+                            });
+
+                        }
+
+                        // Initialize workspaces and start event monitoring
+
+                        initializeWorkspaces();
+
+                        setupHyprlandEvents();
+
+                        // Workspaces Widget Component
+
+                        function WorkspacesWidget(position: 'top' | 'bottom') {
+
+                            const anchor = position === 'top'
+
+                                ? Astal.WindowAnchor.TOP
+
+                                : Astal.WindowAnchor.BOTTOM;
+
+                            // Create workspace buttons (1-10 like in v1 config)
+
+                            const workspaceButtons = Array.from({ length: 10 }, (_, i) => {
+
+                                const workspaceId = i + 1;
+
+                                return <button
+
+                                    key={workspaceId}
+
+                                    className="workspace-btn"
+
+                                    onClicked={() => {
+
+                                        switchWorkspace(workspaceId);
+
+                                    }}
+
+                                    setup={(self) => {
+
+                                        // Function to update button state
+
+                                        const updateButton = () => {
+
+                                            const state = workspaceState.get();
+
+                                            const ws = state.workspaces;
+
+                                            const active = state.activeWorkspace;
+
+                                            const isActive = active === workspaceId;
+
+                                            const isOccupied = Array.isArray(ws) && ws.some((workspace: any) =>
+
+                                                workspace.id === workspaceId && workspace.windows > 0
+
+                                            );
+
+                                            // Show button if it's active or occupied, or if it's workspace 1 (always show)
+
+                                            self.visible = isActive || isOccupied || workspaceId === 1;
+
+                                            // Update CSS classes
+
+                                            self.className = `workspace-btn ''${isActive ? "active" : ""} ''${isOccupied && !isActive ? "occupied" : ""}`.trim();
+
+                                        };
+
+                                        // Initial update
+
+                                        updateButton();
+
+                                        // Subscribe to single workspace state variable instead of two separate ones
+
+                                        workspaceState.subscribe(updateButton);
+
+                                    }}>
+
+                                    <label label={workspaceId.toString()} />
+
+                                </button>
+
+                            });
+
+                            return <window
+
+                                className={`workspaces-''${position}`}
+
+                                layer={Astal.Layer.OVERLAY}
+
+                                exclusivity={Astal.Exclusivity.IGNORE}
+
+                                anchor={anchor}
+
+                                visible={workspacesVisible()}
+
+                                application={App}>
+
+                                <box className="workspaces">
+
+                                    {workspaceButtons}
+
+                                </box>
+
+                            </window>
+
+                        }
+
+                        // ============================================================================
+
+                        // MAIN APPLICATION
+
+                        // ============================================================================
+
+                        // Main app configuration
+
+                        App.start({
+
+                            css: styles,
+
+                            requestHandler(request: string, ...args: any[]) {
+
+                                switch (request) {
+
+                                    case "showStats":
+
+                                        systemStatsVisible.set(true);
+
+                                        systemStatsLayer.set(Astal.Layer.TOP);
+
+                                        return "Stats shown";
+
+                                    case "hideStats":
+
+                                        systemStatsLayer.set(Astal.Layer.BOTTOM);
+
+                                        return "Stats hidden";
+
+                                    case "toggleStats":
+
+                                        if (systemStatsLayer.get() === Astal.Layer.TOP) {
+
+                                            systemStatsLayer.set(Astal.Layer.BOTTOM);
+
+                                        } else {
+
+                                            systemStatsVisible.set(true);
+
+                                            systemStatsLayer.set(Astal.Layer.TOP);
+
+                                        }
+
+                                        return "Stats toggled";
+
+                                    case "showWorkspaces":
+
+                                        workspacesVisible.set(true);
+
+                                        return "Workspaces shown";
+
+                                    case "hideWorkspaces":
+
+                                        workspacesVisible.set(false);
+
+                                        return "Workspaces hidden";
+
+                                    case "toggleWorkspaces":
+
+                                        workspacesVisible.set(!workspacesVisible.get());
+
+                                        return "Workspaces toggled";
+
+                                    default:
+
+                                        return `Unknown request: ''${request}`;
+
+                                }
+
+                            },
+
+                            main() {
+
+                                // Create system stats window
+
+                                SystemStats();
+
+                                // Create workspace widgets
+
+                                WorkspacesWidget('top');
+
+                                WorkspacesWidget('bottom');
+
+                            },
+
+                        })
+
+                      '';
+                    };
+
+                    ".config/ags/tsconfig.json" = {
+                      clobber = true;
+
+                      text = ''
+
+                        {
+
+                          "compilerOptions": {
+
+                            "target": "ES2022",
+
+                            "module": "ES2022",
+
+                            "lib": ["ES2022"],
+
+                            "allowJs": true,
+
+                            "strict": true,
+
+                            "esModuleInterop": true,
+
+                            "skipLibCheck": true,
+
+                            "forceConsistentCasingInFileNames": true,
+
+                            "moduleResolution": "node",
+
+                            "jsx": "react-jsx",
+
+                            "jsxImportSource": "astal/gtk3/jsx-runtime"
+
+                          },
+
+                          "include": ["**/*.ts", "**/*.tsx"],
+
+                          "exclude": ["node_modules"]
+
+                        }
+
+                      '';
+                    };
+                  };
+                };
+              })
+
+              # Cursor configuration
+
+              (lib.mkIf cursorCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    hyprcursorPackage
+
+                    xcursorPackage
+                  ];
+
+                  files = {
+                    ".profile" = {
+                      text = lib.mkAfter ''
+
+                        export HYPRCURSOR_THEME="${hyprThemeName}"
+
+                        export HYPRCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
+
+                        export XCURSOR_THEME="${x11ThemeName}"
+
+                        export XCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
+
+                      '';
+
+                      clobber = true;
+                    };
+
+                    ".config/gtk-3.0/settings.ini" = {
+                      text = lib.mkAfter ''
+
+                        [Settings]
+
+                        gtk-cursor-theme-name=${x11ThemeName}
+
+                        gtk-cursor-theme-size=${toString config.home.core.appearance.cursorSize}
+
+                      '';
+
+                      clobber = true;
+                    };
+
+                    ".config/gtk-4.0/settings.ini" = {
+                      text = lib.mkAfter ''
+
+                        [Settings]
+
+                        gtk-cursor-theme-name=${x11ThemeName}
+
+                        gtk-cursor-theme-size=${toString config.home.core.appearance.cursorSize}
+
+                      '';
+
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # Fonts configuration
+
+              (lib.mkIf fontsCfg.enable {
+                hjem.users.${username} = {
+                  packages = mainFontPackages ++ fallbackPackages;
+
+                  files.".config/fontconfig/fonts.conf" = {
+                    clobber = true;
+
+                    text = fontXmlConfig;
+                  };
+                };
+              })
+
+              # Foot configuration
+
+              (lib.mkIf footCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    foot
+                  ];
+
+                  files.".config/foot/foot.ini" = {
+                    clobber = true;
+
+                    text = lib.mkAfter (lib.generators.toINI {} footConfig);
+                  };
+                };
+              })
+
+              # GTK configuration
+
+              (lib.mkIf gtkCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    gtk3
+
+                    gtk4
+                  ];
+
+                  files = {
+                    ".config/gtk-3.0/settings.ini" = {
+                      clobber = true;
+
+                      text = lib.generators.toINI {} gtk3Settings;
+                    };
+
+                    ".config/gtk-3.0/gtk.css" = {
+                      clobber = true;
+
+                      text = gtkCss;
+                    };
+
+                    ".config/gtk-3.0/bookmarks" = {
+                      clobber = true;
+
+                      text = bookmarksContent;
+                    };
+
+                    ".config/gtk-4.0/settings.ini" = {
+                      clobber = true;
+
+                      text = lib.generators.toINI {} gtk4Settings;
+                    };
+
+                    ".zshenv" = {
+                      clobber = true;
+
+                      text = lib.mkAfter ''
+
+                        export XCURSOR_SIZE="${builtins.replaceStrings [".0"] [""] (toString (builtins.floor (24 * scaleFactor)))}"
+
+                      '';
+                    };
+                  };
+                };
+              })
+
+              # Hyprland configuration
+
+              (lib.mkIf hyprlandCfg.enable {
+                hjem.users.${username} = {
+                  packages = [
+                    pkgs.hyprwayland-scanner
+
+                    pkgs.hyprland # Use nixpkgs version for npins compatibility
+
+                    pkgs.grim
+
+                    pkgs.slurp
+
+                    pkgs.wl-clipboard
+
+                    pkgs.jq
+
+                    pkgs.swaybg
+                  ];
+
+                  files = {
+                    ".config/hypr/hyprland.conf" = {
+                      clobber = true;
+
+                      text = let
+                        hyprlandConfig = let
+                          baseConfig = lib.foldl lib.recursiveUpdate {} [
+                            hyprlandCoreConfig
+
+                            hyprlandIntegrationsConfig
+                          ];
+
+                          allBinds = (hyprlandKeybindingsConfig.bind or []) ++ (hyprlandIntegrationsConfig.bind or []);
+
+                          allBindm = (hyprlandKeybindingsConfig.bindm or []) ++ (hyprlandIntegrationsConfig.bindm or []);
+
+                          allBindr = (hyprlandKeybindingsConfig.bindr or []) ++ (hyprlandIntegrationsConfig.bindr or []);
+
+                          allBinds_hold = (hyprlandKeybindingsConfig.binds or []) ++ (hyprlandIntegrationsConfig.binds or []);
+                        in
+                          baseConfig
+                          // hyprlandKeybindingsConfig
+                          // hyprlandIntegrationsConfig
+                          // {
+                            bind = allBinds;
+
+                            bindm = allBindm;
+
+                            bindr = allBindr;
+
+                            binds = allBinds_hold;
+                          };
+
+                        pluginsConfig = lib.optionalString hyprlandCfg.hy3.enable (
+                          generators.pluginsToHyprconf [
+                            (
+                              if hyprlandCfg.flake.enable
+                              then inputs.hy3.packages.${pkgs.system}.hy3
+                              else pkgs.hyprlandPlugins.hy3
+                            )
+                          ] ["$"]
+                        );
+
+                        mainConfig = generators.toHyprconf {
+                          attrs = hyprlandConfig;
+
+                          importantPrefixes = ["$" "exec" "source"];
+                        };
+                      in
+                        mainConfig + lib.optionalString (pluginsConfig != "") "\n${pluginsConfig}";
+                    };
+
+                    ".config/hypr/hyprpaper.conf" = {
+                      clobber = true;
+
+                      text = ''
+
+                        preload = ${config.home.directories.wallpapers.static.path}
+
+                        wallpaper = ,${config.home.directories.wallpapers.static.path}
+
+                        splash = false
+
+                        ipc = on
+
+                      '';
+                    };
+                  };
+                };
+              })
+
+              # Mako configuration
+
+              (lib.mkIf makoCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    mako
+                  ];
+
+                  files.".config/mako/config" = {
+                    clobber = true;
+
+                    text = ''
+
+                      actions=true
+
+                      anchor=top-right
+
+                      background-color=
+
+                      border-color=
+
+                      border-radius=5
+
+                      border-size=1
+
+                      default-timeout=5000
+
+                      format=<b>%s</b>\n%b
+
+                      group-by=
+
+                      height=100
+
+                      icon-path=
+
+                      icons=true
+
+                      ignore-timeout=false
+
+                      layer=top
+
+                      margin=10
+
+                      markup=true
+
+                      max-icon-size=64
+
+                      max-visible=5
+
+                      output=
+
+                      padding=5
+
+                      progress-color=
+
+                      sort=-time
+
+                      text-color=
+
+                      width=300
+
+                    '';
+                  };
+
+                  systemd.services.mako = {
+                    description = "Mako notification daemon";
+
+                    documentation = ["man:mako(1)"];
+
+                    partOf = ["graphical-session.target"];
+
+                    after = ["graphical-session.target"];
+
+                    wantedBy = ["graphical-session.target"];
+
+                    serviceConfig = {
+                      Type = "dbus";
+
+                      BusName = "org.freedesktop.Notifications";
+
+                      ExecStart = "${pkgs.mako}/bin/mako";
+
+                      ExecReload = "${pkgs.mako}/bin/makoctl reload";
+
+                      Restart = "on-failure";
+
+                      RestartSec = 1;
+
+                      TimeoutStopSec = 10;
+                    };
+                  };
+                };
+              })
+
+              # Niri configuration
+
+              (lib.mkIf niriCfg.enable {
+                hjem.users.${username} = {
+                  packages = [
+                    pkgs.niri
+
+                    pkgs.grim
+
+                    pkgs.slurp
+
+                    pkgs.wl-clipboard
+
+                    pkgs.jq
+
+                    pkgs.swaybg
+                  ];
+
+                  files = {
+                    ".config/niri/config.kdl" = {
+                      text = ''
+
+                        prefer-no-csd
+
+
+                        spawn-at-startup "${pkgs.xwayland-satellite}/bin/xwayland-satellite"
+
+                        spawn-at-startup "sh" "-c" "swaybg -i $(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1) -m fill"
+
+
+                        input {
+
+                            keyboard {
+
+                                xkb {
+
+                                    layout "us"
+
+                                }
+
+                            }
+
+                            touchpad {
+
+                                tap
+
+                                dwt
+
+                                natural-scroll
+
+                                accel-speed 0.0
+
+                            }
+
+                            mouse {
+
+                                accel-speed 0.0
+
+                            }
+
+                            focus-follows-mouse max-scroll-amount="0%"
+
+                            mod-key "Alt"
+
+                        }
+
+
+                        output "DP-2" {
+
+                            mode "5120x1440@239.761"
+
+                            position x=0 y=0
+
+                        }
+
+
+                        output "HDMI-A-2" {
+
+                            mode "1920x1080@60.000"
+
+                            position x=5120 y=0
+
+                        }
+
+
+                        layout {
+
+                            gaps 10
+
+                            center-focused-column "never"
+
+                            default-column-display "tabbed"
+
+                            default-column-width {
+
+                                proportion 0.5
+
+                            }
+
+                            preset-column-widths {
+
+                                proportion 0.33333
+
+                                proportion 0.5
+
+                                proportion 0.66667
+
+                            }
+
+
+                            border {
+
+                            width 0.5
+
+                            active-color "#ffffff"
+
+                            inactive-color "#333333"
+
+                            }
+
+
+                            focus-ring {
+
+                                width 0.5
+
+                                active-color "#ffffff"
+
+                                inactive-color "#333333"
+
+                            }
+
+
+                            tab-indicator {
+
+                                width 4
+
+                                gap 6
+
+                                active-color "#ffffff"
+
+                                inactive-color "#666666"
+
+                                position "left"
+
+                            }
+
+                        }
+
+
+                        hotkey-overlay {}
+
+
+                        animations {
+
+                            slowdown 1.0
+
+                            window-open {
+
+                                duration-ms 150
+
+                                curve "ease-out-expo"
+
+                            }
+
+                            window-close {
+
+                                duration-ms 150
+
+                                curve "ease-out-expo"
+
+                            }
+
+
+                        }
+
+
+                        window-rule {
+
+                            match app-id="firefox"
+
+                            default-column-width {
+
+                                proportion 0.75
+
+                            }
+
+                        }
+
+
+                        window-rule {
+
+                            match app-id="foot"
+
+                            opacity 1.0
+
+                        }
+
+
+                        window-rule {
+
+                            match app-id="launcher"
+
+                            open-floating true
+
+                        }
+
+
+                        binds {
+
+                            "Mod+Shift+Slash" { show-hotkey-overlay; }
+
+
+                            "Mod+T" { spawn "${defaults.terminal}"; }
+
+                            "Super+R" { spawn "foot" "-a" "launcher" "${config.user.configDirectory}/scripts/sway-launcher-desktop.sh"; }
+
+
+                            "Mod+Q" { close-window; }
+
+                            "Mod+Shift+F" { fullscreen-window; }
+
+                            "Mod+F" { maximize-column; }
+
+                            "Mod+Space" { center-column; }
+
+                            "Super+Space" { toggle-window-floating; }
+
+
+                            "Mod+Left" { focus-column-left; }
+
+                            "Mod+Right" { focus-column-right; }
+
+                            "Mod+Up" { focus-window-up; }
+
+                            "Mod+Down" { focus-window-down; }
+
+                            "Mod+H" { focus-column-left; }
+
+                            "Mod+L" { focus-column-right; }
+
+                            "Mod+J" { focus-window-down; }
+
+                            "Mod+K" { focus-window-up; }
+
+
+                            "Mod+Shift+Left" { move-column-left; }
+
+                            "Mod+Shift+Right" { move-column-right; }
+
+                            "Mod+Shift+Up" { move-window-up; }
+
+                            "Mod+Shift+Down" { move-window-down; }
+
+                            "Mod+Shift+H" { move-column-left; }
+
+                            "Mod+Shift+L" { move-column-right; }
+
+                            "Mod+Shift+J" { move-window-down; }
+
+                            "Mod+Shift+K" { move-window-up; }
+
+
+                            "Mod+Page_Up" { focus-workspace-up; }
+
+                            "Mod+Page_Down" { focus-workspace-down; }
+
+                            "Mod+U" { focus-workspace-up; }
+
+                            "Mod+I" { focus-workspace-down; }
+
+                            "Super+1" { focus-workspace 1; }
+
+                            "Super+2" { focus-workspace 2; }
+
+                            "Super+3" { focus-workspace 3; }
+
+                            "Super+4" { focus-workspace 4; }
+
+                            "Super+5" { focus-workspace 5; }
+
+                            "Super+6" { focus-workspace 6; }
+
+                            "Super+7" { focus-workspace 7; }
+
+                            "Super+8" { focus-workspace 8; }
+
+                            "Super+9" { focus-workspace 9; }
+
+
+                            "Mod+Ctrl+Page_Up" { move-column-to-workspace-up; }
+
+                            "Mod+Ctrl+Page_Down" { move-column-to-workspace-down; }
+
+                            "Mod+Ctrl+U" { move-column-to-workspace-up; }
+
+                            "Mod+Ctrl+I" { move-column-to-workspace-down; }
+
+                            "Super+Shift+1" { move-column-to-workspace 1; }
+
+                            "Super+Shift+2" { move-column-to-workspace 2; }
+
+                            "Super+Shift+3" { move-column-to-workspace 3; }
+
+                            "Super+Shift+4" { move-column-to-workspace 4; }
+
+                            "Super+Shift+5" { move-column-to-workspace 5; }
+
+                            "Super+Shift+6" { move-column-to-workspace 6; }
+
+                            "Super+Shift+7" { move-column-to-workspace 7; }
+
+                            "Super+Shift+8" { move-column-to-workspace 8; }
+
+                            "Super+Shift+9" { move-column-to-workspace 9; }
+
+
+                            "Mod+R" { switch-preset-column-width; }
+
+                            "Mod+Shift+R" { switch-preset-window-height; }
+
+                            "Mod+Comma" { consume-window-into-column; }
+
+                            "Mod+Period" { expel-window-from-column; }
+
+                            "Mod+BracketLeft" { consume-or-expel-window-left; }
+
+                            "Mod+BracketRight" { consume-or-expel-window-right; }
+
+
+                            "Mod+G" { spawn "sh" "-c" "grim -g \"$(slurp -d)\" - | wl-copy -t image/png"; }
+
+                            "Mod+Shift+G" { spawn "sh" "-c" "grim - | wl-copy -t image/png"; }
+
+
+                            "Mod+Shift+E" { quit; }
+
+                            "Mod+O" { toggle-overview; }
+
+
+                            "Mod+1" { spawn "${defaults.ide}"; }
+
+                            "Mod+2" { spawn "${defaults.browser}"; }
+
+                            "Mod+3" { spawn "vesktop"; }
+
+                            "Mod+4" { spawn "steam"; }
+
+                            "Mod+5" { spawn "obs"; }
+
+
+                            "Mod+E" { spawn "${defaults.fileManager}"; }
+
+                            "Mod+Shift+O" { spawn "${defaults.terminal}" "-e" "${defaults.editor}"; }
+
+
+                            "Mod+Shift+C" { spawn "sh" "-c" "killall swaybg; swaybg -i $(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1) -m fill &"; }
+
+                        }
+
+
+                        environment {
+
+                            DISPLAY ":0"
+
+                        }
+
+                      '';
+
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # Qutebrowser configuration
+
+              (lib.mkIf qutebrowserCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    qutebrowser
+                  ];
+
+                  files.".config/qutebrowser/config.py" = {
+                    clobber = true;
+
+                    text = ''
+
+                      # Basic qutebrowser configuration
+
+                      config.load_autoconfig(False)
+
+
+                      # Basic settings
+
+                      c.zoom.default = 110
+
+                      c.fonts.default_family = "monospace"
+
+                      c.fonts.default_size = "11pt"
+
+
+                      # Tab settings
+
+                      c.tabs.position = "top"
+
+                      c.tabs.show = "multiple"
+
+                      c.tabs.background = True
+
+
+                      # Downloads
+
+                      c.downloads.location.directory = "~/Downloads"
+
+
+                      # Privacy settings
+
+                      c.content.cookies.accept = "no-3rdparty"
+
+                      c.content.geolocation = "ask"
+
+                      c.content.notifications.enabled = "ask"
+
+
+                      # Dark mode
+
+                      c.colors.webpage.darkmode.enabled = True
+
+                      c.colors.webpage.preferred_color_scheme = "dark"
+
+
+                      # Keybindings
+
+                      config.bind('J', 'tab-prev')
+
+                      config.bind('K', 'tab-next')
+
+                      config.bind('x', 'tab-close')
+
+                      config.bind('X', 'undo')
+
+                      config.bind('t', 'open -t')
+
+                      config.bind('T', 'open -t -r')
+
+
+                      # Search engines
+
+                      c.url.searchengines = {
+
+                          'DEFAULT': 'https://duckduckgo.com/?q={}',
+
+                          'g': 'https://www.google.com/search?q={}',
+
+                          'gh': 'https://github.com/search?q={}',
+
+                          'nix': 'https://search.nixos.org/packages?query={}',
+
+                      }
+
+
+                      # Homepage
+
+                      c.url.start_pages = ["https://duckduckgo.com"]
+
+                      c.url.default_page = "https://duckduckgo.com"
+
+                    '';
+                  };
+                };
+              })
+
+              # Wallust configuration
+
+              (lib.mkIf wallustCfg.enable {
+                hjem.users.${username}.packages = with pkgs; [
+                  wallust
+                ];
+              })
+
+              # Quickshell configuration
+
+              (lib.mkIf quickshellCfg.enable {
+                hjem.users.${username}.packages = with pkgs; [
+                  quickshell
+
+                  cava
+                ];
+              })
+
+              # Wayland configuration
+
+              (lib.mkIf waylandCfg.enable {
+                hjem.users.${username} = {
+                  packages = with pkgs; [
+                    grim
+
+                    slurp
+
+                    wl-clipboard
+
+                    hyprpicker
+                  ];
+
+                  files = {
+                    ".config/zsh/.zshenv" = {
+                      text = lib.mkAfter ''
+
+                        export WLR_NO_HARDWARE_CURSORS=1
+
+                        export NIXOS_OZONE_WL=1
+
+                        export QT_QPA_PLATFORM=wayland
+
+                        export ELECTRON_OZONE_PLATFORM_HINT=wayland
+
+                        export XDG_SESSION_TYPE=wayland
+
+                        export GDK_BACKEND=wayland,x11
+
+                        export SDL_VIDEODRIVER=wayland
+
+                        export CLUTTER_BACKEND=wayland
+
+                      '';
+
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+            ];
+          }
+        )
+        # From modules/home/core.nix (585 lines -> INLINED!)
+        (
+          {
+            config,
+            lib,
+            pkgs,
+            ...
+          }: let
+            # Common type definitions
+            t = lib.types;
+            mkOpt = type: description: lib.mkOption {inherit type description;};
+
+            # Directory module type
+            dirModule = lib.types.submodule {
+              options = {
+                path = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Absolute path to the directory";
+                };
+                create = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  description = "Whether to create the directory if it doesn't exist";
+                };
+              };
+            };
+
+            # Configuration shortcuts
+            appearanceCfg = config.home.core.appearance;
+            packagesCfg = config.home.core.packages;
+            userCfg = config.home.core.user;
+            fontsCfg = config.home.core.fonts;
+            xdgCfg = config.home.session.xdg;
+
+            # nvide script from packages.nix
+            nvide-script = pkgs.writeShellScriptBin "nvide" ''
+                      HELP_TEXT="Usage: nvide [OPTIONS] [working_dir]
+                      Arguments:
+                        working_dir    Directory to open (default: current directory)
+                      Options:
+                        -h, --help     Show this help message
+                        -n, --name     Session name (default: basename of working directory)
+                      Description:
+                        Creates an IDE-like environment with:
+                        - Neotree file explorer on the left
+                        - NeoVim in the center
+                        - Two terminal panes split vertically on the right
+                      "
+                      show_help() {
+                        echo "$HELP_TEXT"
+                      }
+                      session_name=""
+                      working_dir=""
+                      while [[ $# -gt 0 ]]; do
+                        case "$1" in
+                          -h|--help)
+                            show_help
+                            exit 0
+                            ;;
+                          -n|--name)
+                            if [[ -n "$2" && "$2" != -* ]]; then
+                              session_name="$2"
+                              shift 2
+                            else
+                              echo "Error: --name requires a value"
+                              exit 1
+                            fi
+                            ;;
+                          -*)
+                            echo "Unknown option: $1"
+                            echo "Use --help for usage information."
+                            exit 1
+                            ;;
+                          *)
+                            working_dir="$1"
+                            shift
+                            ;;
+                        esac
+                      done
+                      working_dir=''${working_dir:-$(pwd)}
+                      working_dir=$(cd "$working_dir" && pwd)
+                      session_name=''${session_name:-$(basename "$working_dir")}
+                      layout_file="/tmp/nvide-layout-$session_name.kdl"
+                      cat > "$layout_file" << 'INNER_EOF'
+                  layout {
+                      pane size=1 borderless=true {
+                          plugin location="zellij:tab-bar"
+                      }
+                      pane {
+                          pane split_direction="horizontal" {
+                              pane size="70%" {
+                                  command "nvim"
+                                  args "."
+                              }
+                              pane split_direction="vertical" size="30%" {
+                                  pane
+                                  pane
+                              }
+                          }
+                      }
+                      pane size=2 borderless=true {
+                          plugin location="zellij:status-bar"
+                      }
+                  }
+              INNER_EOF
+                      if zellij list-sessions 2>/dev/null | grep -q "^$session_name$"; then
+                        echo "Session '$session_name' already exists. Attaching..."
+                        zellij attach "$session_name"
+                        exit 0
+                      fi
+                      echo "Creating nvide session: $session_name"
+                      echo "Working directory: $working_dir"
+                      cd "$working_dir"
+                      zellij --session "$session_name" --layout "$layout_file"
+            '';
+
+            # Base packages from packages.nix
+            basePackages = with pkgs; [
+              git
+              curl
+              wget
+              cachix
+              unzip
+              bash
+              lsd
+              alejandra
+              tree
+              bottom
+              psmisc
+              kitty
+              dconf
+              lm_sensors
+              networkmanager
+              nvide-script
+            ];
+          in {
+            options = {
+              # From appearance.nix
+              home.core.appearance = {
+                enable = lib.mkEnableOption "appearance settings";
+                fonts = lib.mkOption {
+                  type = t.submodule {
+                    options = {
+                      main = lib.mkOption {
+                        type = t.listOf (t.submodule {
+                          options = {
+                            package = lib.mkOption {
+                              type = t.package;
+                              description = "Font package";
+                            };
+                            name = lib.mkOption {
+                              type = t.str;
+                              description = "Font name";
+                            };
+                          };
+                        });
+                        description = "List of font configurations for main fonts";
+                      };
+                      fallback = lib.mkOption {
+                        type = t.listOf (t.submodule {
+                          options = {
+                            package = lib.mkOption {
+                              type = t.package;
+                              description = "Font package";
+                            };
+                            name = lib.mkOption {
+                              type = t.str;
+                              description = "Font name";
+                            };
+                          };
+                        });
+                        default = [];
+                        description = "List of font configurations for fallback fonts";
+                      };
+                    };
+                  };
+                  description = "System font configuration";
+                };
+                baseFontSize = lib.mkOption {
+                  type = t.int;
+                  default = 12;
+                  description = "Base font size that other UI elements should scale from";
+                };
+                cursorSize = lib.mkOption {
+                  type = t.int;
+                  default = 24;
+                  description = "Size of the system cursor";
+                };
+                dpi = lib.mkOption {
+                  type = t.int;
+                  default = 96;
+                  description = "Display DPI setting for the system";
+                };
+                animations = lib.mkOption {
+                  type = t.submodule {
+                    options = {
+                      enable = lib.mkOption {
+                        type = t.bool;
+                        default = true;
+                        description = "Whether to enable animations globally across all applications";
+                      };
+                    };
+                  };
+                  default = {};
+                  description = "Global animation configuration for the system";
+                };
+              };
+
+              # From defaults.nix
+              home.core.defaults = {
+                browser = lib.mkOption {
+                  type = lib.types.str;
+                  default = "firefox";
+                  description = "Default web browser";
+                };
+                editor = lib.mkOption {
+                  type = lib.types.str;
+                  default = "nvim";
+                  description = "Default text editor";
+                };
+                ide = lib.mkOption {
+                  type = lib.types.str;
+                  default = "cursor";
+                  description = "Default IDE";
+                };
+                terminal = lib.mkOption {
+                  type = lib.types.str;
+                  default = "foot";
+                  description = "Default terminal emulator";
+                };
+                fileManager = lib.mkOption {
+                  type = lib.types.str;
+                  default = "pcmanfm";
+                  description = "Default file manager";
+                };
+                launcher = lib.mkOption {
+                  type = lib.types.str;
+                  default = "foot -a 'launcher' ${config.user.configDirectory}/scripts/sway-launcher-desktop.sh";
+                  description = "Default application launcher";
+                };
+                discord = lib.mkOption {
+                  type = lib.types.str;
+                  default = "discord-canary";
+                  description = "Default Discord client";
+                };
+                archiveManager = lib.mkOption {
+                  type = lib.types.str;
+                  default = "7z";
+                  description = "Default archive manager";
+                };
+                imageViewer = lib.mkOption {
+                  type = lib.types.str;
+                  default = "imv";
+                  description = "Default image viewer";
+                };
+                mediaPlayer = lib.mkOption {
+                  type = lib.types.str;
+                  default = "mpv";
+                  description = "Default media player";
+                };
+              };
+
+              # From directories.nix
+              home.directories = {
+                flake = mkOpt dirModule "The directory where the flake lives.";
+                music = mkOpt dirModule "Directory for music files.";
+                dcim = mkOpt dirModule "Directory for pictures (DCIM).";
+                steam = mkOpt dirModule "Directory for Steam.";
+                wallpapers = mkOpt (t.submodule {
+                  options = {
+                    static = mkOpt dirModule "Wallpaper directory for static images.";
+                    video = mkOpt dirModule "Wallpaper directory for videos.";
+                  };
+                }) "Wallpaper directories configuration";
+              };
+
+              # From fonts-presets.nix
+              home.core.fonts = {
+                preset = lib.mkOption {
+                  type = t.enum ["fast-mono" "system" "noto" "custom"];
+                  default = "fast-mono";
+                  description = "Font preset to use";
+                };
+
+                customFonts = lib.mkOption {
+                  type = t.submodule {
+                    options = {
+                      main = lib.mkOption {
+                        type = t.listOf (t.submodule {
+                          options = {
+                            package = lib.mkOption {
+                              type = t.package;
+                              description = "Font package";
+                            };
+                            name = lib.mkOption {
+                              type = t.str;
+                              description = "Font name";
+                            };
+                          };
+                        });
+                        default = [];
+                        description = "Main font configurations";
+                      };
+                      fallback = lib.mkOption {
+                        type = t.listOf (t.submodule {
+                          options = {
+                            package = lib.mkOption {
+                              type = t.package;
+                              description = "Font package";
+                            };
+                            name = lib.mkOption {
+                              type = t.str;
+                              description = "Font name";
+                            };
+                          };
+                        });
+                        default = [];
+                        description = "Fallback font configurations";
+                      };
+                    };
+                  };
+                  default = {
+                    main = [];
+                    fallback = [];
+                  };
+                  description = "Custom font configurations when preset is 'custom'";
+                };
+              };
+
+              # From packages.nix
+              home.core.packages = {
+                enable = lib.mkEnableOption "core packages and base system tools";
+                extraPackages = lib.mkOption {
+                  type = lib.types.listOf lib.types.package;
+                  default = [];
+                  description = "Additional packages to install";
+                };
+              };
+
+              # From user.nix
+              home.core.user = {
+                enable = lib.mkEnableOption "user configuration (packages and bookmarks)";
+                packages = lib.mkOption {
+                  type = lib.types.listOf lib.types.package;
+                  default = [];
+                  description = "List of additional user-specific packages";
+                };
+                bookmarks = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [];
+                  description = "GTK bookmarks for file manager";
+                };
+              };
+
+              # From xdg.nix
+              home.session.xdg = {
+                enable = lib.mkEnableOption "XDG directory configuration";
+              };
+            };
+
+            config = lib.mkMerge [
+              # From appearance.nix - empty config section
+              (lib.mkIf appearanceCfg.enable {
+                })
+
+              # From defaults.nix - empty config section
+              {
+              }
+
+              # From fonts-presets.nix - font preset configuration
+              {
+                home.core.appearance.fonts =
+                  if fontsCfg.preset == "fast-mono"
+                  then {
+                    main = [
+                      {
+                        package = pkgs.fastFonts;
+                        name = "Fast_Mono";
+                      }
+                    ];
+                    fallback = [
+                      {
+                        package = pkgs.noto-fonts-emoji;
+                        name = "Noto Color Emoji";
+                      }
+                      {
+                        package = pkgs.noto-fonts-cjk-sans;
+                        name = "Noto Sans CJK";
+                      }
+                      {
+                        package = pkgs.font-awesome;
+                        name = "Font Awesome";
+                      }
+                    ];
+                  }
+                  else if fontsCfg.preset == "system"
+                  then {
+                    main = [
+                      {
+                        package = pkgs.dejavu_fonts;
+                        name = "DejaVu Sans Mono";
+                      }
+                    ];
+                    fallback = [
+                      {
+                        package = pkgs.noto-fonts-emoji;
+                        name = "Noto Color Emoji";
+                      }
+                      {
+                        package = pkgs.liberation_ttf;
+                        name = "Liberation Sans";
+                      }
+                    ];
+                  }
+                  else if fontsCfg.preset == "noto"
+                  then {
+                    main = [
+                      {
+                        package = pkgs.noto-fonts-monospace-cjk;
+                        name = "Noto Sans Mono CJK";
+                      }
+                    ];
+                    fallback = [
+                      {
+                        package = pkgs.noto-fonts-emoji;
+                        name = "Noto Color Emoji";
+                      }
+                      {
+                        package = pkgs.noto-fonts;
+                        name = "Noto Sans";
+                      }
+                      {
+                        package = pkgs.noto-fonts-cjk-sans;
+                        name = "Noto Sans CJK";
+                      }
+                    ];
+                  }
+                  else {
+                    inherit (fontsCfg.customFonts) main;
+                    inherit (fontsCfg.customFonts) fallback;
+                  };
+              }
+
+              # From packages.nix - package installation
+              (lib.mkIf packagesCfg.enable {
+                hjem.users.${config.user.name}.packages = basePackages ++ packagesCfg.extraPackages;
+              })
+
+              # From user.nix - empty config section
+              (lib.mkIf userCfg.enable {
+                })
+
+              # From xdg.nix - XDG configuration files
+              (lib.mkIf xdgCfg.enable {
+                hjem.users.${config.user.name}.files = {
+                  ".zshenv" = {
+                    clobber = true;
+                    text = lib.mkAfter ''
+                      export XDG_CONFIG_HOME="$HOME/.config"
+                      export XDG_DATA_HOME="$HOME/.local/share"
+                      export XDG_STATE_HOME="$HOME/.local/state"
+                      export XDG_CACHE_HOME="$HOME/.cache"
+                      export XDG_SCREENSHOTS_DIR="$HOME/Pictures/Screenshots"
+                      export XDG_WALLPAPERS_DIR="$HOME/Pictures/Wallpapers"
+                      export ANDROID_HOME="$XDG_DATA_HOME/android"
+                      export ADB_VENDOR_KEY="$XDG_CONFIG_HOME/android"
+                      export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
+                      export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+                      export NPM_CONFIG_PREFIX="$XDG_DATA_HOME/npm"
+                      export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+                      export NPM_CONFIG_INIT_MODULE="$XDG_CONFIG_HOME/npm/config/npm-init.js"
+                      export NUGET_PACKAGES="$XDG_CACHE_HOME/NuGetPackages"
+                      export KERAS_HOME="$XDG_STATE_HOME/keras"
+                      export NIMBLE_DIR="$XDG_DATA_HOME/nimble"
+                      export DOTNET_CLI_HOME="$XDG_DATA_HOME/dotnet"
+                      export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME/aws/credentials"
+                      export CARGO_HOME="$XDG_DATA_HOME/cargo"
+                      export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+                      export GOPATH="$XDG_DATA_HOME/go"
+                      export _JAVA_OPTIONS="-Djava.util.prefs.userRoot=\"$XDG_CONFIG_HOME/java\""
+                      export LESSHISTFILE="$XDG_STATE_HOME/less/history"
+                      export NODE_REPL_HISTORY="$XDG_STATE_HOME/node_repl_history"
+                      export PYTHONSTARTUP="$XDG_CONFIG_HOME/python/pythonrc"
+                      export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite_history"
+                      export WGET_HSTS_FILE="$XDG_DATA_HOME/wget-hsts"
+                      export PYTHON_HISTORY="$XDG_STATE_HOME/python_history"
+                      export HISTFILE="$XDG_STATE_HOME/zsh/history"
+                      export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+                      export PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
+                      export SPOTDL_CONFIG="$XDG_CONFIG_HOME/spotdl.yml"
+                      export DVDCSS_CACHE="$XDG_DATA_HOME/dvdcss"
+                      export WINEPREFIX="$XDG_DATA_HOME/wine"
+                      export TEXMFVAR="$XDG_CACHE_HOME/texlive/texmf-var"
+                      export SSB_HOME="$XDG_DATA_HOME/zoom"
+                      export __GL_SHADER_DISK_CACHE_PATH="$XDG_CACHE_HOME/nv"
+                    '';
+                  };
+                  ".config/user-dirs.dirs" = {
+                    clobber = true;
+                    text = ''
+                      XDG_DESKTOP_DIR="${config.user.homeDirectory}/Desktop"
+                      XDG_DOWNLOAD_DIR="${config.user.homeDirectory}/Downloads"
+                      XDG_TEMPLATES_DIR="${config.user.homeDirectory}/Templates"
+                      XDG_PUBLICSHARE_DIR="${config.user.homeDirectory}/Public"
+                      XDG_DOCUMENTS_DIR="${config.user.homeDirectory}/Documents"
+                      XDG_MUSIC_DIR="${config.user.homeDirectory}/Music"
+                      XDG_PICTURES_DIR="${config.user.homeDirectory}/Pictures"
+                      XDG_VIDEOS_DIR="${config.user.homeDirectory}/Videos"
+                      XDG_SCREENSHOTS_DIR="${config.user.homeDirectory}/Pictures/Screenshots"
+                      XDG_WALLPAPERS_DIR="${config.user.homeDirectory}/Pictures/Wallpapers"
+                    '';
+                  };
+                  ".config/mimeapps.list" = {
+                    clobber = true;
+                    text = ''
+                      [Default Applications]
+                      text/html=firefox.desktop
+                      x-scheme-handler/http=firefox.desktop
+                      x-scheme-handler/https=firefox.desktop
+                      x-scheme-handler/ftp=firefox.desktop
+                      x-scheme-handler/chrome=firefox.desktop
+                      x-scheme-handler/discord=discord.desktop
+                      inode/directory=pcmanfm.desktop
+                      video/mp4=mpv.desktop
+                      video/x-matroska=mpv.desktop
+                      video/webm=mpv.desktop
+                      image/jpeg=imv.desktop
+                      image/png=imv.desktop
+                      image/gif=imv.desktop
+                      image/tiff=imv.desktop
+                      image/bmp=imv.desktop
+                      application/zip=file-roller.desktop
+                      application/x-7z-compressed=file-roller.desktop
+                      application/x-tar=file-roller.desktop
+                      application/gzip=file-roller.desktop
+                      application/x-compressed-tar=file-roller.desktop
+                      application/x-extension-htm=firefox.desktop
+                      application/x-extension-html=firefox.desktop
+                      application/x-extension-shtml=firefox.desktop
+                      application/xhtml+xml=firefox.desktop
+                      application/x-extension-xhtml=firefox.desktop
+                      [Added Associations]
+                      text/html=firefox.desktop
+                      x-scheme-handler/http=firefox.desktop
+                      x-scheme-handler/https=firefox.desktop
+                      x-scheme-handler/ftp=firefox.desktop
+                    '';
+                  };
+                  ".local/share/applications/firefox.desktop" = {
+                    clobber = true;
+                    text = ''
+                      [Desktop Entry]
+                      Name=Firefox
+                      GenericName=Web Browser
+                      Exec=firefox %U
+                      Terminal=false
+                      Type=Application
+                      Categories=Application;Network;WebBrowser;
+                      MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+                      Icon=firefox
+                      StartupNotify=true
+                    '';
+                  };
+                  ".config/python/pythonrc" = {
+                    clobber = true;
+                    text = ''
+                      import os
+                      import atexit
+                      import readline
+                      histfile = os.path.join(os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")), "python_history")
+                      try:
+                          readline.read_history_file(histfile)
+                          h_len = readline.get_current_history_length()
+                      except FileNotFoundError:
+                          open(histfile, 'wb').close()
+                          h_len = 0
+                      def save(prev_h_len, histfile):
+                          new_h_len = readline.get_current_history_length()
+                          readline.set_history_length(1000)
+                          readline.append_history_file(new_h_len - prev_h_len, histfile)
+                      atexit.register(save, h_len, histfile)
+                    '';
+                  };
+                };
+              })
+            ];
+          }
+        )
 
         # Dev modules functionality now consolidated in dev.nix
 
@@ -683,12 +6632,677 @@ in {
         # fonts-presets.nix INLINED ABOVE! ☝️
 
         # Dev modules consolidated into single dev.nix file
-        (import ./modules/home/dev.nix)
+        # From modules/home/dev.nix (665 lines -> INLINED!)
+        (
+          {
+            config,
+            lib,
+            pkgs,
+            ...
+          }: let
+            # AI Instructions content
+            aiInstructions = ''
+              You are a pragmatic software engineer who values efficiency and quality. Your "laziness" drives you to:
+              - Write minimal, bulletproof code that won't need fixing later
+              - Use established patterns and tools correctly
+              - Solve the actual problem, not what you think the user wants
+              - Fail fast with clear error messages
+
+              **Key Mantras:**
+              - "Do it right the first time or you'll be doing it again"
+              - "The best code is the code you don't have to write"
+              - "If you can't explain it simply, you don't understand it well enough"
+
+              **NixOS Project Context:**
+              - Uses hjem (NOT home-manager)
+              - Check flake.nix for available inputs
+              - Clone external repos to `tmp/` folder (in gitignore)
+              - Rebuild with `nh os switch` after configuration changes
+
+              **Build Commands:**
+              ```bash
+              alejandra .
+              nh os switch --dry
+              nh os switch
+              ```
+            '';
+
+            # MCP Servers configuration
+            mcpServersConfig = {
+              mcpServers = {
+                "Filesystem" = {
+                  type = "stdio";
+                  command = "npx";
+                  args = ["-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
+                  env = {};
+                };
+                "Nixos MCP" = {
+                  type = "stdio";
+                  command = "uvx";
+                  args = ["mcp-nixos"];
+                  env = {};
+                };
+                "sequential-thinking" = {
+                  type = "stdio";
+                  command = "npx";
+                  args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
+                  env = {};
+                };
+                "GitHub Repo MCP" = {
+                  type = "stdio";
+                  command = "npx";
+                  args = ["-y" "github-repo-mcp"];
+                  env = {};
+                };
+                "Gemini MCP" = {
+                  type = "stdio";
+                  command = "npx";
+                  args = ["-y" "gemini-mcp-tool"];
+                  env = {};
+                };
+              };
+            };
+
+            # OpenCode MCP servers configuration
+            opencodeMcpServers = {
+              "Filesystem" = {
+                type = "local";
+                command = ["npx" "-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
+                enabled = true;
+                environment = {};
+              };
+              "Nixos-MCP" = {
+                type = "local";
+                command = ["uvx" "mcp-nixos"];
+                enabled = true;
+                environment = {};
+              };
+              "sequential-thinking" = {
+                type = "local";
+                command = ["npx" "-y" "@modelcontextprotocol/server-sequential-thinking"];
+                enabled = true;
+                environment = {};
+              };
+              "GitHub-Repo-MCP" = {
+                type = "local";
+                command = ["npx" "-y" "github-repo-mcp"];
+                enabled = true;
+                environment = {};
+              };
+              "Gemini-MCP" = {
+                type = "local";
+                command = ["npx" "-y" "gemini-mcp-tool"];
+                enabled = true;
+                environment = {};
+              };
+            };
+          in {
+            options.home.dev = {
+              # Core development tools
+              docker.enable = lib.mkEnableOption "docker development environment";
+              gemini-cli.enable = lib.mkEnableOption "Gemini CLI development tools";
+              mcp.enable = lib.mkEnableOption "Model Context Protocol configuration";
+              npm.enable = lib.mkEnableOption "Node.js and NPM configuration";
+              python.enable = lib.mkEnableOption "Python development environment";
+
+              # Claude configuration options
+              claude-code.enable = lib.mkEnableOption "Claude Code development tools";
+              claude.agents.enable = lib.mkEnableOption "Claude declarative agents";
+              claude.slash-commands.enable = lib.mkEnableOption "Claude slash commands";
+
+              # OpenCode configuration options
+              opencode = {
+                enable = lib.mkEnableOption "opencode AI coding agent";
+                theme = lib.mkOption {
+                  type = lib.types.str;
+                  default = "opencode";
+                  description = "Theme to use for opencode";
+                };
+                model = lib.mkOption {
+                  type = lib.types.str;
+                  default = "anthropic/claude-sonnet-4-20250514";
+                  description = "Default model to use";
+                };
+                enableMcpServers = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Enable MCP servers for enhanced functionality";
+                };
+              };
+
+              # Neovim configuration options
+              nvim = {
+                enable = lib.mkEnableOption "Neovim development environment";
+                neovide = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Enable Neovide GUI";
+                };
+              };
+
+              # Additional tools (inlined from tools.nix)
+              cursor-ide.enable = lib.mkEnableOption "Cursor IDE";
+              latex.enable = lib.mkEnableOption "LaTeX development environment";
+              repomix.enable = lib.mkEnableOption "repomix tool for AI-friendly repository packing";
+              upscale.enable = lib.mkEnableOption "realesrgan-ncnn-vulkan for upscaling";
+            };
+
+            config = lib.mkMerge [
+              # Docker configuration
+              (lib.mkIf config.home.dev.docker.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    docker
+                    docker-compose
+                    docker-buildx
+                    docker-credential-helpers
+                  ];
+                  files = {
+                    ".docker/config.json" = {
+                      clobber = true;
+                      text = builtins.toJSON {
+                        credsStore = "pass";
+                        currentContext = "default";
+                        plugins = {};
+                      };
+                    };
+                  };
+                };
+              })
+
+              # Gemini CLI configuration
+              (lib.mkIf config.home.dev.gemini-cli.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    gemini-cli
+                  ];
+                  files = {
+                    ".gemini/GEMINI.md" = {
+                      text = aiInstructions;
+                      clobber = true;
+                    };
+                    ".gemini/settings.json" = {
+                      text = builtins.toJSON {};
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # MCP configuration
+              (lib.mkIf config.home.dev.mcp.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    nodejs_20
+                    uv
+                  ];
+                  files = {
+                    ".cursor/mcp.json" = {
+                      text = builtins.toJSON mcpServersConfig;
+                      clobber = true;
+                    };
+                    ".claude/mcp_config.json" = {
+                      text = builtins.toJSON mcpServersConfig;
+                      clobber = true;
+                    };
+                    ".claude/mcp_servers.json" = {
+                      text = builtins.toJSON mcpServersConfig;
+                      clobber = true;
+                    };
+                  };
+                };
+
+                systemd.tmpfiles.rules = [
+                  "d ${config.user.homeDirectory}/.local/share/npm/lib/node_modules 0755 ${config.user.name} users - -"
+                ];
+
+                system.activationScripts.setupClaudeMcp = {
+                  text = ''
+                    echo "Setting up Claude MCP servers via CLI..."
+                    add_mcp_server() {
+                      local name="$1"
+                      local command="$2"
+                      shift 2
+                      local args="$@"
+                      if \! runuser -u ${config.user.name} -- ${pkgs.claude-code}/bin/claude mcp list | grep -q "$name"; then
+                        echo "Adding MCP server: $name"
+                        runuser -u ${config.user.name} -- ${pkgs.claude-code}/bin/claude mcp add --scope user "$name" "$command" $args
+                      else
+                        echo "MCP server already exists: $name"
+                      fi
+                    }
+                    add_mcp_server "Filesystem" "npx" "@modelcontextprotocol/server-filesystem" "${config.user.homeDirectory}"
+                    add_mcp_server "sequential-thinking" "npx" "@modelcontextprotocol/server-sequential-thinking"
+                    add_mcp_server "GitHub Repo MCP" "npx" "github-repo-mcp"
+                    add_mcp_server "Gemini MCP" "npx" "gemini-mcp-tool"
+                    echo "Claude MCP servers setup complete"
+                  '';
+                  deps = [];
+                };
+              })
+
+              # Claude Code configuration
+              (lib.mkIf config.home.dev.claude-code.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    claude-code
+                  ];
+                  files = {
+                    ".claude/CLAUDE.md" = {
+                      text = aiInstructions;
+                      clobber = true;
+                    };
+                    ".config/claude/claude_desktop_config.json" = {
+                      text = builtins.toJSON {
+                        mcpServers = {
+                          "Context7" = {
+                            command = "npx";
+                            args = ["-y" "@upstash/context7-mcp"];
+                          };
+                        };
+                      };
+                      clobber = true;
+                    };
+                    ".config/claude/settings.json" = {
+                      text = builtins.toJSON {
+                        includeCoAuthoredBy = false;
+                      };
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # Claude Agents configuration (condensed)
+              (lib.mkIf config.home.dev.claude.agents.enable {
+                hjem.users.${config.user.name} = {
+                  files = {
+                    ".claude/agents/code-reviewer.md" = {
+                      text = ''
+                        ---
+                        name: code-reviewer
+                        description: Use proactively after writing significant code to review and improve it
+                        tools: file-operations, grep, analysis
+                        ---
+                        Expert code reviewer focusing on security, performance, maintainability, and error handling.
+                      '';
+                      clobber = true;
+                    };
+                    ".claude/agents/debugger.md" = {
+                      text = ''
+                        ---
+                        name: debugger
+                        description: Expert debugging and error resolution
+                        tools: bash, file-operations, grep, logs
+                        ---
+                        Systematic debugging specialist with root cause analysis approach.
+                      '';
+                      clobber = true;
+                    };
+                    ".claude/agents/performance-engineer.md" = {
+                      text = ''
+                        ---
+                        name: performance-engineer
+                        description: Code optimization and performance analysis
+                        tools: profiling, benchmarking, analysis
+                        ---
+                        Performance engineering expert specializing in bottleneck identification and optimization.
+                      '';
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # Claude Slash Commands configuration (condensed)
+              (lib.mkIf config.home.dev.claude.slash-commands.enable {
+                hjem.users.${config.user.name} = {
+                  files = {
+                    ".claude/commands/nixos-build.md" = {
+                      text = ''
+                        # /nixos-build
+                        Build and switch NixOS configuration safely:
+                        1. Format code with `alejandra .`
+                        2. Test build with `nh os switch --dry`
+                        3. Apply changes with `nh os switch`
+                      '';
+                      clobber = true;
+                    };
+                    ".claude/commands/fix-issue.md" = {
+                      text = ''
+                        # /fix-issue
+                        Analyze and fix GitHub issue: $ARGUMENTS
+                        1. Use `gh issue view` to get issue details
+                        2. Search codebase for relevant files
+                        3. Implement and test fix
+                      '';
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # OpenCode configuration
+              (lib.mkIf config.home.dev.opencode.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    nodejs_20
+                    uv
+                  ];
+                  files = {
+                    ".config/opencode/opencode.json" = {
+                      text = builtins.toJSON (
+                        {
+                          "$schema" = "https://opencode.ai/config.json";
+                          inherit (config.home.dev.opencode) theme;
+                          inherit (config.home.dev.opencode) model;
+                          autoupdate = true;
+                          share = "manual";
+                          disabled_providers = ["openai" "huggingface"];
+                          instructions = [
+                            "AGENTS.md"
+                            ".cursor/rules/*.md"
+                            "{file:${config.user.configDirectory}/opencode/instructions.md}"
+                          ];
+                        }
+                        // (lib.optionalAttrs config.home.dev.opencode.enableMcpServers {
+                          mcp = opencodeMcpServers;
+                        })
+                      );
+                      clobber = true;
+                    };
+                    ".config/opencode/instructions.md" = {
+                      text = aiInstructions;
+                      clobber = true;
+                    };
+                  };
+                };
+
+                systemd.tmpfiles.rules = [
+                  "d ${config.user.homeDirectory}/.config/opencode 0755 ${config.user.name} users - -"
+                  "d ${config.user.homeDirectory}/.npm-global 0755 ${config.user.name} users - -"
+                ];
+
+                environment.variables.PATH = lib.mkAfter "${config.user.homeDirectory}/.npm-global/bin";
+
+                systemd.services.opencode-install = {
+                  description = "Install OpenCode via npm";
+                  wantedBy = ["multi-user.target"];
+                  after = ["network.target"];
+                  serviceConfig = {
+                    Type = "oneshot";
+                    User = config.user.name;
+                    ExecStart = ''/bin/sh -c "export NPM_CONFIG_PREFIX=${config.user.homeDirectory}/.npm-global && if \! command -v opencode >/dev/null 2>&1; then mkdir -p $NPM_CONFIG_PREFIX && npm install -g opencode-ai; fi"'';
+                    RemainAfterExit = true;
+                  };
+                  path = with pkgs; [nodejs_20 bash uv];
+                };
+              })
+
+              # NPM configuration
+              (lib.mkIf config.home.dev.npm.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    nodejs_20
+                  ];
+                  files = {
+                    ".config/npm/npmrc" = {
+                      clobber = true;
+                      text = ''
+                        prefix={{home}}/.local/share/npm
+                        cache={{xdg_cache_home}}/npm
+                        init-module={{xdg_config_home}}/npm/config/npm-init.js
+                        store-dir={{xdg_cache_home}}/pnpm/store
+                      '';
+                    };
+                  };
+                };
+                systemd.tmpfiles.rules = [
+                  "d ${config.user.homeDirectory}/.local/share/npm 0755 ${config.user.name} ${config.user.name} - -"
+                  "d ${config.user.homeDirectory}/.cache/npm 0755 ${config.user.name} ${config.user.name} - -"
+                  "d ${config.user.homeDirectory}/.config/npm/config 0755 ${config.user.name} ${config.user.name} - -"
+                  "d ${config.user.homeDirectory}/.cache/pnpm/store 0755 ${config.user.name} ${config.user.name} - -"
+                ];
+              })
+
+              # Neovim configuration (simplified)
+              (lib.mkIf config.home.dev.nvim.enable {
+                hjem.users.${config.user.name} = {
+                  packages = [
+                    pkgs.ripgrep
+                    pkgs.fd
+                    pkgs.tree-sitter
+                    (pkgs.tree-sitter.withPlugins (p:
+                      with p; [
+                        tree-sitter-nix
+                        tree-sitter-lua
+                        tree-sitter-python
+                        tree-sitter-markdown
+                        tree-sitter-json
+                      ]))
+                    pkgs.neovim-unwrapped
+                    pkgs.lua-language-server
+                    pkgs.nil
+                    pkgs.pyright
+                    pkgs.stylua
+                    pkgs.alejandra
+                    pkgs.black
+                    pkgs.curl
+                    pkgs.jq
+                  ];
+                  files = {
+                    ".config/nvim/init.lua" = {
+                      clobber = true;
+                      text = ''
+                        -- Neovim Configuration
+                        vim.g.mapleader = " "
+                        vim.g.maplocalleader = "\\"
+
+                        -- Basic settings
+                        vim.opt.number = true
+                        vim.opt.relativenumber = true
+                        vim.opt.signcolumn = "yes"
+                        vim.opt.termguicolors = true
+                        vim.opt.expandtab = true
+                        vim.opt.tabstop = 2
+                        vim.opt.shiftwidth = 2
+                        vim.opt.clipboard = "unnamedplus"
+                        vim.opt.ignorecase = true
+                        vim.opt.smartcase = true
+
+                        -- Load vim.pack configuration
+                        require("vim-pack-config")
+
+                        -- Load opencode configuration if available
+                        pcall(require, "vim-pack-opencode")
+                      '';
+                    };
+                    ".config/nvim/lua/vim-pack-config.lua" = {
+                      text = ''
+                        -- Core plugins with vim.pack
+                        vim.pack.add({
+                          "https://github.com/neovim/nvim-lspconfig",
+                          "https://github.com/hrsh7th/nvim-cmp",
+                          "https://github.com/hrsh7th/cmp-nvim-lsp",
+                          "https://github.com/hrsh7th/cmp-buffer",
+                          "https://github.com/hrsh7th/cmp-path",
+                          "https://github.com/L3MON4D3/LuaSnip",
+                          "https://github.com/saadparwaiz1/cmp_luasnip",
+                          "https://github.com/nvim-telescope/telescope.nvim",
+                          "https://github.com/nvim-lua/plenary.nvim",
+                          "https://github.com/nvim-treesitter/nvim-treesitter",
+                          "https://github.com/numToStr/Comment.nvim",
+                          "https://github.com/windwp/nvim-autopairs",
+                          "https://github.com/scottmckendry/cyberdream.nvim",
+                          "https://github.com/nvim-lualine/lualine.nvim",
+                          "https://github.com/lewis6991/gitsigns.nvim",
+                          "https://github.com/stevearc/oil.nvim",
+                          "https://github.com/nvim-tree/nvim-web-devicons",
+                        })
+
+                        -- Basic setup
+                        local function initialize_config()
+                          -- LSP
+                          local lspconfig = require("lspconfig")
+                          local capabilities = require("cmp_nvim_lsp").default_capabilities()
+                          local servers = { "lua_ls", "nil_ls", "pyright" }
+                          for _, server in ipairs(servers) do
+                            lspconfig[server].setup({ capabilities = capabilities })
+                          end
+
+                          -- Completion
+                          local cmp = require("cmp")
+                          cmp.setup({
+                            snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
+                            mapping = cmp.mapping.preset.insert({
+                              ["<CR>"] = cmp.mapping.confirm({ select = true }),
+                            }),
+                            sources = {{ name = "nvim_lsp" }, { name = "buffer" }, { name = "path" }},
+                          })
+
+                          -- UI
+                          require("cyberdream").setup({ transparent = true })
+                          vim.cmd.colorscheme("cyberdream")
+                          require("lualine").setup({})
+                          require("gitsigns").setup({})
+                          require("oil").setup({ default_file_explorer = true })
+                          require("telescope").setup({})
+                          require("nvim-treesitter.configs").setup({ highlight = { enable = true } })
+                          require("Comment").setup({})
+                          require("nvim-autopairs").setup({})
+                        end
+
+                        vim.api.nvim_create_autocmd("PackChanged", { callback = function() vim.schedule(initialize_config) end })
+                        vim.schedule(function() if pcall(require, "lspconfig") then initialize_config() end end)
+                      '';
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+
+              # Neovide configuration
+              (lib.mkIf (config.home.dev.nvim.enable && config.home.dev.nvim.neovide) {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [neovide];
+                  files.".config/neovide/config.toml" = {
+                    clobber = true;
+                    text = ''
+                      [font]
+                      normal = ["Fast_Mono"]
+                      size = 14.0
+                      [window]
+                      transparency = 0.9
+                      [input]
+                      ime = true
+                    '';
+                  };
+                };
+              })
+
+              # OpenCode Neovim integration
+              (lib.mkIf (config.home.dev.nvim.enable && config.home.dev.opencode.enable) {
+                hjem.users.${config.user.name}.files = {
+                  ".config/nvim/lua/vim-pack-opencode.lua" = {
+                    text = ''
+                      vim.pack.add({ "https://github.com/NickvanDyke/opencode.nvim" })
+                      vim.schedule(function()
+                        local success, opencode = pcall(require, "opencode")
+                        if success then
+                          opencode.setup({ model_id = "gpt-4.1", provider_id = "github-copilot" })
+                          vim.keymap.set({"n", "v"}, "<leader>ca", function() require("opencode").ask() end)
+                          vim.keymap.set("n", "<leader>ce", function() require("opencode").prompt("Explain @cursor") end)
+                        end
+                      end)
+                    '';
+                    clobber = true;
+                  };
+                };
+              })
+
+              # Python configuration
+              (lib.mkIf config.home.dev.python.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [
+                    python3
+                    python312
+                    uv
+                    ninja
+                    meson
+                    pkg-config
+                    cacert
+                    stdenv.cc.cc.lib
+                    zlib
+                    libGL
+                    glib
+                    xorg.libX11
+                    xorg.libXext
+                    xorg.libXrender
+                    gcc
+                    binutils
+                  ];
+                  files = {
+                    "{{xdg_config_home}}/zsh/.zshenv" = {
+                      clobber = true;
+                      text = lib.mkAfter ''
+                        export PYTHONUSERBASE="{{home}}/.local/share/python"
+                        export PIP_CACHE_DIR="{{xdg_cache_home}}/pip"
+                        export VIRTUAL_ENV_HOME="{{home}}/.local/share/venvs"
+                        export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                        export REQUESTS_CA_BUNDLE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                      '';
+                    };
+                    "{{xdg_config_home}}/zsh/.zshrc" = {
+                      clobber = true;
+                      text = lib.mkAfter ''
+                        alias py="python3"
+                        alias pip="pip3"
+                        alias venv="python3 -m venv"
+                        mkvenv() { python3 -m venv ''${1:-venv}; }
+                        workon() { source ''${1:-venv}/bin/activate; }
+                      '';
+                    };
+                  };
+                };
+                systemd.tmpfiles.rules = [
+                  "d ${config.user.homeDirectory}/.local/share/python 0755 ${config.user.name} ${config.user.name} - -"
+                  "d ${config.user.homeDirectory}/.cache/pip 0755 ${config.user.name} ${config.user.name} - -"
+                  "d ${config.user.homeDirectory}/.local/share/venvs 0755 ${config.user.name} ${config.user.name} - -"
+                ];
+              })
+
+              # Additional tools (inlined from tools.nix)
+              (lib.mkIf config.home.dev.cursor-ide.enable {
+                hjem.users.${config.user.name}.packages = with pkgs; [code-cursor];
+              })
+
+              (lib.mkIf config.home.dev.latex.enable {
+                hjem.users.${config.user.name}.packages = with pkgs; [texliveFull texstudio tectonic];
+              })
+
+              (lib.mkIf config.home.dev.repomix.enable {
+                hjem.users.${config.user.name}.packages = with pkgs; [repomix];
+              })
+
+              (lib.mkIf config.home.dev.upscale.enable {
+                hjem.users.${config.user.name} = {
+                  packages = with pkgs; [realesrgan-ncnn-vulkan];
+                  files = {
+                    ".config/zsh/aliases/esrgan.zsh" = {
+                      text = ''
+                        alias esrgan="realesrgan-ncnn-vulkan -i ${config.user.homeDirectory}/Pictures/Upscale/Input -o ${config.user.homeDirectory}/Pictures/Upscale/Output"
+                      '';
+                      clobber = true;
+                    };
+                  };
+                };
+              })
+            ];
+          }
+        )
 
         # 🔥 OBLITERATED WRAPPER MODULES! 🔥
-
         # Shell modules consolidated into shell.nix
-
         # From modules/home/tools/default.nix (12 lines -> OBLITERATED!)
         # From modules/home/tools/7z.nix (17 lines -> INLINED!)
         ({
