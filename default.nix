@@ -2,6 +2,76 @@ let
   sources = import ./npins;
   system = "x86_64-linux";
 
+  # Constants for consistent configuration
+  constants = {
+    ports = {
+      mediamtx = 4200;
+      minecraft = 25565;
+      rtsp = 8554;
+      rtmp = 1935;
+      hls = 8080;
+      api = 9997;
+    };
+    paths = {
+      steamBase = ".local/share/Steam/steamapps/compatdata";
+      wukong = "2358720/pfx/drive_c/users/steamuser/AppData/Local/b1/Saved/Config/Windows";
+      balatro = "2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro";
+      marvelRivals = "2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows";
+      marvelRivals2 = "2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Saved/Config";
+    };
+    mcpServers = {
+      "Filesystem" = ["npx" "-y" "@modelcontextprotocol/server-filesystem"];
+      "Nixos-MCP" = ["uvx" "mcp-nixos"];
+      "sequential-thinking" = ["npx" "-y" "@modelcontextprotocol/server-sequential-thinking"];
+      "GitHub-Repo-MCP" = ["npx" "-y" "github-repo-mcp"];
+      "Gemini-MCP" = ["npx" "-y" "gemini-mcp-tool"];
+    };
+  };
+
+  # Helper functions for consistent patterns
+  helpers = {
+    # Build home user configuration consistently
+    mkHomeUser = username: config: {
+      hjem.users.${username} = lib.filterAttrs (_: v: v != {}) {
+        packages = config.packages or [];
+        files = config.files or {};
+        services = config.services or {};
+      };
+    };
+
+    # Build Steam game configuration paths
+    mkSteamPath = gamePath: "${constants.paths.steamBase}/${gamePath}";
+
+    # Build gaming configuration files
+    mkGameConfig = gamePath: settings: {
+      "${constants.paths.steamBase}/${gamePath}/Engine.ini" = {
+        clobber = true;
+        text = lib.generators.toINI {} settings;
+      };
+    };
+
+    # Generate MCP server configurations
+    mkMcpServersConfig = homeDirectory: {
+      mcpServers =
+        lib.mapAttrs (name: cmd: {
+          type = "stdio";
+          command = builtins.head cmd;
+          args = (builtins.tail cmd) ++ lib.optional (name == "Filesystem") homeDirectory;
+          env = {};
+        })
+        constants.mcpServers;
+    };
+
+    mkOpencodeMcpServers = homeDirectory:
+      lib.mapAttrs (name: cmd: {
+        type = "local";
+        command = cmd ++ lib.optional (name == "Filesystem") homeDirectory;
+        enabled = true;
+        environment = {};
+      })
+      constants.mcpServers;
+  };
+
   # Consolidated overlays from lib/overlays/
   overlays = [
     # neovim-nightly overlay
@@ -111,6 +181,28 @@ in {
       imports = [
         # Hardware configuration with filesystem definitions
         ./configs/hosts/y0usaf-desktop/hardware-configuration.nix
+        # Configuration validation and assertions
+        ({
+          config,
+          lib,
+          ...
+        }: {
+          assertions = [
+            {
+              assertion = config.user.name != "";
+              message = "user.name must be set to a non-empty string";
+            }
+            {
+              assertion = builtins.all (port: builtins.isInt port) (builtins.attrValues constants.ports);
+              message = "All ports must be integers";
+            }
+            {
+              assertion = builtins.all (user: builtins.hasAttr user userConfigs) users;
+              message = "All system users must have corresponding user configs";
+            }
+          ];
+        })
+
         # Host system configuration (EXACTLY like original lib/default.nix structure)
         # From modules/system/core/system.nix (49 lines -> INLINED!)
         ({
@@ -248,7 +340,7 @@ in {
               config = {
                 networking.firewall = {
                   enable = true;
-                  allowedTCPPorts = [25565];
+                  allowedTCPPorts = [constants.ports.minecraft];
                   allowedUDPPorts = [];
                 };
               };
@@ -344,7 +436,7 @@ in {
               pkgs,
               ...
             }: let
-              port = "4200";
+              port = toString constants.ports.mediamtx;
               localips = builtins.concatLists (
                 builtins.map (iface: builtins.map (addr: addr.address) iface.ipv4.addresses) (
                   builtins.attrValues config.networking.interfaces
@@ -362,13 +454,13 @@ in {
                   enable = true;
                   settings = {
                     api = true;
-                    apiAddress = "127.0.0.1:9997";
+                    apiAddress = "127.0.0.1:${toString constants.ports.api}";
                     rtsp = true;
-                    rtspAddress = ":8554";
+                    rtspAddress = ":${toString constants.ports.rtsp}";
                     rtmp = true;
-                    rtmpAddress = ":1935";
+                    rtmpAddress = ":${toString constants.ports.rtmp}";
                     hls = true;
-                    hlsAddress = ":8080";
+                    hlsAddress = ":${toString constants.ports.hls}";
                     hlsAllowOrigin = "*";
                     webrtc = true;
                     webrtcAddress = ":${port}";
@@ -383,10 +475,10 @@ in {
                 networking.firewall = {
                   allowedTCPPorts = [
                     (lib.toInt port)
-                    8554
-                    1935
-                    8080
-                    9997
+                    constants.ports.rtsp
+                    constants.ports.rtmp
+                    constants.ports.hls
+                    constants.ports.api
                   ];
                   allowedUDPPorts = [
                     (lib.toInt port)
@@ -843,7 +935,7 @@ in {
           config = lib.mkMerge [
             # gaming/core.nix + gaming/shader-cache.nix
             (lib.mkIf cfg.enable {
-              hjem.users.y0usaf = {
+              hjem.users.${config.user.name} = {
                 packages = with pkgs; [
                   steam
                   protonup-qt
@@ -863,14 +955,14 @@ in {
 
             # gaming/controllers.nix
             (lib.mkIf controllersCfg.enable {
-              hjem.users.y0usaf.packages = with pkgs; [
+              hjem.users.${config.user.name}.packages = with pkgs; [
                 dualsensectl
               ];
             })
 
             # emulation/cemu.nix
             (lib.mkIf emuWiiUCfg.enable {
-              hjem.users.y0usaf.packages = [
+              hjem.users.${config.user.name}.packages = [
                 pkgs.cemu
               ];
             })
@@ -884,7 +976,7 @@ in {
 
             # wukong/engine.nix
             (lib.mkIf wukongCfg.enable {
-              hjem.users.y0usaf.files.".local/share/Steam/steamapps/compatdata/2358720/pfx/drive_c/users/steamuser/AppData/Local/b1/Saved/Config/Windows/Engine.ini" = {
+              hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.wukong}/Engine.ini" = {
                 clobber = true;
                 text = lib.generators.toINI {} {
                   "SystemSettings" = {
@@ -932,7 +1024,7 @@ in {
               hjem.users.${config.user.name}.files = lib.mkMerge [
                 # MoreSpeeds mod (inline Lua)
                 (lib.optionalAttrs (lib.elem "morespeeds" balatroCfg.enabledMods) {
-                  ".local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/MoreSpeeds.lua" = {
+                  "${helpers.mkSteamPath constants.paths.balatro}/Mods/MoreSpeeds.lua" = {
                     clobber = true;
                     text = ''
                       --- STEAMODDED HEADER
@@ -1017,7 +1109,7 @@ in {
                 (lib.mapAttrs' (
                     name: mod:
                       lib.nameValuePair
-                      ".local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/${mod.name}"
+                      "${helpers.mkSteamPath constants.paths.balatro}/Mods/${mod.name}"
                       {
                         clobber = true;
                         source = mod.src;
@@ -1036,7 +1128,7 @@ in {
 
             # marvel-rivals/engine.nix
             (lib.mkIf marvelRivalsEngineCfg.enable {
-              hjem.users.${config.user.name}.files.".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/Engine.ini" = {
+              hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.marvelRivals}/Engine.ini" = {
                 clobber = true;
                 text = lib.generators.toINI {} {
                   "SystemSettings" = {
@@ -1172,7 +1264,7 @@ in {
 
             # marvel-rivals/gameusersettings.nix
             (lib.mkIf marvelRivalsGameUserSettingsCfg.enable {
-              hjem.users.${config.user.name}.files.".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Config/Windows/GameUserSettings.ini" = {
+              hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.marvelRivals}/GameUserSettings.ini" = {
                 clobber = true;
                 text = lib.generators.toINI {} {
                   "Internationalization" = {
@@ -1244,11 +1336,11 @@ in {
             # marvel-rivals/marvelusersettings.nix
             (lib.mkIf marvelRivalsMarvelUserSettingsCfg.enable {
               hjem.users.${config.user.name}.files = {
-                ".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Saved/Config/default/MarvelUserSetting.ini" = {
+                "${helpers.mkSteamPath constants.paths.marvelRivals2}/default/MarvelUserSetting.ini" = {
                   clobber = true;
                   text = marvelUserSettingsContent;
                 };
-                ".local/share/Steam/steamapps/compatdata/2767030/pfx/drive_c/users/steamuser/AppData/Local/Marvel/Saved/Saved/Config/current/MarvelUserSetting.ini" = {
+                "${helpers.mkSteamPath constants.paths.marvelRivals2}/current/MarvelUserSetting.ini" = {
                   clobber = true;
                   text = marvelUserSettingsContent;
                 };
@@ -1569,7 +1661,7 @@ in {
                 --toolbarbutton-border-radius: 0;
                 --urlbar-icon-border-radius: 0;
                 backdrop-filter: blur(10px);
-                background-color: transparent \!important;
+                background-color: transparent !important;
             }
                 --toolbarbutton-border-radius: 0;
                 --urlbar-icon-border-radius: 0;
@@ -5568,7 +5660,7 @@ in {
                         }
 
 
-                        output "DP-2" {
+                        output "DP-4" {
 
                             mode "5120x1440@239.761"
 
@@ -7006,100 +7098,91 @@ in {
           }: let
             # AI Instructions content
             aiInstructions = ''
-              You are a pragmatic software engineer who values efficiency and quality. Your "laziness" drives you to:
-              - Write minimal, bulletproof code that won't need fixing later
-              - Use established patterns and tools correctly
-              - Solve the actual problem, not what you think the user wants
-              - Fail fast with clear error messages
+              ```json
+              {
+                "system_context": {
+                  "platform": "NixOS",
+                  "home_manager": "hjem (NOT home-manager)",
+                  "note": "ALWAYS use hjem, never home-manager"
+                },
 
-              **Key Mantras:**
-              - "Do it right the first time or you'll be doing it again"
-              - "The best code is the code you don't have to write"
-              - "If you can't explain it simply, you don't understand it well enough"
+                "assistant_profile": {
+                  "type": "pragmatic_lazy_engineer",
+                  "core_principles": [
+                    "do_it_right_first_time_or_do_again",
+                    "best_code_is_no_code",
+                    "simple_explanation_means_understanding"
+                  ],
+                  "behavior": [
+                    "write_minimal_bulletproof_code",
+                    "use_established_patterns",
+                    "solve_actual_problem_not_assumed",
+                    "fail_fast_with_clear_errors"
+                  ]
+                },
 
-              **NixOS Project Context:**
-              - Uses hjem (NOT home-manager)
-              - Check flake.nix for available inputs
-              - Clone external repos to `tmp/` folder (in gitignore)
-              - Rebuild with `nh os switch` after configuration changes
+                "tool_usage_rules": {
+                  "documentation_lookup": {
+                    "trigger": ["need_documentation", "external_library_info"],
+                    "action": "USE context7_mcp_server"
+                  },
+                  "complex_reasoning": {
+                    "trigger": ["complex_problem", "multi_step_reasoning"],
+                    "action": "USE sequential_thinking_tool"
+                  },
+                  "file_operations": {
+                    "trigger": ["ALL file operations"],
+                    "action": "USE filesystem_mcp_server EXCLUSIVELY",
+                    "forbidden": ["Read", "Write", "Edit", "MultiEdit", "built-in file tools"],
+                    "note": "NEVER use built-in file tools - filesystem MCP only"
+                  }
+                },
 
-              **Build Commands:**
-              ```bash
-              alejandra .
-              nh os switch --dry
-              nh os switch
+                "nixos_workflow": {
+                  "system_changes": [
+                    {
+                      "step": 1,
+                      "command": "alejandra .",
+                      "description": "format first"
+                    },
+                    {
+                      "step": 2,
+                      "command": "nh os switch --dry",
+                      "description": "dry run"
+                    },
+                    {
+                      "step": 3,
+                      "command": "nh os switch",
+                      "description": "apply changes",
+                      "condition": "IF dry_run_successful"
+                    }
+                  ]
+                },
+
+                "backup_policy": {
+                  "rule": "NEVER copy files for backup",
+                  "action": "USE Git instead",
+                  "workflow": [
+                    "git add -A",
+                    "git commit -m 'Professional commit message describing changes'",
+                    "proceed with changes"
+                  ],
+                  "note": "Git is your version control - use professional commit messages"
+                },
+
+                "system_info": {
+                  "home_manager": "hjem (NOT home-manager)",
+                  "external_repos": "clone to tmp/ folder (gitignored)",
+                  "config_source": "check flake.nix for available inputs",
+                  "build_verification": "ALWAYS run dry switch before real switch"
+                }
+              }
               ```
             '';
 
-            # MCP Servers configuration
-            mcpServersConfig = {
-              mcpServers = {
-                "Filesystem" = {
-                  type = "stdio";
-                  command = "npx";
-                  args = ["-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
-                  env = {};
-                };
-                "Nixos MCP" = {
-                  type = "stdio";
-                  command = "uvx";
-                  args = ["mcp-nixos"];
-                  env = {};
-                };
-                "sequential-thinking" = {
-                  type = "stdio";
-                  command = "npx";
-                  args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
-                  env = {};
-                };
-                "GitHub Repo MCP" = {
-                  type = "stdio";
-                  command = "npx";
-                  args = ["-y" "github-repo-mcp"];
-                  env = {};
-                };
-                "Gemini MCP" = {
-                  type = "stdio";
-                  command = "npx";
-                  args = ["-y" "gemini-mcp-tool"];
-                  env = {};
-                };
-              };
-            };
-
-            # OpenCode MCP servers configuration
-            opencodeMcpServers = {
-              "Filesystem" = {
-                type = "local";
-                command = ["npx" "-y" "@modelcontextprotocol/server-filesystem" config.user.homeDirectory];
-                enabled = true;
-                environment = {};
-              };
-              "Nixos-MCP" = {
-                type = "local";
-                command = ["uvx" "mcp-nixos"];
-                enabled = true;
-                environment = {};
-              };
-              "sequential-thinking" = {
-                type = "local";
-                command = ["npx" "-y" "@modelcontextprotocol/server-sequential-thinking"];
-                enabled = true;
-                environment = {};
-              };
-              "GitHub-Repo-MCP" = {
-                type = "local";
-                command = ["npx" "-y" "github-repo-mcp"];
-                enabled = true;
-                environment = {};
-              };
-              "Gemini-MCP" = {
-                type = "local";
-                command = ["npx" "-y" "gemini-mcp-tool"];
-                enabled = true;
-                environment = {};
-              };
-            };
+            # MCP Servers configuration (unified from constants)
+            mcpServersConfig = helpers.mkMcpServersConfig config.user.homeDirectory;
+            opencodeMcpServers = helpers.mkOpencodeMcpServers config.user.homeDirectory;
           in {
             options.home.dev = {
               # Core development tools
