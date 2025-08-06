@@ -1,4 +1,19 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NIXOS SINGLE-FILE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════════
+# Complete NixOS system configuration consolidated into a single file while
+# maintaining clear modular structure for easy navigation and maintenance.
+#
+# TABLE OF CONTENTS:
+# ├─ Foundation (line ~20)      - Sources, constants, helpers
+# ├─ Overlays (line ~100)       - Package overlays and modifications
+# ├─ System Setup (line ~180)   - Packages, user configs, host configs
+# └─ Configuration (line ~200)  - Final nixosConfigurations assembly
+# ═══════════════════════════════════════════════════════════════════════════════
 let
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FOUNDATION - Sources, Constants, and Helper Functions
+  # ═══════════════════════════════════════════════════════════════════════════
   sources = import ./npins;
   system = "x86_64-linux";
 
@@ -72,7 +87,10 @@ let
       constants.mcpServers;
   };
 
-  # Consolidated overlays from lib/overlays/
+  # ═══════════════════════════════════════════════════════════════════════════
+  # OVERLAYS - Package Modifications and Extensions
+  # ═══════════════════════════════════════════════════════════════════════════
+
   overlays = [
     # neovim-nightly overlay
     (import (sources.neovim-nightly-overlay))
@@ -147,7 +165,10 @@ let
     })
   ];
 
-  # Direct pkgs with all overlays
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SYSTEM SETUP - Packages, User Configs, and Host Configuration
+  # ═══════════════════════════════════════════════════════════════════════════
+
   pkgs = import sources.nixpkgs {
     inherit system;
     inherit overlays;
@@ -172,6 +193,10 @@ let
   inherit (hostConfig) users;
   hostUserConfigs = lib.genAttrs users (username: userConfigs.${username});
 in {
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FINAL CONFIGURATION - NixOS System Assembly
+  # ═══════════════════════════════════════════════════════════════════════════
+
   inherit lib;
   formatter.${system} = pkgs.alejandra;
 
