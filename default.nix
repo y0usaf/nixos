@@ -1,23 +1,6 @@
-# ═══════════════════════════════════════════════════════════════════════════════
-# NIXOS SINGLE-FILE CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════
-# Complete NixOS system configuration consolidated into a single file while
-# maintaining clear modular structure for easy navigation and maintenance.
-#
-# TABLE OF CONTENTS:
-# ├─ Foundation (line ~20)      - Sources, constants, helpers
-# ├─ Overlays (line ~100)       - Package overlays and modifications
-# ├─ System Setup (line ~180)   - Packages, user configs, host configs
-# └─ Configuration (line ~200)  - Final nixosConfigurations assembly
-# ═══════════════════════════════════════════════════════════════════════════════
 let
-  # ═══════════════════════════════════════════════════════════════════════════
-  # FOUNDATION - Sources, Constants, and Helper Functions
-  # ═══════════════════════════════════════════════════════════════════════════
   sources = import ./npins;
   system = "x86_64-linux";
-
-  # Constants for consistent configuration
   constants = {
     ports = {
       mediamtx = 4200;
@@ -42,10 +25,7 @@ let
       "Gemini-MCP" = ["npx" "-y" "gemini-mcp-tool"];
     };
   };
-
-  # Helper functions for consistent patterns
   helpers = {
-    # Build home user configuration consistently
     mkHomeUser = username: config: {
       hjem.users.${username} = lib.filterAttrs (_: v: v != {}) {
         packages = config.packages or [];
@@ -53,19 +33,13 @@ let
         services = config.services or {};
       };
     };
-
-    # Build Steam game configuration paths
     mkSteamPath = gamePath: "${constants.paths.steamBase}/${gamePath}";
-
-    # Build gaming configuration files
     mkGameConfig = gamePath: settings: {
       "${constants.paths.steamBase}/${gamePath}/Engine.ini" = {
         clobber = true;
         text = lib.generators.toINI {} settings;
       };
     };
-
-    # Generate MCP server configurations
     mkMcpServersConfig = homeDirectory: {
       mcpServers =
         lib.mapAttrs (name: cmd: {
@@ -76,7 +50,6 @@ let
         })
         constants.mcpServers;
     };
-
     mkOpencodeMcpServers = homeDirectory:
       lib.mapAttrs (name: cmd: {
         type = "local";
@@ -86,22 +59,13 @@ let
       })
       constants.mcpServers;
   };
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # OVERLAYS - Package Modifications and Extensions
-  # ═══════════════════════════════════════════════════════════════════════════
-
   overlays = [
-    # neovim-nightly overlay
     (import (sources.neovim-nightly-overlay))
-
-    # Fast Font overlay (from lib/overlays/fast-fonts.nix)
     (final: _prev: {
       fastFonts = final.stdenvNoCC.mkDerivation {
         pname = "fast-fonts";
         version = "1.0.0";
         src = sources.Fast-Font;
-
         installPhase = ''
           mkdir -p $out/share/fonts/truetype
           install -m444 -Dt $out/share/fonts/truetype *.ttf
@@ -113,7 +77,6 @@ let
             install -m444 -Dt $out/share/doc/fast-fonts README.md
           fi
         '';
-
         meta = with final.lib; {
           description = "Fast Font Collection - TTF fonts";
           longDescription = "Fast Font Collection provides optimized monospace and sans-serif fonts";
@@ -123,11 +86,8 @@ let
         };
       };
     })
-
-    # Lib extensions overlay
     (final: prev: {
       lib = prev.lib.extend (lfinal: lprev: {
-        # User config builder from lib/user-config.nix
         buildUserConfig = {
           username,
           homeDirectory ? "/home/${username}",
@@ -164,11 +124,6 @@ let
       });
     })
   ];
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # SYSTEM SETUP - Packages, User Configs, and Host Configuration
-  # ═══════════════════════════════════════════════════════════════════════════
-
   pkgs = import sources.nixpkgs {
     inherit system;
     inherit overlays;
@@ -177,36 +132,22 @@ let
       cudaSupport = true;
     };
   };
-
   inherit (pkgs) lib;
-
-  # LEGACY allModules structure removed - all functionality consolidated into default.nix!
-
-  # User configurations
   userConfigs = {
     y0usaf = import ./configs/users/y0usaf {inherit pkgs lib;};
     guest = import ./configs/users/guest {inherit pkgs lib;};
   };
-
-  # Host configuration
   hostConfig = import ./configs/hosts/y0usaf-desktop {inherit pkgs;};
   inherit (hostConfig) users;
   hostUserConfigs = lib.genAttrs users (username: userConfigs.${username});
 in {
-  # ═══════════════════════════════════════════════════════════════════════════
-  # FINAL CONFIGURATION - NixOS System Assembly
-  # ═══════════════════════════════════════════════════════════════════════════
-
   inherit lib;
   formatter.${system} = pkgs.alejandra;
-
   nixosConfigurations.y0usaf-desktop = import (sources.nixpkgs + "/nixos") {
     inherit system;
     configuration = {
       imports = [
-        # Hardware configuration with filesystem definitions
         ./configs/hosts/y0usaf-desktop/hardware-configuration.nix
-        # Configuration validation and assertions
         ({
           config,
           lib,
@@ -227,18 +168,12 @@ in {
             }
           ];
         })
-
-        # Host system configuration (EXACTLY like original lib/default.nix structure)
-        # From modules/system/core/system.nix (49 lines -> INLINED!)
         ({
           config,
           lib,
           ...
         }: {
           imports = [
-            # 🔥 SYSTEM MODULES INLINED! 🔥
-            # Boot modules (consolidated from ./boot/default.nix)
-            # kernel.nix (28 lines -> INLINED!)
             ({
               lib,
               pkgs,
@@ -247,7 +182,7 @@ in {
             }: {
               config = {
                 boot = {
-                  kernelPackages = pkgs.linuxPackages_latest; # TODO: Re-enable linuxPackages_cachyos when chaotic is fixed
+                  kernelPackages = pkgs.linuxPackages_latest;
                   kernelModules =
                     [
                       "kvm-amd"
@@ -267,7 +202,6 @@ in {
                 };
               };
             })
-            # loader.nix (14 lines -> INLINED!)
             (_: {
               config = {
                 boot.loader = {
@@ -282,9 +216,6 @@ in {
                 };
               };
             })
-
-            # Core modules (consolidated from ./core/default.nix)
-            # cachix.nix (22 lines -> INLINED!)
             {
               config = {
                 nix.settings = {
@@ -307,7 +238,6 @@ in {
                 };
               };
             }
-            # lix.nix (11 lines -> INLINED!)
             ({
               config,
               lib,
@@ -319,9 +249,7 @@ in {
                 nix.package = pkgs.lix;
               };
             })
-            # nix-ld.nix (3 lines -> INLINED!)
             (_: {config = {programs.nix-ld.enable = true;};})
-            # nix-package-management.nix (28 lines -> INLINED!)
             ({
               config,
               pkgs,
@@ -350,17 +278,12 @@ in {
                 };
               };
             })
-            # nix-tools.nix (9 lines -> INLINED!)
             ({pkgs, ...}: {config = {environment.systemPackages = [pkgs.alejandra pkgs.statix pkgs.deadnix];};})
-            # ollama.nix (7 lines -> INLINED!) - NOW OPTIONAL
             ({
               lib,
               hostSystem,
               ...
             }: {config = {services.ollama = lib.mkIf (hostSystem.services.ollama.enable or false) {enable = true;};};})
-
-            # Networking modules (consolidated from ./networking/default.nix)
-            # firewall.nix (12 lines -> INLINED!)
             (_: {
               config = {
                 networking.firewall = {
@@ -370,9 +293,7 @@ in {
                 };
               };
             })
-            # networkmanager.nix (3 lines -> INLINED!)
             (_: {config = {networking.networkmanager.enable = true;};})
-            # xdg-portal.nix (11 lines -> INLINED!)
             ({pkgs, ...}: {
               config = {
                 xdg.portal = {
@@ -382,9 +303,6 @@ in {
                 };
               };
             })
-
-            # Programs modules (consolidated from ./programs/default.nix)
-            # hyprland.nix (14 lines -> INLINED!)
             ({
               pkgs,
               config,
@@ -394,12 +312,11 @@ in {
                 programs.hyprland = {
                   enable = true;
                   xwayland.enable = true;
-                  package = pkgs.hyprland; # Use nixpkgs version for npins compatibility
+                  package = pkgs.hyprland;
                   portalPackage = pkgs.xdg-desktop-portal-hyprland;
                 };
               };
             })
-            # obs.nix (10 lines -> INLINED!)
             ({config, ...}: {
               boot = {
                 kernelModules = ["v4l2loopback"];
@@ -408,13 +325,8 @@ in {
               };
               security.polkit.enable = true;
             })
-
-            # Security modules (consolidated from ./security/default.nix)
-            # polkit.nix (3 lines -> INLINED!)
             (_: {config = {security.polkit.enable = true;};})
-            # rtkit.nix (3 lines -> INLINED!)
             (_: {config = {security.rtkit.enable = true;};})
-            # sudo.nix (15 lines -> INLINED!)
             ({config, ...}: {
               config = {
                 security.sudo.extraRules = [
@@ -430,9 +342,6 @@ in {
                 ];
               };
             })
-
-            # Services modules (consolidated from ./services/default.nix)
-            # audio.nix (12 lines -> INLINED!)
             (_: {
               config = {
                 services.pipewire = {
@@ -445,7 +354,6 @@ in {
                 };
               };
             })
-            # dbus.nix (11 lines -> INLINED!)
             ({pkgs, ...}: {
               config = {
                 services.dbus = {
@@ -454,7 +362,6 @@ in {
                 };
               };
             })
-            # mediamtx.nix (77 lines -> INLINED!)
             ({
               config,
               lib,
@@ -532,7 +439,6 @@ in {
                 ];
               };
             })
-            # scx.nix (9 lines -> INLINED!)
             ({pkgs, ...}: {
               config = {
                 services.scx = {
@@ -542,9 +448,6 @@ in {
                 };
               };
             })
-
-            # Users modules (consolidated from ./users/default.nix)
-            # accounts.nix (24 lines -> INLINED!)
             ({
               config,
               pkgs,
@@ -554,7 +457,6 @@ in {
             }: {
               config = {
                 users.users = lib.mkMerge [
-                  # Create users for each configured user
                   (lib.genAttrs config.hostSystem.users (username: let
                     userConfig = userConfigs.${username};
                     systemConfig = userConfig.system or {};
@@ -563,21 +465,16 @@ in {
                     shell = pkgs.${systemConfig.shell or "zsh"};
                     extraGroups = systemConfig.extraGroups or ["networkmanager" "video" "audio"];
                     home = systemConfig.homeDirectory or "/home/${username}";
-
                     ignoreShellProgramCheck = true;
                   }))
                 ];
               };
             })
-
-            # Virtualization modules (consolidated from ./virtualization/default.nix)
-            # android.nix (11 lines -> INLINED!)
             ({
               lib,
               hostSystem,
               ...
             }: {config = {virtualisation.waydroid = lib.mkIf (hostSystem.services.waydroid.enable or false) {enable = true;};};})
-            # containers.nix (19 lines -> INLINED!)
             ({
               lib,
               config,
@@ -668,14 +565,12 @@ in {
                 message = "Home directory must be an absolute path";
               }
             ];
-            # Set user configuration from primary user
             user = let
               primaryUser = builtins.head hostConfig.users;
             in {
               name = primaryUser;
               inherit (hostConfig) homeDirectory;
             };
-            # Configure nixpkgs with overlays
             nixpkgs = {
               inherit overlays;
               config = {
@@ -685,29 +580,23 @@ in {
             };
           };
         })
-        # User home configurations via hjem (EXACTLY like original structure)
         ({
           config,
           lib,
           ...
         }: {
           imports = [
-            # Use hjem for home management
             (sources.hjem + "/modules/nixos")
           ];
           config = {
-            # Use proper NixOS module merging
             home = lib.mkMerge (
               lib.mapAttrsToList (
                 _username: userConfig:
-                # Remove system-specific config that doesn't belong in home
                   lib.filterAttrs (name: _: name != "system") userConfig
               )
               hostUserConfigs
             );
-            # Configure hjem for each user
             hjem = {
-              # Use SMFH manifest linker instead of systemd-tmpfiles
               linker = pkgs.callPackage (sources.smfh + "/package.nix") {};
               users = lib.genAttrs users (_username: {
                 packages = [];
@@ -716,7 +605,6 @@ in {
             };
           };
         })
-        # User configuration abstraction (from lib/user-config.nix - 95 lines -> INLINED!)
         ({
           lib,
           config,
@@ -779,12 +667,6 @@ in {
             ];
           };
         })
-        # 🔥 EXPLODED HOME MODULES DIRECTORY - Individual imports for targeted inlining! 🔥
-
-        # UI modules functionality now consolidated in ui.nix
-
-        # 🔥 CONSOLIDATED MODULE IMPORTS! 🔥
-        # From modules/home/gaming.nix (590 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -800,11 +682,7 @@ in {
           marvelRivalsEngineCfg = config.home.gaming.marvel-rivals.engine;
           marvelRivalsGameUserSettingsCfg = config.home.gaming.marvel-rivals.gameusersettings;
           marvelRivalsMarvelUserSettingsCfg = config.home.gaming.marvel-rivals.marvelusersettings;
-
-          # Import npins sources to maintain exact package closure equivalence with original system
           sources = import ./npins;
-
-          # Balatro configuration from gaming/balatro/installation.nix
           balatrroSources = sources;
           availableMods = {
             steamodded = {
@@ -857,33 +735,22 @@ in {
             sha256 = "sha256-KjWSJugIfUOfWHZctEDKWGvNERXDzjW1+Ty5kJtEJlw=";
             stripRoot = false;
           };
-
-          # Marvel Rivals settings content
           marvelUserSettingsContent = ''
             {"MasterVolume": 70, "SoundEffectVolume": 100, "MusicVolume": 0, "VoiceVolume": 100, "UserControl": "{\"0\": \"{\\\"MouseHorizontalSensitivity\\\": 5.0, \\\"MouseVerticalSensitivity\\\": 5.0, \\\"CharControlInputMappings\\\": {\\\"6\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"J\\\"}}, \\\"24\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"B\\\"}}, \\\"36\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"None\\\"}}, \\\"46\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"X\\\"}}, \\\"47\\\": {\\\"PrimaryKey\\\": {\\\"Key\\\": \\\"Z\\\"}}}, \\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}], \\\"HpBarVisibleRule\\\": 1}\", \"1035\": \"{\\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldSprint\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 0, \\\"Key\\\": \\\"WallRunMode\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": \\\"TowardUp\\\"}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldSprint\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 0, \\\"Key\\\": \\\"WallRunMode\\\", \\\"AbilityID\\\": 103501, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": \\\"TowardUp\\\"}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"UseSimpleSwing\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"UseSimpleSwing\\\", \\\"AbilityID\\\": 103551, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}]}\", \"1045\": \"{\\\"AbilityUserSettingList\\\": [{\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104541, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104541, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104542, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"bIsHoldAbility\\\", \\\"AbilityID\\\": 104542, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": false, \\\"bIsDirty\\\": false, \\\"Value\\\": true}, {\\\"SettingType\\\": 1, \\\"Key\\\": \\\"WakandaUp\\\", \\\"AbilityID\\\": 200401, \\\"bIsGamepad\\\": true, \\\"bIsDirty\\\": false, \\\"Value\\\": false}]}\"}";'';
         in {
           options = {
-            # gaming/core.nix
             home.gaming.core = {
               enable = lib.mkEnableOption "core gaming packages";
             };
-
-            # gaming/controllers.nix
             home.gaming.controllers = {
               enable = lib.mkEnableOption "gaming controller support";
             };
-
-            # emulation/cemu.nix
             home.gaming.emulation.wii-u = {
               enable = lib.mkEnableOption "Wii U emulation via Cemu";
             };
-
-            # emulation/dolphin.nix
             home.gaming.emulation.gcn-wii = {
               enable = lib.mkEnableOption "GameCube and Wii emulation via Dolphin";
             };
-
-            # wukong/engine.nix
             home.gaming.wukong = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -891,8 +758,6 @@ in {
                 description = "Enable Black Myth: Wukong configuration";
               };
             };
-
-            # gaming/balatro/installation.nix
             home.gaming.balatro = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -928,8 +793,6 @@ in {
                 '';
               };
             };
-
-            # marvel-rivals/engine.nix
             home.gaming.marvel-rivals.engine = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -937,8 +800,6 @@ in {
                 description = "Enable Marvel Rivals engine configuration";
               };
             };
-
-            # marvel-rivals/gameusersettings.nix
             home.gaming.marvel-rivals.gameusersettings = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -946,8 +807,6 @@ in {
                 description = "Enable Marvel Rivals GameUserSettings.ini configuration";
               };
             };
-
-            # marvel-rivals/marvelusersettings.nix
             home.gaming.marvel-rivals.marvelusersettings = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -956,9 +815,7 @@ in {
               };
             };
           };
-
           config = lib.mkMerge [
-            # gaming/core.nix + gaming/shader-cache.nix
             (lib.mkIf cfg.enable {
               hjem.users.${config.user.name} = {
                 packages = with pkgs; [
@@ -968,7 +825,6 @@ in {
                   protontricks
                   prismlauncher
                 ];
-                # gaming/shader-cache.nix
                 files.".config/steam/steam_dev.cfg" = {
                   text = ''
                     unShaderBackgroundProcessingThreads ${toString config.nix.settings.max-jobs}
@@ -977,29 +833,21 @@ in {
                 };
               };
             })
-
-            # gaming/controllers.nix
             (lib.mkIf controllersCfg.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [
                 dualsensectl
               ];
             })
-
-            # emulation/cemu.nix
             (lib.mkIf emuWiiUCfg.enable {
               hjem.users.${config.user.name}.packages = [
                 pkgs.cemu
               ];
             })
-
-            # emulation/dolphin.nix
             (lib.mkIf emuGcnWiiCfg.enable {
               hjem.users.y0usaf.packages = [
                 pkgs.dolphin-emu
               ];
             })
-
-            # wukong/engine.nix
             (lib.mkIf wukongCfg.enable {
               hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.wukong}/Engine.ini" = {
                 clobber = true;
@@ -1039,15 +887,8 @@ in {
                 };
               };
             })
-
-            # Balatro mod sources as packages (needed for build system)
-            # The sources are already available as derivations through the npins system
-            # and are automatically included in the closure when used in files config
-
-            # gaming/balatro/installation.nix
             (lib.mkIf balatroCfg.enable {
               hjem.users.${config.user.name}.files = lib.mkMerge [
-                # MoreSpeeds mod (inline Lua)
                 (lib.optionalAttrs (lib.elem "morespeeds" balatroCfg.enabledMods) {
                   "${helpers.mkSteamPath constants.paths.balatro}/Mods/MoreSpeeds.lua" = {
                     clobber = true;
@@ -1130,7 +971,6 @@ in {
                     '';
                   };
                 })
-                # Mod installations
                 (lib.mapAttrs' (
                     name: mod:
                       lib.nameValuePair
@@ -1141,7 +981,6 @@ in {
                       }
                   )
                   enabledMods)
-                # Lovely Injector installation
                 (lib.optionalAttrs balatroCfg.enableLovelyInjector {
                   ".local/share/Steam/steamapps/common/Balatro/version.dll" = {
                     clobber = true;
@@ -1150,8 +989,6 @@ in {
                 })
               ];
             })
-
-            # marvel-rivals/engine.nix
             (lib.mkIf marvelRivalsEngineCfg.enable {
               hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.marvelRivals}/Engine.ini" = {
                 clobber = true;
@@ -1286,8 +1123,6 @@ in {
                 };
               };
             })
-
-            # marvel-rivals/gameusersettings.nix
             (lib.mkIf marvelRivalsGameUserSettingsCfg.enable {
               hjem.users.${config.user.name}.files."${helpers.mkSteamPath constants.paths.marvelRivals}/GameUserSettings.ini" = {
                 clobber = true;
@@ -1357,8 +1192,6 @@ in {
                 };
               };
             })
-
-            # marvel-rivals/marvelusersettings.nix
             (lib.mkIf marvelRivalsMarvelUserSettingsCfg.enable {
               hjem.users.${config.user.name}.files = {
                 "${helpers.mkSteamPath constants.paths.marvelRivals2}/default/MarvelUserSetting.ini" = {
@@ -1373,7 +1206,6 @@ in {
             })
           ];
         })
-        # From modules/home/programs.nix (891 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -1385,14 +1217,11 @@ in {
           firefoxConfig = config.home.programs.firefox;
           androidConfig = config.home.programs.android;
           username = config.user.name;
-
           nvidiaCudaEnabled = hostSystem.hardware.nvidia.enable && (hostSystem.hardware.nvidia.cuda.enable or false);
           obsPackage =
             if nvidiaCudaEnabled
             then pkgs.obs-studio.override {cudaSupport = true;}
             else pkgs.obs-studio;
-
-          # Firefox configuration data
           firefoxCommonSettings = {
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
             "gfx.webrender.all" =
@@ -1430,7 +1259,6 @@ in {
             "dom.webcomponents.enabled" = true;
             "layout.css.shadow-parts.enabled" = true;
           };
-
           firefoxUserJs = lib.concatStringsSep "\n" (
             lib.mapAttrsToList (
               key: value: let
@@ -1451,7 +1279,6 @@ in {
             )
             firefoxCommonSettings
           );
-
           firefoxPolicies = builtins.toJSON {
             policies = {
               DisableTelemetry = true;
@@ -1468,7 +1295,6 @@ in {
               };
             };
           };
-
           firefoxUserChrome = ''
             /* Disable all animations */
             * {
@@ -1694,42 +1520,31 @@ in {
           '';
         in {
           options = {
-            # programs/obs.nix (28 lines -> INLINED\!)
             home.programs.obs = {
               enable = lib.mkEnableOption "OBS Studio";
             };
-            # programs/firefox/* (5 files -> CONSOLIDATED\!)
             home.programs.firefox = {
               enable = lib.mkEnableOption "Firefox browser with optimized settings";
             };
-            # programs/android.nix (50 lines -> INLINED\!)
             home.programs.android = {
               enable = lib.mkEnableOption "android tools and waydroid";
             };
-            # Missing options that were removed during consolidation - adding back for compatibility
             home.programs.discord = {
               enable = lib.mkEnableOption "Discord communication";
             };
             home.programs.obsidian = {
               enable = lib.mkEnableOption "Obsidian note-taking app";
             };
-            # vesktop already inlined in default.nix
             home.programs.webapps = {
               enable = lib.mkEnableOption "Web applications";
             };
             home.programs.sway-launcher-desktop = {
               enable = lib.mkEnableOption "Sway launcher desktop";
             };
-            # imv already inlined in default.nix
-            # mpv already inlined in default.nix
-            # pcmanfm already inlined in default.nix
-            # qbittorrent already inlined in default.nix
-            # stremio already inlined in default.nix
             home.programs.bambu = {
               enable = lib.mkEnableOption "Bambu tools";
             };
           };
-
           config = lib.mkMerge [
             (lib.mkIf obsConfig.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [
@@ -1737,7 +1552,6 @@ in {
                 obs-studio-plugins.obs-backgroundremoval
                 obs-studio-plugins.obs-vkcapture
                 obs-studio-plugins.obs-pipewire-audio-capture
-                # inputs.obs-image-reaction.packages.${pkgs.system}.default # TODO: Fix for npins
                 v4l-utils
               ];
             })
@@ -1822,10 +1636,8 @@ in {
                 };
               };
             })
-            # Basic implementations for missing options - add packages when enabled
             (lib.mkIf config.home.programs.discord.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [
-                # Use discord-canary as specified in user defaults, with vencord integration
                 (discord-canary.override {
                   withOpenASAR = true;
                   withVencord = true;
@@ -1835,7 +1647,6 @@ in {
             (lib.mkIf config.home.programs.obsidian.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [obsidian];
             })
-            # vesktop config already inlined in default.nix
             (lib.mkIf config.home.programs.webapps.enable {
               hjem.users.${config.user.name} = {
                 packages = with pkgs; [
@@ -1878,19 +1689,12 @@ in {
                   clobber = true;
                   executable = true;
                   text = ''
-                    #!/usr/bin/env bash
-                    # terminal application launcher for sway, using fzf
-                    # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
-                    # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
                     shopt -s nullglob globstar
                     set -o pipefail
-                    # Ensure file descriptor 3 is available for debug output
                     exec 3>/dev/null 2>/dev/null || true
-                    # shellcheck disable=SC2154
                     trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
                     IFS=$'\n\t'
                     DEL=$'\34'
-
                     FZF_COMMAND="''${FZF_COMMAND:=fzf}"
                     TERMINAL_COMMAND="''${TERMINAL_COMMAND:="$TERMINAL -e"}"
                     GLYPH_COMMAND="''${GLYPH_COMMAND-  }"
@@ -1898,15 +1702,11 @@ in {
                     CONFIG_DIR="''${XDG_CONFIG_HOME:-${config.user.homeDirectory}/.config}/sway-launcher-desktop"
                     PROVIDERS_FILE="''${PROVIDERS_FILE:=providers.conf}"
                     if [[ "''${PROVIDERS_FILE#/}" == "''${PROVIDERS_FILE}" ]]; then
-                      # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
                       PROVIDERS_FILE="''${CONFIG_DIR}/''${PROVIDERS_FILE}"
                     fi
                     if [[ ! -v PREVIEW_WINDOW ]]; then
                         PREVIEW_WINDOW=up:2:noborder
                     fi
-
-                    # Provider config entries are separated by the field separator \034 and have the following structure:
-                    # list_cmd,preview_cmd,launch_cmd,purge_cmd
                     declare -A PROVIDERS
                     if [ -f "''${PROVIDERS_FILE}" ]; then
                       eval "$(awk -F= '
@@ -1935,17 +1735,13 @@ in {
                         HIST_FILE="''${XDG_CACHE_HOME:-${config.user.homeDirectory}/.cache}/''${0##*/}-history.txt"
                       fi
                     fi
-                    PROVIDERS['user']="exit''${DEL}exit''${DEL}{1}" # Fallback provider that simply executes the exact command if there were no matches
-
+                    PROVIDERS['user']="exit''${DEL}exit''${DEL}{1}"
                     if [[ -n "''${HIST_FILE}" ]]; then
                       mkdir -p "''${HIST_FILE%/*}" && touch "$HIST_FILE"
                       readarray HIST_LINES <"$HIST_FILE"
                     fi
-
                     function describe() {
-                      # shellcheck disable=SC2086
                       readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[''${1}]}
-                      # shellcheck disable=SC2086
                       [ -n "''${PROVIDER_ARGS[1]}" ] && eval "''${PROVIDER_ARGS[1]//\\{1\\}/''${2}}"
                     }
                     function describe-desktop() {
@@ -1960,9 +1756,7 @@ in {
                       echo -e "\033[33m''${1}\033[0m"
                       echo "''${description:-No description}"
                     }
-
                     function provide() {
-                      # shellcheck disable=SC2086
                       readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[$1]}
                       eval "''${PROVIDER_ARGS[0]}"
                     }
@@ -1974,8 +1768,6 @@ in {
                       done | sort -u
                     }
                     function list-entries() {
-                      # Get locations of desktop application folders according to spec
-                      # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
                       IFS=':' read -ra DIRS <<<"''${XDG_DATA_HOME-${config.user.homeDirectory}/.local/share}:''${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
                       for i in "''${!DIRS[@]}"; do
                         if [[ ! -d "''${DIRS[i]}" ]]; then
@@ -1984,12 +1776,9 @@ in {
                           DIRS[$i]="''${DIRS[i]}/applications/**/*.desktop"
                         fi
                       done
-
-                      # shellcheck disable=SC2068
                       entries ''${DIRS[@]} | sort -k2
                     }
                     function entries() {
-                      # shellcheck disable=SC2068
                       awk -v pre="$GLYPH_DESKTOP" -F= '
                         function desktopFileID(filename){
                           sub("^.*applications/", "", filename);
@@ -2001,7 +1790,6 @@ in {
                           hidden=0;
                           block="";
                           a=0
-
                           id=desktopFileID(FILENAME)
                           if(id in fileIds){
                             nextfile;
@@ -2038,7 +1826,6 @@ in {
                           }
                         }' \
                         $@ </dev/null
-                      # the empty stdin is needed in case no *.desktop files
                     }
                     function run-desktop() {
                       CMD="$("''${0}" generate-command "$@" 2>&3)"
@@ -2046,17 +1833,11 @@ in {
                       eval "''${CMD}"
                     }
                     function generate-command() {
-                      # Define the search pattern that specifies the block to search for within the .desktop file
                       PATTERN="^\\\\[Desktop Entry\\\\]"
                       if [[ -n $2 ]]; then
                         PATTERN="^\\\\[Desktop Action ''${2}\\\\]"
                       fi
                       echo "Searching for pattern: ''${PATTERN}" >&3
-                      # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
-                      # 2. We see the specified pattern: start search
-                      # 3. We see an Exec= line during search: remove field codes and set variable
-                      # 3. We see a Path= line during search: set variable
-                      # 4. Finally, build command line
                       awk -v pattern="''${PATTERN}" -v terminal_cmd="''${TERMINAL_COMMAND}" -F= '
                         BEGIN{a=0;exec=0;path=0}
                            /^\[Desktop/{
@@ -2084,7 +1865,6 @@ in {
                           print exec
                         }' "$1"
                     }
-
                     function shouldAutostart() {
                         local condition="$(cat $1 | grep "AutostartCondition" | cut -d'=' -f2)"
                         local filename="''${XDG_CONFIG_HOME-${config.user.homeDirectory}/.config}/''${condition#* }"
@@ -2100,7 +1880,6 @@ in {
                                 ;;
                         esac
                     }
-
                     function autostart() {
                       for application in $(list-autostart); do
                           if shouldAutostart "$application" ; then
@@ -2108,10 +1887,7 @@ in {
                           fi
                       done
                     }
-
                     function list-autostart() {
-                      # Get locations of desktop application folders according to spec
-                      # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
                       IFS=':' read -ra DIRS <<<"''${XDG_CONFIG_HOME-${config.user.homeDirectory}/.config}:''${XDG_CONFIG_DIRS-/etc/xdg}"
                       for i in "''${!DIRS[@]}"; do
                         if [[ ! -d "''${DIRS[i]}" ]]; then
@@ -2120,8 +1896,6 @@ in {
                           DIRS[$i]="''${DIRS[i]}/autostart/*.desktop"
                         fi
                       done
-
-                      # shellcheck disable=SC2068
                       awk -v pre="$GLYPH_DESKTOP" -F= '
                         function desktopFileID(filename){
                           sub("^.*autostart/", "", filename);
@@ -2133,7 +1907,6 @@ in {
                           block="";
                           disabled=0;
                           a=0
-
                           id=desktopFileID(FILENAME)
                           if(id in fileIds){
                             nextfile;
@@ -2152,9 +1925,7 @@ in {
                         }' \
                         ''${DIRS[@]} </dev/null
                     }
-
                     purge() {
-                     # shellcheck disable=SC2188
                      > "''${HIST_FILE}"
                      declare -A PURGE_CMDS
                      for PROVIDER_NAME in "''${!PROVIDERS[@]}"; do
@@ -2167,13 +1938,12 @@ in {
                         readarray -td $'\034' HIST_ENTRY <<<''${HIST_LINE}
                         ENTRY=''${HIST_ENTRY[1]}
                         readarray -td ' ' FILTER <<<''${PURGE_CMDS[$ENTRY]//\{1\}/''${HIST_ENTRY[0]}}
-                        (eval "''${FILTER[@]}" 1>/dev/null) # Run filter command discarding output. We only want the exit status
+                        (eval "''${FILTER[@]}" 1>/dev/null)
                         if [[ $? -ne 43 ]]; then
                           echo "1 ''${HIST_LINE[@]%$'\n'}" >> "''${HIST_FILE}"
                         fi
                       done
                     }
-
                     case "$1" in
                     describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide | purge)
                       "$@"
@@ -2181,19 +1951,13 @@ in {
                       ;;
                     esac
                     echo "Starting launcher instance with the following providers:" "''${!PROVIDERS[@]}" >&3
-
                     FZFPIPE=$(mktemp -u)
                     mkfifo "$FZFPIPE"
                     trap 'rm "$FZFPIPE"' EXIT INT
-
-                    # Append Launcher History, removing usage count
                     (printf '%s' "''${HIST_LINES[@]#* }" >>"$FZFPIPE") &
-
-                    # Iterate over providers and run their list-command
                     for PROVIDER_NAME in "''${!PROVIDERS[@]}"; do
                       (bash -c "''${0} provide ''${PROVIDER_NAME}" >>"$FZFPIPE") &
                     done
-
                     readarray -t COMMAND_STR <<<$(
                       ''${FZF_COMMAND} --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
                         --print-query \
@@ -2205,20 +1969,13 @@ in {
                         --color='16,gutter:-1' \
                         <"$FZFPIPE"
                     ) || exit 1
-                    # Get the last line of the fzf output. If there were no matches, it contains the query which we'll treat as a custom command
-                    # If there were matches, it contains the selected item
                     COMMAND_STR=$(printf '%s\n' "''${COMMAND_STR[@]: -1}")
-                    # We still need to format the query to conform to our fallback provider.
-                    # We check for the presence of field separator character to determine if we're dealing with a custom command
                     if [[ $COMMAND_STR != *$'\034'* ]]; then
                         COMMAND_STR="''${COMMAND_STR}"$'\034user\034'"''${COMMAND_STR}"$'\034'
-                        SKIP_HIST=1 # I chose not to include custom commands in the history. If this is a bad idea, open an issue please
+                        SKIP_HIST=1
                     fi
-
                     [ -z "$COMMAND_STR" ] && exit 1
-
                     if [[ -n "''${HIST_FILE}" && ! "$SKIP_HIST" ]]; then
-                      # update history
                       for i in "''${!HIST_LINES[@]}"; do
                         if [[ "''${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
                           HIST_COUNT=''${HIST_LINES[i]%% *}
@@ -2230,19 +1987,13 @@ in {
                       if ! ((match)); then
                         HIST_LINES+=("1 $COMMAND_STR"$'\n')
                       fi
-
                       printf '%s' "''${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
                     fi
-
-                    # shellcheck disable=SC2086
                     readarray -d $'\034' -t PARAMS <<<''${COMMAND_STR}
-                    # shellcheck disable=SC2086
                     readarray -d ''${DEL} -t PROVIDER_ARGS <<<''${PROVIDERS[''${PARAMS[1]}]}
-                    # Substitute {1}, {2} etc with the correct values
                     COMMAND=''${PROVIDER_ARGS[2]//\{1\}/''${PARAMS[0]}}
                     COMMAND=''${COMMAND//\{2\}/''${PARAMS[3]}}
                     COMMAND=''${COMMAND%%[[:space:]]}
-
                     if [ -t 1 ]; then
                       echo "Launching command: ''${COMMAND}" >&3
                       setsid /bin/sh -c "''${COMMAND}" >&/dev/null </dev/null &
@@ -2254,17 +2005,11 @@ in {
                 };
               };
             })
-            # imv config already inlined in default.nix
-            # mpv config already inlined in default.nix
-            # pcmanfm config already inlined in default.nix
-            # qbittorrent config already inlined in default.nix
-            # stremio config already inlined in default.nix
             (lib.mkIf config.home.programs.bambu.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [bambu-studio];
             })
           ];
         })
-        # From modules/home/services.nix (348 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -2278,18 +2023,14 @@ in {
           syncthingCfg = config.home.services.syncthing;
           nixosGitSyncCfg = config.home.services.nixosGitSync;
           hyprlandConfigWatcherCfg = config.home.services.hyprlandConfigWatcher;
-
           formatScript = pkgs.writeShellScript "format-nix-watcher" ''
             set -e
             WATCH_DIR="${formatNixCfg.watchDirectory}"
             cd "$WATCH_DIR"
-
             echo "Starting Nix file watcher on $WATCH_DIR..."
-
             ${pkgs.inotify-tools}/bin/inotifywait -m -r -e modify,create,move \
               --include='.*\.nix$' \
               "$WATCH_DIR" | while read path action file; do
-
               if [[ "$file" =~ \.nix$ ]]; then
                 echo "Detected $action on $file, formatting..."
                 ${pkgs.alejandra}/bin/alejandra "$path$file"
@@ -2299,15 +2040,12 @@ in {
           '';
         in {
           options = {
-            # services/polkit-agent.nix (27 lines -> INLINED\!)
             home.services.polkitAgent = {
               enable = lib.mkEnableOption "polkit authentication agent";
             };
-            # services/polkit-gnome.nix (27 lines -> INLINED\!)
             home.services.polkitGnome = {
               enable = lib.mkEnableOption "polkit GNOME authentication agent";
             };
-            # services/format-nix.nix (47 lines -> INLINED\!)
             home.services.formatNix = {
               enable = lib.mkEnableOption "automatic Nix file formatting with alejandra";
               watchDirectory = lib.mkOption {
@@ -2316,15 +2054,12 @@ in {
                 description = "Directory to watch for Nix file changes";
               };
             };
-            # services/ssh.nix (49 lines -> INLINED\!)
             home.services.ssh = {
               enable = lib.mkEnableOption "SSH configuration module";
             };
-            # services/syncthing.nix (58 lines -> INLINED\!)
             home.services.syncthing = {
               enable = lib.mkEnableOption "Syncthing service";
             };
-            # services/nixos-git-sync.nix (56 lines -> INLINED\!)
             home.services.nixosGitSync = {
               enable = lib.mkEnableOption "NixOS configuration git sync service";
               repoPath = lib.mkOption {
@@ -2338,7 +2073,6 @@ in {
                 description = "Remote branch to push to";
               };
             };
-            # services/hyprland-config-watcher.nix (129 lines -> INLINED\!)
             home.services.hyprlandConfigWatcher = {
               enable = lib.mkOption {
                 type = lib.types.bool;
@@ -2362,7 +2096,6 @@ in {
               };
             };
           };
-
           config = lib.mkMerge [
             (lib.mkIf polkitAgentCfg.enable {
               hjem.users.${config.user.name}.packages = [pkgs.polkit_gnome];
@@ -2612,7 +2345,6 @@ in {
             })
           ];
         })
-        # From modules/home/shell.nix (379 lines -> INLINED!)
         ({
           config,
           lib,
@@ -2624,8 +2356,6 @@ in {
           zshCfg = config.home.shell.zsh;
           zellijCfg = config.home.shell.zellij;
           inherit (config.user) name homeDirectory nixosConfigDirectory tokensDirectory;
-
-          # Zellij IDE layout configuration
           ideLayout = ''
             layout {
                 cwd "${config.user.homeDirectory}"
@@ -2648,7 +2378,6 @@ in {
                 }
             }
           '';
-
           zshConfig = {
             cat-fetch = true;
             history-memory = 10000;
@@ -2660,19 +2389,15 @@ in {
           };
         in {
           options = {
-            # shell/cat-fetch.nix (28 lines -> INLINED\!)
             home.shell.cat-fetch = {
               enable = lib.mkEnableOption "cat fetch display on shell startup";
             };
-            # shell/aliases.nix (89 lines -> INLINED\!)
             home.shell.aliases = {
               enable = lib.mkEnableOption "Enable base aliases";
             };
-            # shell/zsh.nix (175 lines -> INLINED\!)
             home.shell.zsh = {
               enable = lib.mkEnableOption "zsh shell configuration";
             };
-            # shell/zellij.nix + zellij-ide.nix -> INLINED\!
             home.shell.zellij = {
               enable = lib.mkEnableOption "zellij terminal multiplexer";
               autoStart = lib.mkOption {
@@ -2689,9 +2414,7 @@ in {
               };
             };
           };
-
           config = lib.mkMerge [
-            # cat-fetch configuration moved to main zshrc to prevent conflicts
             (lib.mkIf aliasesCfg.enable {
               hjem.users.${name}.files = {
                 ".config/zsh/aliases/android.zsh" = {
@@ -2748,25 +2471,18 @@ in {
                       tokenFunctionScript = ''
                         export_vars_from_files() {
                             local dir_path=$1
-                            # Skip opencode-related API keys to prefer oauth
                             local skip_for_opencode=("ANTHROPIC_API_KEY" "OPENAI_API_KEY")
-
                             for file_path in "$dir_path"/*.txt; do
                                 if [[ -f $file_path ]]; then
                                     var_name=$(basename "$file_path" .txt)
-
-                                    # Skip API keys that conflict with opencode oauth
                                     if [[ " ''${skip_for_opencode[@]} " =~ " $var_name " ]]; then
                                         continue
                                     fi
-
                                     export $var_name=$(cat "$file_path")
                                 fi
                             done
                         }
                         export_vars_from_files "${tokensDirectory}"
-
-                        # Set default applications
                         export TERMINAL="${config.home.core.defaults.terminal}"
                         export BROWSER="${config.home.core.defaults.browser}"
                         export EDITOR="${config.home.core.defaults.editor}"
@@ -2791,16 +2507,12 @@ in {
                   };
                   ".config/zsh/.zshrc" = {
                     text = ''
-                      # Set default applications
                       export TERMINAL="${config.home.core.defaults.terminal}"
                       export BROWSER="${config.home.core.defaults.browser}"
                       export EDITOR="${config.home.core.defaults.editor}"
-
-                      # Source all files in the aliases directory
                       for alias_file in ''${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/aliases/*.zsh; do
                         source "$alias_file"
                       done
-
                       HISTSIZE=${toString zshConfig.history-memory}
                       SAVEHIST=${toString zshConfig.history-storage}
                        HISTFILE="${homeDirectory}/.local/state/zsh/history"
@@ -2811,7 +2523,7 @@ in {
                       setopt SHARE_HISTORY
                       setopt EXTENDED_HISTORY
                       ${lib.optionalString zshConfig.enableFancyPrompt ''
-                        PS1='%F{blue}%~ %(?.%F{green}.%F{red})%#%f '
+                        PS1='%F{blue}%~ %(?.%F{green}.%F{red})%# %f'
                       ''}
                       zstyle ':completion:*' menu select
                       zstyle ':completion:*' matcher-list \
@@ -2845,8 +2557,6 @@ in {
                           shift
                           nix run "nixpkgs#$pkg" -- "$@"
                       }
-
-                      # Cat-fetch display (consolidated from cat-fetch module)
                       ${lib.optionalString config.home.shell.cat-fetch.enable ''
                         print_cats() {
                             echo -e "\033[0;31m ⟋|､      \033[0;34m  ⟋|､      \033[0;35m  ⟋|､      \033[0;32m  ⟋|､
@@ -2857,8 +2567,6 @@ in {
                         }
                         print_cats
                       ''}
-
-                      # Zellij auto-start and aliases (consolidated from zellij module)
                       ${lib.optionalString (config.home.shell.zellij.enable && config.home.shell.zellij.autoStart) ''
                         if [[ -z "$ZELLIJ" && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" && -z "$NVIM" ]]; then
                             exec zellij
@@ -2867,8 +2575,6 @@ in {
                       ${lib.optionalString config.home.shell.zellij.enable ''
                         alias ide='zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl'
                       ''}
-
-                      # Tool aliases consolidated from tools.nix to prevent conflicts
                       ${lib.optionalString config.home.tools.spotdl.enable ''
                         alias spotm4a="uvx spotdl --format m4a --output '{title}'"
                         alias spotmp3="uvx spotdl --format mp3 --output '{title}'"
@@ -2985,13 +2691,11 @@ in {
                       simplified_ui true
                     '';
                   };
-                  # zellij zshrc configuration moved to main zshrc to prevent conflicts
                 };
               };
             })
           ];
         })
-        # From modules/home/tools.nix (312 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -3006,15 +2710,12 @@ in {
           npinsCfg = config.home.tools.npins-build;
         in {
           options = {
-            # tools/spotdl.nix (28 lines -> INLINED\!)
             home.tools.spotdl = {
               enable = lib.mkEnableOption "SpotDL music downloading tools";
             };
-            # tools/yt-dlp.nix (35 lines -> INLINED\!)
             home.tools.yt-dlp = {
               enable = lib.mkEnableOption "YouTube-DLP media conversion tools";
             };
-            # tools/nh.nix (46 lines -> INLINED\!)
             home.tools.nh = {
               enable = lib.mkEnableOption "nh (Nix Helper) shell integration";
               flake = lib.mkOption {
@@ -3028,7 +2729,6 @@ in {
                 '';
               };
             };
-            # tools/jj.nix (83 lines -> INLINED\!)
             home.tools.jj = {
               enable = lib.mkEnableOption "jujutsu version control system";
               name = lib.mkOption {
@@ -3050,7 +2750,6 @@ in {
                 description = "Enable common jujutsu aliases.";
               };
             };
-            # tools/git.nix -> INLINED\!
             home.tools.git = {
               enable = lib.mkEnableOption "git configuration";
               name = lib.mkOption {
@@ -3074,19 +2773,16 @@ in {
                 };
               };
             };
-            # tools/npins-build.nix -> INLINED\!
             home.tools.npins-build = {
               enable = lib.mkEnableOption "npins-build helper script";
             };
           };
-
           config = lib.mkMerge [
             (lib.mkIf spotdlCfg.enable {
               hjem.users.${config.user.name} = {
                 packages = with pkgs; [
                   ffmpeg
                 ];
-                # zsh aliases moved to shell.nix to prevent conflicts
               };
             })
             (lib.mkIf ytdlpCfg.enable {
@@ -3095,7 +2791,6 @@ in {
                   yt-dlp-light
                   ffmpeg
                 ];
-                # zsh aliases moved to shell.nix to prevent conflicts
               };
             })
             (lib.mkIf nhCfg.enable {
@@ -3103,7 +2798,6 @@ in {
                 packages = with pkgs; [
                   nh
                 ];
-                # zsh aliases moved to shell.nix to prevent conflicts
               };
             })
             (lib.mkIf jjCfg.enable {
@@ -3147,7 +2841,6 @@ in {
                     clobber = true;
                   };
                 };
-                # zsh aliases moved to shell.nix to prevent conflicts
               };
             })
             (lib.mkIf gitCfg.enable {
@@ -3157,7 +2850,6 @@ in {
                   ".local/share/bin/nixos-git-sync" = {
                     executable = true;
                     text = ''
-                              #!/usr/bin/env bash
                               set -x
                               sleep 2
                               REPO_PATH="${config.user.nixosConfigDirectory}"
@@ -3184,11 +2876,9 @@ in {
                   ".local/share/bin/setup-nixos-repo" = {
                     executable = true;
                     text = ''
-                      #!/usr/bin/env bash
                       set -e
                       REPO_DIR="${config.user.nixosConfigDirectory}"
                       REPO_URL="${gitCfg.nixos-git-sync.nixosRepoUrl}"
-
                       if [ ! -d "$REPO_DIR" ]; then
                         echo "Setting up NixOS repository at $REPO_DIR"
                         git clone "$REPO_URL" "$REPO_DIR"
@@ -3199,7 +2889,6 @@ in {
                         git remote set-url origin "$REPO_URL"
                         git pull origin ${gitCfg.nixos-git-sync.remoteBranch} || true
                       fi
-
                       echo "Repository setup complete"
                     '';
                     clobber = true;
@@ -3266,7 +2955,6 @@ in {
             })
             (lib.mkIf npinsCfg.enable {
               hjem.users.${config.user.name}.packages = with pkgs; [npins];
-              # npins-build function moved to shell.nix to prevent conflicts
             })
             (lib.mkIf gitCfg.nixos-git-sync.enable {
               systemd.user.services."nixos-git-sync" = {
@@ -3303,8 +2991,6 @@ in {
             })
           ];
         })
-        # From modules/home/ui.nix (1666 lines -> INLINED\!)
-
         (
           {
             config,
@@ -3314,400 +3000,210 @@ in {
             hostSystem,
             ...
           }: let
-            # Main UI component options
             agsCfg = config.home.ui.ags;
-
             cursorCfg = config.home.ui.cursor;
-
             fontsCfg = config.home.ui.fonts;
-
             footCfg = config.home.ui.foot;
-
             gtkCfg = config.home.ui.gtk;
-
             hyprlandCfg = config.home.ui.hyprland;
-
             makoCfg = config.home.ui.mako;
-
             niriCfg = config.home.ui.niri;
-
             qutebrowserCfg = config.home.ui.qutebrowser;
-
             wallustCfg = config.home.ui.wallust;
-
             quickshellCfg = config.home.ui.quickshell;
-
             waylandCfg = config.home.ui.wayland;
-
             username = config.user.name;
-
             inherit (config.home.core) defaults;
-
-            # Cursor configuration
-
             hyprThemeName = "DeepinDarkV20-hypr";
-
             x11ThemeName = "DeepinDarkV20-x11";
-
             hyprcursorPackage = pkgs.phinger-cursors;
-
             xcursorPackage = pkgs.phinger-cursors;
-
-            # Font configuration
-
             mainFontPackages = map (x: x.package) config.home.core.appearance.fonts.main;
-
             mainFontNames = map (x: x.name) config.home.core.appearance.fonts.main;
-
             fallbackPackages = map (x: x.package) config.home.core.appearance.fonts.fallback;
-
             fallbackNames = map (x: x.name) config.home.core.appearance.fonts.fallback;
-
             fontXmlConfig = ''
-
               <?xml version="1.0"?>
-
               <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-
               <fontconfig>
-
                 <!-- Disable all fonts by default -->
-
                 <selectfont>
-
                   <rejectfont>
-
                     <pattern>
-
                       <patelt name="family">
-
                         <string>*</string>
-
                       </patelt>
-
                     </pattern>
-
                   </rejectfont>
-
                 </selectfont>
-
                 <!-- Explicitly enable only our chosen fonts -->
-
                 <selectfont>
-
                   <acceptfont>
-
                     <pattern>
-
                       <patelt name="family">
-
                         <string>${builtins.elemAt mainFontNames 0}</string>
-
                       </patelt>
-
                     </pattern>
-
                     ${lib.concatMapStrings (name: ''
-
                   <pattern>
-
                     <patelt name="family">
-
                       <string>${name}</string>
-
                     </patelt>
-
                   </pattern>
-
                 '')
                 fallbackNames}
-
                   </acceptfont>
-
                 </selectfont>
-
                 <!-- Set main font as default -->
-
                 <match>
-
                   <test name="family">
-
                     <string>*</string>
-
                   </test>
-
                   <edit name="family" mode="prepend">
-
                     <string>${builtins.elemAt mainFontNames 0}</string>
-
                   </edit>
-
                 </match>
-
                 <!-- Fallback font configuration -->
-
                 <alias>
-
                   <family>monospace</family>
-
                   <prefer>
-
                     <family>${builtins.elemAt mainFontNames 0}</family>
-
                     ${lib.concatMapStrings (name: "<family>${name}</family>") fallbackNames}
-
                   </prefer>
-
                 </alias>
-
                 <!-- Font rendering options -->
-
                 <match target="font">
-
                   <edit name="antialias" mode="assign"><bool>true</bool></edit>
-
                   <edit name="hinting" mode="assign"><bool>true</bool></edit>
-
                   <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
-
                   <edit name="rgba" mode="assign"><const>rgb</const></edit>
-
                   <edit name="autohint" mode="assign"><bool>true</bool></edit>
-
                   <edit name="lcdfilter" mode="assign"><const>lcdlight</const></edit>
-
                   <edit name="dpi" mode="assign"><double>${toString config.home.core.appearance.dpi}</double></edit>
-
                 </match>
-
               </fontconfig>
-
             '';
-
-            # Foot terminal configuration
-
             computedFontSize = toString (config.home.core.appearance.baseFontSize * 1.33);
-
             mainFontName = (builtins.elemAt config.home.core.appearance.fonts.main 0).name;
-
             fallbackFontNames = map (x: x.name) config.home.core.appearance.fonts.fallback;
-
             mainFontConfig =
               "${mainFontName}:size=${computedFontSize}, "
               + lib.concatStringsSep ", " (map (name: "${name}:size=${computedFontSize}") fallbackFontNames);
-
             footConfig = {
               main = {
                 term = "xterm-256color";
-
                 font = mainFontConfig;
-
                 dpi-aware = "yes";
               };
-
               cursor = {
                 style = "underline";
-
                 blink = "no";
               };
-
               mouse = {
                 hide-when-typing = "no";
-
                 alternate-scroll-mode = "yes";
               };
-
               colors = {
                 alpha = 0;
-
                 background = "000000";
-
                 foreground = "ffffff";
-
                 regular0 = "000000";
-
                 regular1 = "ff0000";
-
                 regular2 = "00ff00";
-
                 regular3 = "ffff00";
-
                 regular4 = "1e90ff";
-
                 regular5 = "ff00ff";
-
                 regular6 = "00ffff";
-
                 regular7 = "ffffff";
-
                 bright0 = "808080";
-
                 bright1 = "ff0000";
-
                 bright2 = "00ff00";
-
                 bright3 = "ffff00";
-
                 bright4 = "1e90ff";
-
                 bright5 = "ff00ff";
-
                 bright6 = "00ffff";
-
                 bright7 = "ffffff";
               };
-
               key-bindings = {
                 clipboard-copy = "Control+c XF86Copy";
-
                 clipboard-paste = "Control+v XF86Paste";
               };
             };
-
-            # GTK configuration
-
             mainFontNameGtk = (builtins.elemAt config.home.core.appearance.fonts.main 0).name;
-
             inherit (config.home.core.appearance) baseFontSize;
-
             dpiStr = toString config.home.core.appearance.dpi;
-
             inherit (config.home.core.user) bookmarks;
-
             scaleFactor = gtkCfg.scale;
-
             shadowSize = "0.05rem";
-
             shadowRadius = "0.05rem";
-
             shadowColor = "rgba(0, 0, 0, 0.3)";
-
             shadowOffsets = [
               "${shadowSize} 0 ${shadowRadius} ${shadowColor}"
-
               "-${shadowSize} 0 ${shadowRadius} ${shadowColor}"
-
               "0 ${shadowSize} ${shadowRadius} ${shadowColor}"
-
               "0 -${shadowSize} ${shadowRadius} ${shadowColor}"
-
               "${shadowSize} ${shadowSize} ${shadowRadius} ${shadowColor}"
-
               "-${shadowSize} ${shadowSize} ${shadowRadius} ${shadowColor}"
-
               "${shadowSize} -${shadowSize} ${shadowRadius} ${shadowColor}"
-
               "-${shadowSize} -${shadowSize} ${shadowRadius} ${shadowColor}"
             ];
-
             repeatedShadow = lib.concatStringsSep ",\n" (lib.concatLists (lib.genList (_: shadowOffsets) 4));
-
             whiteColor = "white";
-
             transparentColor = "transparent";
-
             menuBackground = "rgba(0, 0, 0, 0.8)";
-
             hoverBg = "rgba(100, 149, 237, 0.1)";
-
             selectedBg = "rgba(100, 149, 237, 0.5)";
-
             gtk3Settings = {
               Settings = {
                 gtk-application-prefer-dark-theme = 1;
-
                 gtk-cursor-theme-name = "DeepinDarkV20-x11";
-
                 gtk-cursor-theme-size = toString (builtins.floor (24 * scaleFactor));
-
                 gtk-font-name = "${mainFontNameGtk} ${toString baseFontSize}";
-
                 gtk-xft-antialias = 1;
-
                 gtk-xft-dpi = dpiStr;
-
                 gtk-xft-hinting = 1;
-
                 gtk-xft-hintstyle = "hintslight";
-
                 gtk-xft-rgba = "rgb";
               };
             };
-
             gtk4Settings = {
               Settings = {
                 gtk-application-prefer-dark-theme = 1;
-
                 gtk-cursor-theme-name = "DeepinDarkV20-x11";
-
                 gtk-cursor-theme-size = toString (builtins.floor (24 * scaleFactor));
-
                 gtk-font-name = "${mainFontNameGtk} ${toString baseFontSize}";
               };
             };
-
             gtkCss = ''
-
               /* Global element styling */
-
               * {
-
                 font-family: "${mainFontNameGtk}";
-
                 color: ${whiteColor};
-
                 background: ${transparentColor};
-
                 outline-width: 0;
-
                 outline-offset: 0;
-
                 text-shadow: ${repeatedShadow};
-
               }
-
               /* Hover state for all elements */
-
               *:hover {
-
                 background: ${hoverBg};
-
               }
-
               /* Selected state for all elements */
-
               *:selected {
-
                 background: ${selectedBg};
-
               }
-
               /* Button styling */
-
               button {
-
                 border-radius: 0.15rem;
-
                 min-height: 1rem;
-
                 padding: 0.05rem 0.25rem;
-
               }
-
               /* Menu background styling */
-
               menu {
-
                 background: ${menuBackground};
-
               }
-
             '';
-
             bookmarksContent = lib.concatStringsSep "\n" bookmarks;
-
-            # Hyprland toHyprconf generator functions
-
             generators = let
               inherit
                 (builtins)
@@ -3716,13 +3212,9 @@ in {
                 isList
                 removeAttrs
                 ;
-
               inherit (lib.attrsets) filterAttrs mapAttrsToList;
-
               inherit (lib.generators) toKeyValue;
-
               inherit (lib.lists) foldl replicate;
-
               inherit
                 (lib.strings)
                 concatStrings
@@ -3730,47 +3222,34 @@ in {
                 concatMapStringsSep
                 hasPrefix
                 ;
-
               inherit (lib.types) package;
-
               sectionOrderingRules = {
                 animations = ["bezier" "animation"];
               };
-
               toHyprconf = {
                 attrs,
                 indentLevel ? 0,
                 importantPrefixes ? ["$"],
               }: let
                 initialIndent = concatStrings (replicate indentLevel "  ");
-
                 toHyprconf' = indent: attrs: let
                   sections = filterAttrs (_: v: isAttrs v || (isList v && all isAttrs v)) attrs;
-
                   mkSection = n: attrs:
                     if isList attrs
                     then (concatMapStringsSep "\n" (a: mkSection n a) attrs)
                     else let
                       hasOrderingRules = builtins.hasAttr n sectionOrderingRules;
-
                       processedAttrs =
                         if hasOrderingRules
                         then let
                           orderingRule = sectionOrderingRules.${n};
-
                           allKeys = builtins.attrNames attrs;
-
                           orderedKeys = builtins.filter (key: builtins.elem key orderingRule) allKeys;
-
                           unorderedKeys = builtins.filter (key: !(builtins.elem key orderingRule)) allKeys;
-
                           sortedOrderedKeys = builtins.filter (ruleKey: builtins.elem ruleKey orderedKeys) orderingRule;
-
                           finalKeyOrder = sortedOrderedKeys ++ unorderedKeys;
-
                           orderedAttrs = lib.listToAttrs (map (key: {
                               name = key;
-
                               value = attrs.${key};
                             })
                             finalKeyOrder);
@@ -3778,21 +3257,14 @@ in {
                           orderedAttrs
                         else attrs;
                     in ''
-
                       ${indent}${n} {
-
                       ${toHyprconf' "  ${indent}" processedAttrs}${indent}}
-
                     '';
-
                   mkFields = toKeyValue {
                     listsAsDuplicateKeys = true;
-
                     inherit indent;
                   };
-
                   allFields = filterAttrs (_: v: !(isAttrs v || (isList v && all isAttrs v))) attrs;
-
                   isImportantField = n: _:
                     foldl (acc: prev:
                       if hasPrefix prev n
@@ -3800,13 +3272,9 @@ in {
                       else acc)
                     false
                     importantPrefixes;
-
                   isEarlyField = n: _: n == "bezier";
-
                   importantFields = filterAttrs isImportantField allFields;
-
                   earlyFields = filterAttrs isEarlyField (removeAttrs allFields (mapAttrsToList (n: _: n) importantFields));
-
                   regularFields = removeAttrs allFields (mapAttrsToList (n: _: n) (importantFields // earlyFields));
                 in
                   mkFields importantFields
@@ -3815,7 +3283,6 @@ in {
                   + mkFields regularFields;
               in
                 toHyprconf' initialIndent attrs;
-
               pluginsToHyprconf = plugins: importantPrefixes:
                 toHyprconf {
                   attrs = {
@@ -3827,33 +3294,21 @@ in {
                     in
                       map mkEntry plugins;
                   };
-
                   inherit importantPrefixes;
                 };
             in {
               inherit toHyprconf pluginsToHyprconf;
             };
-
-            # Hyprland core configuration
-
             hyprlandCoreConfig = {
               "$active_colour" = "ffffffff";
-
               "$transparent" = "ffffff00";
-
               "$inactive_colour" = "333333ff";
-
               general = {
                 gaps_in = 10;
-
                 gaps_out = 5;
-
                 border_size = 1;
-
                 "col.active_border" = "rgba($active_colour)";
-
                 "col.inactive_border" = "rgba($inactive_colour)";
-
                 layout =
                   if hyprlandCfg.hy3.enable
                   then "hy3"
@@ -3861,281 +3316,171 @@ in {
                   then "group"
                   else "dwindle";
               };
-
               dwindle = {
                 single_window_aspect_ratio = "1.77 1.0";
-
                 single_window_aspect_ratio_tolerance = 0.1;
               };
-
               input = {
                 kb_layout = "us";
-
                 follow_mouse = 1;
-
                 sensitivity = -1.0;
-
                 force_no_accel = true;
-
                 mouse_refocus = false;
               };
-
               decoration = {
                 rounding = 0;
-
                 blur = {
                   enabled = true;
-
                   size = 10;
-
                   passes = 3;
-
                   ignore_opacity = true;
-
                   popups = true;
                 };
               };
-
               render = {
                 cm_enabled = 0;
               };
-
               bezier = [
                 "in-out,.65,-0.01,0,.95"
-
                 "woa,0,0,0,1"
               ];
-
               animations = {
                 enabled =
                   if config.home.core.appearance.animations.enable
                   then 1
                   else 0;
-
                 animation = [
                   "windows,1,2,woa,popin"
-
                   "border,1,10,default"
-
                   "fade,1,10,default"
-
                   "workspaces,1,5,in-out,slide"
                 ];
               };
-
               misc = {
                 disable_hyprland_logo = true;
-
                 disable_splash_rendering = true;
               };
-
               debug.disable_logs = false;
-
               env =
                 [
                   "HYPRCURSOR_THEME,DeepinDarkV20-hypr"
-
                   "HYPRCURSOR_SIZE,${toString config.home.core.appearance.cursorSize}"
-
                   "XCURSOR_THEME,DeepinDarkV20-x11"
-
                   "XCURSOR_SIZE,${toString config.home.core.appearance.cursorSize}"
                 ]
                 ++ lib.optionals hostSystem.hardware.nvidia.enable [
                   "LIBVA_DRIVER_NAME,nvidia"
-
                   "GBM_BACKEND,nvidia-drm"
-
                   "__GLX_VENDOR_LIBRARY_NAME,nvidia"
                 ];
             };
-
-            # Hyprland keybindings configuration
-
             hyprlandKeybindingsConfig = {
               "$mod" = "ALT";
-
               "$mod2" = "SUPER";
-
               "$term" = defaults.terminal;
-
               "$filemanager" = defaults.fileManager;
-
               "$browser" = defaults.browser;
-
               "$discord" = defaults.discord;
-
               "$launcher" = defaults.launcher;
-
               "$ide" = defaults.ide;
-
               "$notepad" = "${defaults.terminal} -e ${defaults.editor}";
-
               "$obs" = "obs";
-
               bind = lib.lists.flatten [
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL, G, togglegroup")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, G, lockgroups, toggle")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL, J, changegroupactive, b")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL, K, changegroupactive, f")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, J, moveintogroup, b")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL SHIFT, K, moveintogroup, f")
-
                 (lib.optional hyprlandCfg.group.enable "$mod CTRL, H, moveoutofgroup")
-
                 [
                   "$mod, Q, killactive"
-
                   "$mod, M, exit"
-
                   "$mod, F, fullscreen"
-
                   "$mod, TAB, layoutmsg, orientationnext"
-
                   "$mod, space, togglefloating"
-
                   "$mod, P, pseudo"
                 ]
-
                 [
                   "$mod, T, exec, $term"
-
                   "$mod, E, exec, $filemanager"
-
                   "$mod, R, exec, $launcher"
-
                   "$mod, O, exec, $notepad"
-
                   "$mod, 1, exec, $ide"
-
                   "$mod, 2, exec, $browser"
-
                   "$mod, 3, exec, vesktop"
-
                   "$mod, 4, exec, steam"
-
                   "$mod, 5, exec, $obs"
                 ]
-
                 [
                   "$mod SHIFT, S, swapactiveworkspaces, DP-4 HDMI-A-2"
-
                   "$mod, S, movecurrentworkspacetomonitor, +1"
                 ]
-
                 (lib.lists.forEach ["h" "j" "k" "l"] (key: let
                   direction =
                     {
                       "k" = "u";
-
                       "h" = "l";
-
                       "j" = "d";
-
                       "l" = "r";
                     }
-
                     .${
                       key
                     };
                 in [
                   "$mod, ${key}, movefocus, ${direction}"
-
                   "$mod SHIFT, ${key}, movewindow, ${direction}"
                 ]))
-
                 (lib.lists.forEach (lib.range 1 9) (i: let
                   num = toString i;
                 in [
                   "$mod2, ${num}, workspace, ${num}"
-
                   "$mod2 SHIFT, ${num}, movetoworkspacesilent, ${num}"
                 ]))
-
                 [
                   "Ctrl$mod2,Delete, exec, gnome-system-monitor"
-
                   "$mod Shift, M, exec, shutdown now"
-
                   "Ctrl$mod2Shift, M, exec, reboot"
-
                   "Ctrl,Period,exec,smile"
                 ]
-
                 [
                   "$mod, G, exec, grim -g \"$(slurp -d)\" - | wl-copy -t image/png"
-
                   "$mod SHIFT, G, exec, grim - | wl-copy -t image/png"
-
                   "$mod, GRAVE, exec, hyprpicker | wl-copy"
                 ]
-
                 [
                   "$mod SHIFT, C, exec, killall swaybg; for monitor in $(hyprctl monitors -j | jq -r '.[].name'); do wall=$(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1); swaybg -o $monitor -i $wall -m fill & done"
                 ]
               ];
-
               bindm = [
                 "$mod, mouse:272, movewindow"
-
                 "$mod, mouse:273, resizewindow"
               ];
             };
-
-            # Hyprland integrations configuration
-
             agsEnabled = config.home.ui.ags.enable or false;
-
             quickshellEnabled = config.home.ui.quickshell.enable or false;
-
             hyprlandIntegrationsConfig = {
-              # Monitor configuration
-
               monitor = [
                 "DP-4,highres@highrr,0x0,1"
-
                 "DP-3,highres@highrr,0x0,1"
-
                 "DP-2,5120x1440@239.76,0x0,1"
-
                 "DP-1,5120x1440@239.76,0x0,1"
-
                 "eDP-1,1920x1080@300.00,0x0,1"
               ];
-
-              # Window rules and layer rules
-
               "$firefox-pip" = "class:^(firefox)$, title:^(Picture-in-Picture)";
-
               "$kitty" = "class:^(kitty)$";
-
               windowrulev2 = [
                 "float, center, size 300 600, class:^(launcher)"
-
                 "float, center, class:^(hyprland-share-picker)"
-
                 "float, $firefox-pip"
-
                 "opacity 0.75 override, $firefox-pip"
-
                 "noborder, $firefox-pip"
-
                 "size 30% 30%, $firefox-pip"
-
                 "workspace special:lovely, title:^(Lovely.*)"
               ];
-
               layerrule = [
                 "blur, notifications"
               ];
-
-              # Exec-once integrations
-
               "exec-once" =
                 lib.optionals agsEnabled [
                   "exec ags run"
@@ -4144,1333 +3489,713 @@ in {
                   "exec quickshell"
                 ]
                 ++ [
-                  # Initial wallpaper setup
-
                   "for monitor in $(hyprctl monitors -j | jq -r '.[].name'); do wall=$(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1); swaybg -o $monitor -i $wall -m fill & done"
                 ];
-
-              # Keybindings
-
               bind =
                 lib.optionals agsEnabled [
                   "$mod, W, exec, ags request showStats"
-
                   "$mod2, TAB, exec, ags request toggleWorkspaces"
                 ]
                 ++ lib.optionals quickshellEnabled [
                   "$mod2, TAB, exec, quickshell ipc call workspaces toggle"
                 ];
-
               bindr = lib.optionals agsEnabled [
                 "$mod, W, exec, ags request hideStats"
               ];
             };
           in {
             options.home.ui = {
-              # AGS options
-
               ags = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-
                   default = false;
-
                   description = "Enable AGS v2 (Astal Framework)";
                 };
               };
-
-              # Cursor options
-
               cursor = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-
                   default = false;
-
                   description = "Enable cursor theme configuration";
                 };
               };
-
-              # Fonts options
-
               fonts = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-
                   default = false;
-
                   description = "Enable font configuration with string substitution";
                 };
               };
-
-              # Foot options
-
               foot = {
                 enable = lib.mkEnableOption "foot terminal emulator";
               };
-
-              # GTK options
-
               gtk = {
                 enable = lib.mkEnableOption "GTK theming and configuration using hjem";
-
                 scale = lib.mkOption {
                   type = lib.types.float;
-
                   default = 1.0;
-
                   description = "Scaling factor for GTK applications (e.g., 1.0, 1.25, 1.5, 2.0)";
-
                   example = 1.5;
                 };
               };
-
-              # Hyprland options
-
               hyprland = {
                 enable = lib.mkEnableOption "Hyprland window manager";
-
                 flake = {
                   enable = lib.mkOption {
                     type = lib.types.bool;
-
                     default = true;
-
                     description = "Whether to use Hyprland from flake inputs instead of nixpkgs";
                   };
                 };
-
                 hy3 = {
                   enable = lib.mkOption {
                     type = lib.types.bool;
-
                     default = true;
-
                     description = "Whether to enable the hy3 tiling layout plugin";
                   };
                 };
-
                 group = {
                   enable = lib.mkOption {
                     type = lib.types.bool;
-
                     default = false;
-
                     description = "Whether to enable the group layout mode";
                   };
                 };
               };
-
-              # Mako options
-
               mako = {
                 enable = lib.mkEnableOption "Mako notification daemon";
               };
-
-              # Niri options
-
               niri = {
                 enable = lib.mkEnableOption "Niri window manager";
               };
-
-              # Qutebrowser options
-
               qutebrowser = {
                 enable = lib.mkEnableOption "qutebrowser web browser";
               };
-
-              # Wayland tools options
-
               wallust.enable = lib.mkEnableOption "wallust color generation";
-
               quickshell.enable = lib.mkOption {
                 type = lib.types.bool;
-
                 default = false;
-
                 description = "Enable Quickshell desktop shell";
               };
-
               wayland.enable = lib.mkEnableOption "Wayland configuration";
             };
-
             config = lib.mkMerge [
-              # AGS configuration
-
               (lib.mkIf agsCfg.enable {
                 hjem.users.${username} = {
                   packages = [
                     pkgs.ags
                   ];
-
                   files = {
                     ".config/ags/app.tsx" = {
                       clobber = true;
-
                       text = ''
-
                         import { App, Astal, Gtk } from "astal/gtk3"
-
                         import { Variable, exec, subprocess } from "astal"
-
                         // ============================================================================
-
                         // UTILITY FUNCTIONS
-
                         // ============================================================================
-
                         // Safe command execution helper for AGS v2
-
                         function safeExec(command: string, defaultValue: string = 'N/A'): string {
-
                             try {
-
                                 const result = exec(["bash", "-c", command]);
-
                                 return result.trim() || defaultValue;
-
                             } catch (error) {
-
                                 console.log(`Failed to execute command: ''${command}`, error);
-
                                 return defaultValue;
-
                             }
-
                         }
-
                         // Timer-based time updates (more efficient than polling)
-
                         function setupTimeUpdates(currentTime: any, currentDate: any) {
-
                             const updateTime = () => {
-
                                 currentTime.set(safeExec('date "+%H:%M:%S"'));
-
                             };
-
                             const updateDate = () => {
-
                                 currentDate.set(safeExec('date "+%d/%m/%y"'));
-
                             };
-
                             // Update immediately
-
                             updateTime();
-
                             updateDate();
-
                             // Update time every second using setTimeout instead of polling
-
                             const timeInterval = setInterval(updateTime, 1000);
-
                             // Update date at midnight and then every 24 hours
-
                             const now = new Date();
-
                             const tomorrow = new Date(now);
-
                             tomorrow.setDate(tomorrow.getDate() + 1);
-
                             tomorrow.setHours(0, 0, 0, 0);
-
                             const msUntilMidnight = tomorrow.getTime() - now.getTime();
-
                             setTimeout(() => {
-
                                 updateDate();
-
                                 // Then update every 24 hours
-
                                 setInterval(updateDate, 24 * 60 * 60 * 1000);
-
                             }, msUntilMidnight);
-
                         }
-
                         // Event-driven package count monitoring
-
                         function setupPackageMonitoring(packageCount: any) {
-
                             const updatePackageCount = () => {
-
                                 const count = safeExec("which nix-store >/dev/null 2>&1 && nix-store -q --requisites /run/current-system/sw 2>/dev/null | wc -l || echo 'N/A'").trim();
-
                                 packageCount.set(count);
-
                             };
-
                             updatePackageCount();
-
                             // Monitor for system rebuilds and package operations
-
                             subprocess([
-
                                 "bash",
-
                                 "-c",
-
                                 `
-
                                 while true; do
-
                                     inotifywait -e modify,create,delete /nix/var/nix/profiles/system* 2>/dev/null || sleep 30
-
                                     echo "package_change"
-
                                 done
-
                                 `
-
                             ], (output: string) => {
-
                                 if (output.includes('package_change')) {
-
                                     updatePackageCount();
-
                                 }
-
                             });
-
                         }
-
                         // Helper functions for SystemStats component
-
                         function padLabel(label: string, longestLabel: number): string {
-
                             return label + ' '.repeat(longestLabel - label.length);
-
                         }
-
                         function horizontalBorder(char1: string, char2: string, char3: string, longestLabel: number): string {
-
                             return char1 + "─".repeat(longestLabel + 4) + char3;
-
                         }
-
                         // Cache GPU availability check
-
                         const hasNvidiaGpu = (() => {
-
                             try {
-
                                 exec(["bash", "-c", "which nvidia-smi >/dev/null 2>&1"]);
-
                                 return true;
-
                             } catch {
-
                                 return false;
-
                             }
-
                         })();
-
                         // ============================================================================
-
                         // STYLES
-
                         // ============================================================================
-
                         const styles = `
-
                         /* Base font size */
-
                         * {
-
                             font-size: 14px;
-
                             font-family: monospace;
-
                         }
-
                         /* System Stats Widget Styles */
-
                         .system-stats-window {
-
                             background: transparent;
-
                         }
-
                         .system-stats {
-
                             background: transparent;
-
                             padding: 0.5em;
-
                             margin: 0.5em;
-
                             font-family: monospace;
-
                             font-size: 1rem;
-
                         }
-
                         .system-stats * {
-
                             margin: 0;
-
                             padding: 0;
-
                             background: transparent;
-
                             border: none;
-
                             box-shadow: none;
-
                             text-shadow:
-
                                 0.05rem 0 0.05rem
-
                                 -0.05rem 0 0.05rem
-
                                 0 0.05rem 0.05rem
-
                                 0 -0.05rem 0.05rem
-
                                 0.05rem 0.05rem 0.05rem
-
                                 -0.05rem 0.05rem 0.05rem
-
                                 0.05rem -0.05rem 0.05rem
-
                                 -0.05rem -0.05rem 0.05rem
-
                             font-family: inherit;
-
                             font-size: inherit;
-
                             font-weight: inherit;
-
                             color: inherit;
-
                         }
-
                         /* Rainbow color assignments */
-
                         .stats-time { color:
-
                         .stats-date { color:
-
                         .stats-shell { color:
-
                         .stats-uptime { color:
-
                         .stats-pkgs { color:
-
                         .stats-memory { color:
-
                         .stats-cpu { color:
-
                         .stats-gpu { color:
-
                         .stats-colors { color:
-
                         .stats-white { color:
-
                         .stats-red { color:
-
                         .stats-orange { color:
-
                         .stats-yellow { color:
-
                         .stats-green { color:
-
                         .stats-blue-green { color:
-
                         .stats-cyan { color:
-
                         .stats-blue { color:
-
                         .stats-magenta { color:
-
                         /* Workspaces Widget Styles */
-
                         .workspaces-top, .workspaces-bottom {
-
                             background: transparent;
-
                         }
-
                         .workspaces {
-
                             background: transparent;
-
                             margin: 0;
-
                             padding: 0;
-
                         }
-
                         .workspaces *,
-
                         .workspaces {
-
                             margin: 0;
-
                             padding: 0;
-
                             background: transparent;
-
                             border: none;
-
                             box-shadow: none;
-
                             color: white;
-
                         }
-
                         .workspace-btn {
-
                             margin: 0;
-
                             padding: 0;
-
                             background-color:
-
                             border-radius: 0;
-
                             min-width: 20px;
-
                             min-height: 20px;
-
                         }
-
                         .workspace-btn label {
-
                             background: transparent;
-
                             color: rgba(255, 255, 255, 0.4);
-
                             font-size: 0.8rem;
-
                             padding: 0.25em;
-
                         }
-
                         .workspace-btn.active label {
-
                             color: rgba(255, 255, 255, 1.0);
-
                         }
-
                         .workspace-btn.occupied label {
-
                             color: rgba(255, 255, 255, 0.8);
-
                         }
-
                         .workspace-btn.inactive label {
-
                             color: rgba(255, 255, 255, 0.5);
-
                         }
-
                         .workspace-btn.urgent label {
-
                             color:
-
                         }
-
                         `
-
                         // ============================================================================
-
                         // SYSTEM STATS MODULE
-
                         // ============================================================================
-
                         // Show/hide control variables
-
                         const systemStatsVisible = Variable(true);
-
                         const systemStatsLayer = Variable(Astal.Layer.BOTTOM);
-
                         // System monitoring variables with optimized polling intervals
-
                         const cpuTemp = Variable('N/A').poll(250, () => {
-
                             return safeExec("sensors 2>/dev/null | grep -E 'Tctl|Package id 0' | head -1 | awk '{print $2}' | sed 's/+//' || echo 'N/A'");
-
                         });
-
                         const gpuTemp = Variable('N/A').poll(250, () => {
-
                             if (!hasNvidiaGpu) return 'N/A';
-
                             const temp = safeExec("nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null || echo 'N/A'");
-
                             return temp !== "N/A" && temp !== "" ? temp + "C" : "N/A";
-
                         });
-
                         const memoryInfo = Variable({ used: 'N/A', total: 'N/A' }).poll(2000, () => {
-
                             try {
-
                                 const output = exec(["bash", "-c", "free -h | grep '^Mem:' | awk '{print $3 \"/\" $2}'"]);
-
                                 const parts = output.trim().split('/');
-
                                 return { used: parts[0] || 'N/A', total: parts[1] || 'N/A' };
-
                             } catch {
-
                                 return { used: 'N/A', total: 'N/A' };
-
                             }
-
                         });
-
                         const uptime = Variable('N/A').poll(60000, () => {
-
                             return safeExec("uptime | sed 's/.*up *//' | sed 's/,.*user.*//' | sed 's/^ *//' | sed 's/ *$//' | sed 's/ day/d/' | sed 's/ days/d/'").trim();
-
                         });
-
                         // Timer-based time updates
-
                         const currentTime = Variable('00:00:00');
-
                         const currentDate = Variable('00/00/00');
-
                         // Event-driven package count
-
                         const packageCount = Variable('N/A');
-
                         // Shell name never changes during session - set once
-
                         const shellName = Variable(safeExec("basename \"$SHELL\""));
-
                         // Initialize monitoring
-
                         setupTimeUpdates(currentTime, currentDate);
-
                         setupPackageMonitoring(packageCount);
-
                         // Static data for SystemStats component (moved outside to prevent recreation)
-
                         const statsLabels = ['time', 'date', 'shell', 'uptime', 'pkgs', 'memory', 'cpu', 'gpu', 'colors'];
-
                         const longestLabel = Math.max(...statsLabels.map(l => l.length));
-
                         // System Stats Widget Component
-
                         function SystemStats() {
-
                             return <window
-
                                 className="system-stats-window"
-
                                 layer={systemStatsLayer()}
-
                                 exclusivity={Astal.Exclusivity.IGNORE}
-
                                 visible={systemStatsVisible()}
-
                                 application={App}>
-
                                 <box className="system-stats" vertical>
-
                                     {/* NixOS Logo */}
-
                                     <label
-
                                         className="stats-white"
-
                                         label="   _  ___      ____  ____&
-
                                     />
-
                                     {/* Top border */}
-
                                     <label
-
                                         className="stats-white"
-
                                         halign={Gtk.Align.START}
-
                                         label={horizontalBorder("╭", "─", "╮", longestLabel)}
-
                                     />
-
                                     {/* Stats rows */}
-
                                     {statsLabels.map(currentLabel =>
-
                                         <box key={currentLabel}>
-
                                             <label className="stats-white" halign={Gtk.Align.START} label="│ " />
-
                                             <label className={`stats-''${currentLabel}`} halign={Gtk.Align.START} label="• " />
-
                                             <label className="stats-white" halign={Gtk.Align.START} label={`''${padLabel(currentLabel, longestLabel)} │ `} />
-
                                             <label
-
                                                 className={`stats-''${currentLabel}`}
-
                                                 halign={Gtk.Align.START}
-
                                                 label={(() => {
-
                                                     switch(currentLabel) {
-
                                                         case 'time': return currentTime();
-
                                                         case 'date': return currentDate();
-
                                                         case 'shell': return shellName();
-
                                                         case 'uptime': return uptime();
-
                                                         case 'pkgs': return packageCount();
-
                                                         case 'memory': return `''${memoryInfo.get().used}/''${memoryInfo.get().total}`;
-
                                                         case 'cpu': return cpuTemp();
-
                                                         case 'gpu': return gpuTemp();
-
                                                         case 'colors': return "";
-
                                                         default: return "";
-
                                                     }
-
                                                 })()}
-
                                             />
-
                                             {/* Color dots for colors row */}
-
                                             {currentLabel === 'colors' && [
-
                                                 <label key="red" className="stats-red" label="• " />,
-
                                                 <label key="orange" className="stats-orange" label="• " />,
-
                                                 <label key="yellow" className="stats-yellow" label="• " />,
-
                                                 <label key="green" className="stats-green" label="• " />,
-
                                                 <label key="blue-green" className="stats-blue-green" label="• " />,
-
                                                 <label key="cyan" className="stats-cyan" label="• " />,
-
                                                 <label key="blue" className="stats-blue" label="• " />,
-
                                                 <label key="magenta" className="stats-magenta" label="• " />,
-
                                                 <label key="white" className="stats-white" label="• " />
-
                                             ]}
-
                                         </box>
-
                                     )}
-
                                     {/* Bottom border */}
-
                                     <label
-
                                         className="stats-white"
-
                                         halign={Gtk.Align.START}
-
                                         label={horizontalBorder("╰", "─", "╯", longestLabel)}
-
                                     />
-
                                 </box>
-
                             </window>
-
                         }
-
                         // ============================================================================
-
                         // WORKSPACES MODULE
-
                         // ============================================================================
-
                         // Show/hide control variable
-
                         const workspacesVisible = Variable(true);
-
                         // Hyprland workspace management with real-time events
-
                         const workspaces = Variable<any[]>([]);
-
                         const activeWorkspace = Variable<number>(1);
-
                         // Create a single derived variable for workspace state to optimize subscriptions
-
                         const workspaceState = Variable.derive([workspaces, activeWorkspace], (ws, active) => ({
-
                             workspaces: ws,
-
                             activeWorkspace: active
-
                         }));
-
                         // Helper function to switch workspace using hyprctl
-
                         function switchWorkspace(workspaceId: number) {
-
                             try {
-
                                 exec(["hyprctl", "dispatch", "workspace", workspaceId.toString()]);
-
                             } catch (error) {
-
                                 console.error("Failed to switch workspace:", error);
-
                             }
-
                         }
-
                         // Initialize workspace data
-
                         function initializeWorkspaces() {
-
                             try {
-
                                 const output = exec(["bash", "-c", "hyprctl workspaces -j 2>/dev/null || echo '[]'"]);
-
                                 workspaces.set(JSON.parse(output));
-
                             } catch {
-
                                 workspaces.set([]);
-
                             }
-
                             try {
-
                                 const output = exec(["bash", "-c", "hyprctl activeworkspace -j 2>/dev/null || echo '{\"id\":1}'"]);
-
                                 const parsed = JSON.parse(output);
-
                                 activeWorkspace.set(parsed.id || 1);
-
                             } catch {
-
                                 activeWorkspace.set(1);
-
                             }
-
                         }
-
                         // Update workspace list when needed
-
                         function updateWorkspaceList() {
-
                             try {
-
                                 const output = exec(["bash", "-c", "hyprctl workspaces -j 2>/dev/null || echo '[]'"]);
-
                                 workspaces.set(JSON.parse(output));
-
                             } catch {
-
                                 // Keep existing workspaces if update fails
-
                             }
-
                         }
-
                         // Set up real-time Hyprland event monitoring
-
                         function setupHyprlandEvents() {
-
                             const hyprlandSignature = exec(["bash", "-c", "echo $HYPRLAND_INSTANCE_SIGNATURE"]).trim();
-
                             if (!hyprlandSignature) {
-
                                 console.error("HYPRLAND_INSTANCE_SIGNATURE not found - not running under Hyprland");
-
                                 return;
-
                             }
-
                             // Get current user ID dynamically for portability
-
                             const userId = exec(["bash", "-c", "id -u"]).trim();
-
                             const socketPath = `/run/user/''${userId}/hypr/''${hyprlandSignature}/.socket2.sock`;
-
                             // Real-time event monitoring using nc
-
                             subprocess([
-
                                 "bash",
-
                                 "-c",
-
                                 `nc -U "''${socketPath}" 2>/dev/null || { echo "Failed to connect to Hyprland socket"; exit 1; }`
-
                             ], (output) => {
-
                                 const lines = output.split('\\n').filter(line => line.trim());
-
                                 for (const line of lines) {
-
                                     if (line.startsWith('workspace>>')) {
-
                                         // Active workspace changed
-
                                         const workspaceId = parseInt(line.split('>>')[1]) || 1;
-
                                         activeWorkspace.set(workspaceId);
-
                                     }
-
                                     else if (line.startsWith('createworkspace>>')) {
-
                                         // New workspace created
-
                                         updateWorkspaceList();
-
                                     }
-
                                     else if (line.startsWith('destroyworkspace>>')) {
-
                                         // Workspace destroyed
-
                                         updateWorkspaceList();
-
                                     }
-
                                     else if (line.startsWith('openwindow>>') || line.startsWith('closewindow>>')) {
-
                                         // Window opened/closed - might affect workspace occupancy
-
                                         updateWorkspaceList();
-
                                     }
-
                                 }
-
                             });
-
                         }
-
                         // Initialize workspaces and start event monitoring
-
                         initializeWorkspaces();
-
                         setupHyprlandEvents();
-
                         // Workspaces Widget Component
-
                         function WorkspacesWidget(position: 'top' | 'bottom') {
-
                             const anchor = position === 'top'
-
                                 ? Astal.WindowAnchor.TOP
-
                                 : Astal.WindowAnchor.BOTTOM;
-
                             // Create workspace buttons (1-10 like in v1 config)
-
                             const workspaceButtons = Array.from({ length: 10 }, (_, i) => {
-
                                 const workspaceId = i + 1;
-
                                 return <button
-
                                     key={workspaceId}
-
                                     className="workspace-btn"
-
                                     onClicked={() => {
-
                                         switchWorkspace(workspaceId);
-
                                     }}
-
                                     setup={(self) => {
-
                                         // Function to update button state
-
                                         const updateButton = () => {
-
                                             const state = workspaceState.get();
-
                                             const ws = state.workspaces;
-
                                             const active = state.activeWorkspace;
-
                                             const isActive = active === workspaceId;
-
                                             const isOccupied = Array.isArray(ws) && ws.some((workspace: any) =>
-
                                                 workspace.id === workspaceId && workspace.windows > 0
-
                                             );
-
                                             // Show button if it's active or occupied, or if it's workspace 1 (always show)
-
                                             self.visible = isActive || isOccupied || workspaceId === 1;
-
                                             // Update CSS classes
-
                                             self.className = `workspace-btn ''${isActive ? "active" : ""} ''${isOccupied && !isActive ? "occupied" : ""}`.trim();
-
                                         };
-
                                         // Initial update
-
                                         updateButton();
-
                                         // Subscribe to single workspace state variable instead of two separate ones
-
                                         workspaceState.subscribe(updateButton);
-
                                     }}>
-
                                     <label label={workspaceId.toString()} />
-
                                 </button>
-
                             });
-
                             return <window
-
                                 className={`workspaces-''${position}`}
-
                                 layer={Astal.Layer.OVERLAY}
-
                                 exclusivity={Astal.Exclusivity.IGNORE}
-
                                 anchor={anchor}
-
                                 visible={workspacesVisible()}
-
                                 application={App}>
-
                                 <box className="workspaces">
-
                                     {workspaceButtons}
-
                                 </box>
-
                             </window>
-
                         }
-
                         // ============================================================================
-
                         // MAIN APPLICATION
-
                         // ============================================================================
-
                         // Main app configuration
-
                         App.start({
-
                             css: styles,
-
                             requestHandler(request: string, ...args: any[]) {
-
                                 switch (request) {
-
                                     case "showStats":
-
                                         systemStatsVisible.set(true);
-
                                         systemStatsLayer.set(Astal.Layer.TOP);
-
                                         return "Stats shown";
-
                                     case "hideStats":
-
                                         systemStatsLayer.set(Astal.Layer.BOTTOM);
-
                                         return "Stats hidden";
-
                                     case "toggleStats":
-
                                         if (systemStatsLayer.get() === Astal.Layer.TOP) {
-
                                             systemStatsLayer.set(Astal.Layer.BOTTOM);
-
                                         } else {
-
                                             systemStatsVisible.set(true);
-
                                             systemStatsLayer.set(Astal.Layer.TOP);
-
                                         }
-
                                         return "Stats toggled";
-
                                     case "showWorkspaces":
-
                                         workspacesVisible.set(true);
-
                                         return "Workspaces shown";
-
                                     case "hideWorkspaces":
-
                                         workspacesVisible.set(false);
-
                                         return "Workspaces hidden";
-
                                     case "toggleWorkspaces":
-
                                         workspacesVisible.set(!workspacesVisible.get());
-
                                         return "Workspaces toggled";
-
                                     default:
-
                                         return `Unknown request: ''${request}`;
-
                                 }
-
                             },
-
                             main() {
-
                                 // Create system stats window
-
                                 SystemStats();
-
                                 // Create workspace widgets
-
                                 WorkspacesWidget('top');
-
                                 WorkspacesWidget('bottom');
-
                             },
-
                         })
-
                       '';
                     };
-
                     ".config/ags/tsconfig.json" = {
                       clobber = true;
-
                       text = ''
-
                         {
-
                           "compilerOptions": {
-
                             "target": "ES2022",
-
                             "module": "ES2022",
-
                             "lib": ["ES2022"],
-
                             "allowJs": true,
-
                             "strict": true,
-
                             "esModuleInterop": true,
-
                             "skipLibCheck": true,
-
                             "forceConsistentCasingInFileNames": true,
-
                             "moduleResolution": "node",
-
                             "jsx": "react-jsx",
-
                             "jsxImportSource": "astal/gtk3/jsx-runtime"
-
                           },
-
                           "include": ["**/*.ts", "**/*.tsx"],
-
                           "exclude": ["node_modules"]
-
                         }
-
                       '';
                     };
                   };
                 };
               })
-
-              # Cursor configuration
-
               (lib.mkIf cursorCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     hyprcursorPackage
-
                     xcursorPackage
                   ];
-
                   files = {
                     ".profile" = {
                       text = lib.mkAfter ''
-
                         export HYPRCURSOR_THEME="${hyprThemeName}"
-
                         export HYPRCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
-
                         export XCURSOR_THEME="${x11ThemeName}"
-
                         export XCURSOR_SIZE="${toString config.home.core.appearance.cursorSize}"
-
                       '';
-
                       clobber = true;
                     };
-
                     ".config/gtk-3.0/settings.ini" = {
                       text = lib.mkAfter ''
-
                         [Settings]
-
                         gtk-cursor-theme-name=${x11ThemeName}
-
                         gtk-cursor-theme-size=${toString config.home.core.appearance.cursorSize}
-
                       '';
-
                       clobber = true;
                     };
-
                     ".config/gtk-4.0/settings.ini" = {
                       text = lib.mkAfter ''
-
                         [Settings]
-
                         gtk-cursor-theme-name=${x11ThemeName}
-
                         gtk-cursor-theme-size=${toString config.home.core.appearance.cursorSize}
-
                       '';
-
                       clobber = true;
                     };
                   };
                 };
               })
-
-              # Fonts configuration
-
               (lib.mkIf fontsCfg.enable {
                 hjem.users.${username} = {
                   packages = mainFontPackages ++ fallbackPackages;
-
                   files.".config/fontconfig/fonts.conf" = {
                     clobber = true;
-
                     text = fontXmlConfig;
                   };
                 };
               })
-
-              # Foot configuration
-
               (lib.mkIf footCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     foot
                   ];
-
                   files.".config/foot/foot.ini" = {
                     clobber = true;
-
                     text = lib.mkAfter (lib.generators.toINI {} footConfig);
                   };
                 };
               })
-
-              # GTK configuration
-
               (lib.mkIf gtkCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     gtk3
-
                     gtk4
                   ];
-
                   files = {
                     ".config/gtk-3.0/settings.ini" = {
                       clobber = true;
-
                       text = lib.generators.toINI {} gtk3Settings;
                     };
-
                     ".config/gtk-3.0/gtk.css" = {
                       clobber = true;
-
                       text = gtkCss;
                     };
-
                     ".config/gtk-3.0/bookmarks" = {
                       clobber = true;
-
                       text = bookmarksContent;
                     };
-
                     ".config/gtk-4.0/settings.ini" = {
                       clobber = true;
-
                       text = lib.generators.toINI {} gtk4Settings;
                     };
-
                     ".zshenv" = {
                       clobber = true;
-
                       text = lib.mkAfter ''
-
                         export XCURSOR_SIZE="${builtins.replaceStrings [".0"] [""] (toString (builtins.floor (24 * scaleFactor)))}"
-
                       '';
                     };
                   };
                 };
               })
-
-              # Hyprland configuration
-
               (lib.mkIf hyprlandCfg.enable {
                 hjem.users.${username} = {
                   packages = [
                     pkgs.hyprwayland-scanner
-
-                    pkgs.hyprland # Use nixpkgs version for npins compatibility
-
+                    pkgs.hyprland
                     pkgs.grim
-
                     pkgs.slurp
-
                     pkgs.wl-clipboard
-
                     pkgs.jq
-
                     pkgs.swaybg
                   ];
-
                   files = {
                     ".config/hypr/hyprland.conf" = {
                       clobber = true;
-
                       text = let
                         hyprlandConfig = let
                           baseConfig = lib.foldl lib.recursiveUpdate {} [
                             hyprlandCoreConfig
-
                             hyprlandIntegrationsConfig
                           ];
-
                           allBinds = (hyprlandKeybindingsConfig.bind or []) ++ (hyprlandIntegrationsConfig.bind or []);
-
                           allBindm = (hyprlandKeybindingsConfig.bindm or []) ++ (hyprlandIntegrationsConfig.bindm or []);
-
                           allBindr = (hyprlandKeybindingsConfig.bindr or []) ++ (hyprlandIntegrationsConfig.bindr or []);
-
                           allBinds_hold = (hyprlandKeybindingsConfig.binds or []) ++ (hyprlandIntegrationsConfig.binds or []);
                         in
                           baseConfig
@@ -5478,14 +4203,10 @@ in {
                           // hyprlandIntegrationsConfig
                           // {
                             bind = allBinds;
-
                             bindm = allBindm;
-
                             bindr = allBindr;
-
                             binds = allBinds_hold;
                           };
-
                         pluginsConfig = lib.optionalString hyprlandCfg.hy3.enable (
                           generators.pluginsToHyprconf [
                             (
@@ -5495,655 +4216,324 @@ in {
                             )
                           ] ["$"]
                         );
-
                         mainConfig = generators.toHyprconf {
                           attrs = hyprlandConfig;
-
                           importantPrefixes = ["$" "exec" "source"];
                         };
                       in
                         mainConfig + lib.optionalString (pluginsConfig != "") "\n${pluginsConfig}";
                     };
-
                     ".config/hypr/hyprpaper.conf" = {
                       clobber = true;
-
                       text = ''
-
                         preload = ${config.home.directories.wallpapers.static.path}
-
                         wallpaper = ,${config.home.directories.wallpapers.static.path}
-
                         splash = false
-
                         ipc = on
-
                       '';
                     };
                   };
                 };
               })
-
-              # Mako configuration
-
               (lib.mkIf makoCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     mako
                   ];
-
                   files.".config/mako/config" = {
                     clobber = true;
-
                     text = ''
-
                       actions=true
-
                       anchor=top-right
-
                       background-color=
-
                       border-color=
-
                       border-radius=5
-
                       border-size=1
-
                       default-timeout=5000
-
                       format=<b>%s</b>\n%b
-
                       group-by=
-
                       height=100
-
                       icon-path=
-
                       icons=true
-
                       ignore-timeout=false
-
                       layer=top
-
                       margin=10
-
                       markup=true
-
                       max-icon-size=64
-
                       max-visible=5
-
                       output=
-
                       padding=5
-
                       progress-color=
-
                       sort=-time
-
                       text-color=
-
                       width=300
-
                     '';
                   };
-
                   systemd.services.mako = {
                     description = "Mako notification daemon";
-
                     documentation = ["man:mako(1)"];
-
                     partOf = ["graphical-session.target"];
-
                     after = ["graphical-session.target"];
-
                     wantedBy = ["graphical-session.target"];
-
                     serviceConfig = {
                       Type = "dbus";
-
                       BusName = "org.freedesktop.Notifications";
-
                       ExecStart = "${pkgs.mako}/bin/mako";
-
                       ExecReload = "${pkgs.mako}/bin/makoctl reload";
-
                       Restart = "on-failure";
-
                       RestartSec = 1;
-
                       TimeoutStopSec = 10;
                     };
                   };
                 };
               })
-
-              # Niri configuration
-
               (lib.mkIf niriCfg.enable {
                 hjem.users.${username} = {
                   packages = [
                     pkgs.niri
-
                     pkgs.grim
-
                     pkgs.slurp
-
                     pkgs.wl-clipboard
-
                     pkgs.jq
-
                     pkgs.swaybg
                   ];
-
                   files = {
                     ".config/niri/config.kdl" = {
                       text = ''
-
                         prefer-no-csd
-
-
                         spawn-at-startup "${pkgs.xwayland-satellite}/bin/xwayland-satellite"
-
                         spawn-at-startup "sh" "-c" "swaybg -i $(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1) -m fill"
-
-
                         input {
-
                             keyboard {
-
                                 xkb {
-
                                     layout "us"
-
                                 }
-
                             }
-
                             touchpad {
-
                                 tap
-
                                 dwt
-
                                 natural-scroll
-
                                 accel-speed 0.0
-
                             }
-
                             mouse {
-
                                 accel-speed 0.0
-
                             }
-
                             focus-follows-mouse max-scroll-amount="0%"
-
                             mod-key "Alt"
-
                         }
-
-
                         output "DP-4" {
-
                             mode "5120x1440@239.761"
-
                             position x=0 y=0
-
                         }
-
-
                         output "HDMI-A-2" {
-
                             mode "1920x1080@60.000"
-
                             position x=5120 y=0
-
                         }
-
-
                         layout {
-
                             gaps 10
-
                             center-focused-column "never"
-
                             default-column-display "tabbed"
-
                             default-column-width {
-
                                 proportion 0.5
-
                             }
-
                             preset-column-widths {
-
                                 proportion 0.33333
-
                                 proportion 0.5
-
                                 proportion 0.66667
-
                             }
-
-
                             border {
-
                             width 0.5
-
                             active-color "#ffffff"
-
                             inactive-color "#333333"
-
                             }
-
-
                             focus-ring {
-
                                 width 0.5
-
                                 active-color "#ffffff"
-
                                 inactive-color "#333333"
-
                             }
-
-
                             tab-indicator {
-
                                 width 4
-
                                 gap 6
-
                                 active-color "#ffffff"
-
                                 inactive-color "#666666"
-
                                 position "left"
-
                             }
-
                         }
-
-
                         hotkey-overlay {}
-
-
                         animations {
-
                             slowdown 1.0
-
                             window-open {
-
                                 duration-ms 150
-
                                 curve "ease-out-expo"
-
                             }
-
                             window-close {
-
                                 duration-ms 150
-
                                 curve "ease-out-expo"
-
                             }
-
-
                         }
-
-
                         window-rule {
-
                             match app-id="firefox"
-
                             default-column-width {
-
                                 proportion 0.75
-
                             }
-
                         }
-
-
                         window-rule {
-
                             match app-id="foot"
-
                             opacity 1.0
-
                         }
-
-
                         window-rule {
-
                             match app-id="launcher"
-
                             open-floating true
-
                         }
-
-
                         binds {
-
                             "Mod+Shift+Slash" { show-hotkey-overlay; }
-
-
                             "Mod+T" { spawn "${defaults.terminal}"; }
-
-                            "Super+R" { spawn "foot" "-a" "launcher" "${config.user.configDirectory}/scripts/sway-launcher-desktop.sh"; }
-
-
+                            "Super+R" { spawn "foot" "-a" "launcher" "bash" "-c" "${config.user.configDirectory}/scripts/sway-launcher-desktop.sh"; }
                             "Mod+Q" { close-window; }
-
                             "Mod+Shift+F" { fullscreen-window; }
-
                             "Mod+F" { maximize-column; }
-
                             "Mod+Space" { center-column; }
-
                             "Super+Space" { toggle-window-floating; }
-
-
                             "Mod+Left" { focus-column-left; }
-
                             "Mod+Right" { focus-column-right; }
-
                             "Mod+Up" { focus-window-up; }
-
                             "Mod+Down" { focus-window-down; }
-
                             "Mod+H" { focus-column-left; }
-
                             "Mod+L" { focus-column-right; }
-
                             "Mod+J" { focus-window-down; }
-
                             "Mod+K" { focus-window-up; }
-
-
                             "Mod+Shift+Left" { move-column-left; }
-
                             "Mod+Shift+Right" { move-column-right; }
-
                             "Mod+Shift+Up" { move-window-up; }
-
                             "Mod+Shift+Down" { move-window-down; }
-
                             "Mod+Shift+H" { move-column-left; }
-
                             "Mod+Shift+L" { move-column-right; }
-
                             "Mod+Shift+J" { move-window-down; }
-
                             "Mod+Shift+K" { move-window-up; }
-
-
                             "Mod+Page_Up" { focus-workspace-up; }
-
                             "Mod+Page_Down" { focus-workspace-down; }
-
                             "Mod+U" { focus-workspace-up; }
-
                             "Mod+I" { focus-workspace-down; }
-
                             "Super+1" { focus-workspace 1; }
-
                             "Super+2" { focus-workspace 2; }
-
                             "Super+3" { focus-workspace 3; }
-
                             "Super+4" { focus-workspace 4; }
-
                             "Super+5" { focus-workspace 5; }
-
                             "Super+6" { focus-workspace 6; }
-
                             "Super+7" { focus-workspace 7; }
-
                             "Super+8" { focus-workspace 8; }
-
                             "Super+9" { focus-workspace 9; }
-
-
                             "Mod+Ctrl+Page_Up" { move-column-to-workspace-up; }
-
                             "Mod+Ctrl+Page_Down" { move-column-to-workspace-down; }
-
                             "Mod+Ctrl+U" { move-column-to-workspace-up; }
-
                             "Mod+Ctrl+I" { move-column-to-workspace-down; }
-
                             "Super+Shift+1" { move-column-to-workspace 1; }
-
                             "Super+Shift+2" { move-column-to-workspace 2; }
-
                             "Super+Shift+3" { move-column-to-workspace 3; }
-
                             "Super+Shift+4" { move-column-to-workspace 4; }
-
                             "Super+Shift+5" { move-column-to-workspace 5; }
-
                             "Super+Shift+6" { move-column-to-workspace 6; }
-
                             "Super+Shift+7" { move-column-to-workspace 7; }
-
                             "Super+Shift+8" { move-column-to-workspace 8; }
-
                             "Super+Shift+9" { move-column-to-workspace 9; }
-
-
                             "Mod+R" { switch-preset-column-width; }
-
                             "Mod+Shift+R" { switch-preset-window-height; }
-
                             "Mod+Comma" { consume-window-into-column; }
-
                             "Mod+Period" { expel-window-from-column; }
-
                             "Mod+BracketLeft" { consume-or-expel-window-left; }
-
                             "Mod+BracketRight" { consume-or-expel-window-right; }
-
-
                             "Mod+G" { spawn "sh" "-c" "grim -g \"$(slurp -d)\" - | wl-copy -t image/png"; }
-
                             "Mod+Shift+G" { spawn "sh" "-c" "grim - | wl-copy -t image/png"; }
-
-
                             "Mod+Shift+E" { quit; }
-
                             "Mod+O" { toggle-overview; }
-
-
                             "Mod+1" { spawn "${defaults.ide}"; }
-
                             "Mod+2" { spawn "${defaults.browser}"; }
-
                             "Mod+3" { spawn "vesktop"; }
-
                             "Mod+4" { spawn "steam"; }
-
                             "Mod+5" { spawn "obs"; }
-
-
                             "Mod+E" { spawn "${defaults.fileManager}"; }
-
                             "Mod+Shift+O" { spawn "${defaults.terminal}" "-e" "${defaults.editor}"; }
-
-
                             "Mod+Shift+C" { spawn "sh" "-c" "killall swaybg; swaybg -i $(find ${config.home.directories.wallpapers.static.path} -type f | shuf -n 1) -m fill &"; }
-
                         }
-
-
                         environment {
-
                             DISPLAY ":0"
-
                         }
-
                       '';
-
                       clobber = true;
                     };
                   };
                 };
               })
-
-              # Qutebrowser configuration
-
               (lib.mkIf qutebrowserCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     qutebrowser
                   ];
-
                   files.".config/qutebrowser/config.py" = {
                     clobber = true;
-
                     text = ''
-
-                      # Basic qutebrowser configuration
-
                       config.load_autoconfig(False)
-
-
-                      # Basic settings
-
                       c.zoom.default = 110
-
                       c.fonts.default_family = "monospace"
-
                       c.fonts.default_size = "11pt"
-
-
-                      # Tab settings
-
                       c.tabs.position = "top"
-
                       c.tabs.show = "multiple"
-
                       c.tabs.background = True
-
-
-                      # Downloads
-
                       c.downloads.location.directory = "~/Downloads"
-
-
-                      # Privacy settings
-
                       c.content.cookies.accept = "no-3rdparty"
-
                       c.content.geolocation = "ask"
-
                       c.content.notifications.enabled = "ask"
-
-
-                      # Dark mode
-
                       c.colors.webpage.darkmode.enabled = True
-
                       c.colors.webpage.preferred_color_scheme = "dark"
-
-
-                      # Keybindings
-
                       config.bind('J', 'tab-prev')
-
                       config.bind('K', 'tab-next')
-
                       config.bind('x', 'tab-close')
-
                       config.bind('X', 'undo')
-
                       config.bind('t', 'open -t')
-
                       config.bind('T', 'open -t -r')
-
-
-                      # Search engines
-
                       c.url.searchengines = {
-
                           'DEFAULT': 'https://duckduckgo.com/?q={}',
-
                           'g': 'https://www.google.com/search?q={}',
-
                           'gh': 'https://github.com/search?q={}',
-
                           'nix': 'https://search.nixos.org/packages?query={}',
-
                       }
-
-
-                      # Homepage
-
                       c.url.start_pages = ["https://duckduckgo.com"]
-
                       c.url.default_page = "https://duckduckgo.com"
-
                     '';
                   };
                 };
               })
-
-              # Wallust configuration
-
               (lib.mkIf wallustCfg.enable {
                 hjem.users.${username}.packages = with pkgs; [
                   wallust
                 ];
               })
-
-              # Quickshell configuration
-
               (lib.mkIf quickshellCfg.enable {
                 hjem.users.${username}.packages = with pkgs; [
                   quickshell
-
                   cava
                 ];
               })
-
-              # Wayland configuration
-
               (lib.mkIf waylandCfg.enable {
                 hjem.users.${username} = {
                   packages = with pkgs; [
                     grim
-
                     slurp
-
                     wl-clipboard
-
                     hyprpicker
                   ];
-
                   files = {
                     ".config/zsh/.zshenv" = {
                       text = lib.mkAfter ''
-
                         export WLR_NO_HARDWARE_CURSORS=1
-
                         export NIXOS_OZONE_WL=1
-
                         export QT_QPA_PLATFORM=wayland
-
                         export ELECTRON_OZONE_PLATFORM_HINT=wayland
-
                         export XDG_SESSION_TYPE=wayland
-
                         export GDK_BACKEND=wayland,x11
-
                         export SDL_VIDEODRIVER=wayland
-
                         export CLUTTER_BACKEND=wayland
-
                       '';
-
                       clobber = true;
                     };
                   };
@@ -6152,7 +4542,6 @@ in {
             ];
           }
         )
-        # From modules/home/core.nix (585 lines -> INLINED!)
         (
           {
             config,
@@ -6160,11 +4549,8 @@ in {
             pkgs,
             ...
           }: let
-            # Common type definitions
             t = lib.types;
             mkOpt = type: description: lib.mkOption {inherit type description;};
-
-            # Directory module type
             dirModule = lib.types.submodule {
               options = {
                 path = lib.mkOption {
@@ -6178,97 +4564,11 @@ in {
                 };
               };
             };
-
-            # Configuration shortcuts
             appearanceCfg = config.home.core.appearance;
             packagesCfg = config.home.core.packages;
             userCfg = config.home.core.user;
             fontsCfg = config.home.core.fonts;
             xdgCfg = config.home.session.xdg;
-
-            # nvide script from packages.nix
-            nvide-script = pkgs.writeShellScriptBin "nvide" ''
-                      HELP_TEXT="Usage: nvide [OPTIONS] [working_dir]
-                      Arguments:
-                        working_dir    Directory to open (default: current directory)
-                      Options:
-                        -h, --help     Show this help message
-                        -n, --name     Session name (default: basename of working directory)
-                      Description:
-                        Creates an IDE-like environment with:
-                        - Neotree file explorer on the left
-                        - NeoVim in the center
-                        - Two terminal panes split vertically on the right
-                      "
-                      show_help() {
-                        echo "$HELP_TEXT"
-                      }
-                      session_name=""
-                      working_dir=""
-                      while [[ $# -gt 0 ]]; do
-                        case "$1" in
-                          -h|--help)
-                            show_help
-                            exit 0
-                            ;;
-                          -n|--name)
-                            if [[ -n "$2" && "$2" != -* ]]; then
-                              session_name="$2"
-                              shift 2
-                            else
-                              echo "Error: --name requires a value"
-                              exit 1
-                            fi
-                            ;;
-                          -*)
-                            echo "Unknown option: $1"
-                            echo "Use --help for usage information."
-                            exit 1
-                            ;;
-                          *)
-                            working_dir="$1"
-                            shift
-                            ;;
-                        esac
-                      done
-                      working_dir=''${working_dir:-$(pwd)}
-                      working_dir=$(cd "$working_dir" && pwd)
-                      session_name=''${session_name:-$(basename "$working_dir")}
-                      layout_file="/tmp/nvide-layout-$session_name.kdl"
-                      cat > "$layout_file" << 'INNER_EOF'
-                  layout {
-                      pane size=1 borderless=true {
-                          plugin location="zellij:tab-bar"
-                      }
-                      pane {
-                          pane split_direction="horizontal" {
-                              pane size="70%" {
-                                  command "nvim"
-                                  args "."
-                              }
-                              pane split_direction="vertical" size="30%" {
-                                  pane
-                                  pane
-                              }
-                          }
-                      }
-                      pane size=2 borderless=true {
-                          plugin location="zellij:status-bar"
-                      }
-                  }
-              INNER_EOF
-                      if zellij list-sessions 2>/dev/null | grep -q "^$session_name$"; then
-                        echo "Session '$session_name' already exists. Attaching..."
-                        zellij attach "$session_name"
-                        exit 0
-                      fi
-                      echo "Creating nvide session: $session_name"
-                      echo "Working directory: $working_dir"
-                      cd "$working_dir"
-                      zellij --session "$session_name" --layout "$layout_file"
-            '';
-
-            # Base packages from packages.nix
             basePackages = with pkgs; [
               git
               curl
@@ -6285,11 +4585,9 @@ in {
               dconf
               lm_sensors
               networkmanager
-              nvide-script
             ];
           in {
             options = {
-              # From appearance.nix
               home.core.appearance = {
                 enable = lib.mkEnableOption "appearance settings";
                 fonts = lib.mkOption {
@@ -6359,8 +4657,6 @@ in {
                   description = "Global animation configuration for the system";
                 };
               };
-
-              # From defaults.nix
               home.core.defaults = {
                 browser = lib.mkOption {
                   type = lib.types.str;
@@ -6413,8 +4709,6 @@ in {
                   description = "Default media player";
                 };
               };
-
-              # From directories.nix
               home.directories = {
                 flake = mkOpt dirModule "The directory where the flake lives.";
                 music = mkOpt dirModule "Directory for music files.";
@@ -6427,15 +4721,12 @@ in {
                   };
                 }) "Wallpaper directories configuration";
               };
-
-              # From fonts-presets.nix
               home.core.fonts = {
                 preset = lib.mkOption {
                   type = t.enum ["fast-mono" "system" "noto" "custom"];
                   default = "fast-mono";
                   description = "Font preset to use";
                 };
-
                 customFonts = lib.mkOption {
                   type = t.submodule {
                     options = {
@@ -6480,8 +4771,6 @@ in {
                   description = "Custom font configurations when preset is 'custom'";
                 };
               };
-
-              # From packages.nix
               home.core.packages = {
                 enable = lib.mkEnableOption "core packages and base system tools";
                 extraPackages = lib.mkOption {
@@ -6490,8 +4779,6 @@ in {
                   description = "Additional packages to install";
                 };
               };
-
-              # From user.nix
               home.core.user = {
                 enable = lib.mkEnableOption "user configuration (packages and bookmarks)";
                 packages = lib.mkOption {
@@ -6505,23 +4792,15 @@ in {
                   description = "GTK bookmarks for file manager";
                 };
               };
-
-              # From xdg.nix
               home.session.xdg = {
                 enable = lib.mkEnableOption "XDG directory configuration";
               };
             };
-
             config = lib.mkMerge [
-              # From appearance.nix - empty config section
               (lib.mkIf appearanceCfg.enable {
                 })
-
-              # From defaults.nix - empty config section
               {
               }
-
-              # From fonts-presets.nix - font preset configuration
               {
                 home.core.appearance.fonts =
                   if fontsCfg.preset == "fast-mono"
@@ -6594,17 +4873,11 @@ in {
                     inherit (fontsCfg.customFonts) fallback;
                   };
               }
-
-              # From packages.nix - package installation
               (lib.mkIf packagesCfg.enable {
                 hjem.users.${config.user.name}.packages = basePackages ++ packagesCfg.extraPackages;
               })
-
-              # From user.nix - empty config section
               (lib.mkIf userCfg.enable {
                 })
-
-              # From xdg.nix - XDG configuration files
               (lib.mkIf xdgCfg.enable {
                 hjem.users.${config.user.name}.files = {
                   ".zshenv" = {
@@ -6740,11 +5013,6 @@ in {
             ];
           }
         )
-
-        # Dev modules functionality now consolidated in dev.nix
-
-        # 🔥 HARDWARE MODULES CONSOLIDATION! 🔥
-        # From modules/system/hardware/nvidia.nix (62 lines -> INLINED!)
         ({
           config,
           lib,
@@ -6828,9 +5096,6 @@ in {
             '';
           };
         })
-
-        # From modules/system/hardware/default.nix (consolidated hardware modules - 95 lines -> INLINED!)
-        # AMD GPU support (9 lines -> INLINED!)
         ({
           lib,
           hostSystem,
@@ -6840,8 +5105,6 @@ in {
             services.xserver.videoDrivers = lib.mkIf hostSystem.hardware.amdgpu.enable ["amdgpu"];
           };
         })
-
-        # Bluetooth support (27 lines -> INLINED!)
         ({
           config,
           lib,
@@ -6869,8 +5132,6 @@ in {
             users.users.${config.hostSystem.username}.extraGroups = lib.optionals (hardwareCfg.bluetooth.enable or false) ["dialout" "bluetooth" "lp"];
           };
         })
-
-        # Graphics support (12 lines -> INLINED!)
         ({pkgs, ...}: {
           config = {
             hardware.graphics = {
@@ -6880,15 +5141,11 @@ in {
             };
           };
         })
-
-        # I2C support (3 lines -> INLINED!)
         (_: {
           config = {
             hardware.i2c.enable = true;
           };
         })
-
-        # Input devices support (19 lines -> INLINED!)
         ({
           lib,
           hostSystem,
@@ -6908,26 +5165,11 @@ in {
             ];
           };
         })
-
-        # Video devices support (7 lines -> INLINED!)
         (_: {
           config = {
             services.udev.extraRules = ''KERNEL=="video[0-9]*", GROUP="video", MODE="0660"'';
           };
         })
-
-        # 🔥 FINAL WRAPPER MODULE OBLITERATION! 🔥
-        # balatro/installation.nix consolidated into gaming.nix
-        # From modules/home/gaming/emulation/default.nix (6 lines -> OBLITERATED!)
-        # emulation modules consolidated into gaming.nix
-        # marvel-rivals modules consolidated elsewhere
-        # From modules/home/gaming/wukong/default.nix (5 lines -> OBLITERATED!)
-        # wukong module consolidated into gaming.nix
-
-        # From modules/home/programs/default.nix (21 lines -> OBLITERATED!)
-        # android.nix consolidated into programs.nix
-        # bambu.nix consolidated into programs.nix
-        # From modules/home/programs/bluetooth.nix (24 lines -> INLINED!)
         ({
           config,
           lib,
@@ -6952,7 +5194,6 @@ in {
             };
           };
         })
-        # From modules/home/programs/creative.nix (18 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -6971,8 +5212,6 @@ in {
             ];
           };
         })
-        # discord.nix consolidated into programs.nix
-        # From modules/home/programs/imv.nix (15 lines -> INLINED!)
         ({
           config,
           lib,
@@ -6988,7 +5227,6 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [imv];
           };
         })
-        # From modules/home/programs/media.nix (21 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -7010,7 +5248,6 @@ in {
             ];
           };
         })
-        # From modules/home/programs/mpv.nix (15 lines -> INLINED!)
         ({
           config,
           lib,
@@ -7026,9 +5263,6 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [mpv];
           };
         })
-        # obs.nix consolidated into programs.nix
-        # obsidian.nix consolidated into programs.nix
-        # From modules/home/programs/pcmanfm.nix (17 lines -> INLINED!)
         ({
           config,
           lib,
@@ -7046,7 +5280,6 @@ in {
             ];
           };
         })
-        # From modules/home/programs/qbittorrent.nix (17 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -7064,7 +5297,6 @@ in {
             ];
           };
         })
-        # From modules/home/programs/stremio.nix (15 lines -> INLINED!)
         ({
           config,
           lib,
@@ -7080,8 +5312,6 @@ in {
             hjem.users.${config.user.name}.packages = with pkgs; [stremio];
           };
         })
-        # sway-launcher-desktop.nix consolidated into programs.nix
-        # From modules/home/programs/vesktop.nix (15 lines -> INLINED!)
         ({
           config,
           pkgs,
@@ -7097,23 +5327,6 @@ in {
             hjem.users.${config.user.name}.packages = [pkgs.vesktop];
           };
         })
-        # webapps.nix consolidated into programs.nix
-        # Firefox modules consolidated into programs.nix
-
-        # 🔥 MORE WRAPPER MODULES OBLITERATED! 🔥
-
-        # From modules/home/core/default.nix (11 lines -> OBLITERATED!)
-        # appearance.nix INLINED ABOVE! ☝️
-        # defaults.nix INLINED ABOVE! ☝️
-        # directories.nix INLINED ABOVE! ☝️
-        # packages.nix INLINED ABOVE! ☝️
-        # user.nix INLINED ABOVE! ☝️
-        # Session modules consolidated elsewhere
-        # From modules/home/core/fonts/default.nix (5 lines -> OBLITERATED!)
-        # fonts-presets.nix INLINED ABOVE! ☝️
-
-        # Dev modules consolidated into single dev.nix file
-        # From modules/home/dev.nix (665 lines -> INLINED!)
         (
           {
             config,
@@ -7121,7 +5334,6 @@ in {
             pkgs,
             ...
           }: let
-            # AI Instructions content
             aiInstructions = ''
               ```json
               {
@@ -7130,7 +5342,6 @@ in {
                   "home_manager": "hjem (NOT home-manager)",
                   "note": "ALWAYS use hjem, never home-manager"
                 },
-
                 "assistant_profile": {
                   "type": "pragmatic_lazy_engineer",
                   "core_principles": [
@@ -7145,7 +5356,6 @@ in {
                     "fail_fast_with_clear_errors"
                   ]
                 },
-
                 "tool_usage_rules": {
                   "documentation_lookup": {
                     "trigger": ["need_documentation", "external_library_info"],
@@ -7162,7 +5372,6 @@ in {
                     "note": "NEVER use built-in file tools - filesystem MCP only"
                   }
                 },
-
                 "nixos_workflow": {
                   "system_changes": [
                     {
@@ -7183,7 +5392,6 @@ in {
                     }
                   ]
                 },
-
                 "backup_policy": {
                   "rule": "NEVER copy files for backup",
                   "action": "USE Git instead",
@@ -7194,7 +5402,6 @@ in {
                   ],
                   "note": "Git is your version control - use professional commit messages"
                 },
-
                 "system_info": {
                   "home_manager": "hjem (NOT home-manager)",
                   "external_repos": "clone to tmp/ folder (gitignored)",
@@ -7204,25 +5411,18 @@ in {
               }
               ```
             '';
-
-            # MCP Servers configuration (unified from constants)
             mcpServersConfig = helpers.mkMcpServersConfig config.user.homeDirectory;
             opencodeMcpServers = helpers.mkOpencodeMcpServers config.user.homeDirectory;
           in {
             options.home.dev = {
-              # Core development tools
               docker.enable = lib.mkEnableOption "docker development environment";
               gemini-cli.enable = lib.mkEnableOption "Gemini CLI development tools";
               mcp.enable = lib.mkEnableOption "Model Context Protocol configuration";
               npm.enable = lib.mkEnableOption "Node.js and NPM configuration";
               python.enable = lib.mkEnableOption "Python development environment";
-
-              # Claude configuration options
               claude-code.enable = lib.mkEnableOption "Claude Code development tools";
               claude.agents.enable = lib.mkEnableOption "Claude declarative agents";
               claude.slash-commands.enable = lib.mkEnableOption "Claude slash commands";
-
-              # OpenCode configuration options
               opencode = {
                 enable = lib.mkEnableOption "opencode AI coding agent";
                 theme = lib.mkOption {
@@ -7241,8 +5441,6 @@ in {
                   description = "Enable MCP servers for enhanced functionality";
                 };
               };
-
-              # Neovim configuration options
               nvim = {
                 enable = lib.mkEnableOption "Neovim development environment";
                 neovide = lib.mkOption {
@@ -7251,16 +5449,12 @@ in {
                   description = "Enable Neovide GUI";
                 };
               };
-
-              # Additional tools (inlined from tools.nix)
               cursor-ide.enable = lib.mkEnableOption "Cursor IDE";
               latex.enable = lib.mkEnableOption "LaTeX development environment";
               repomix.enable = lib.mkEnableOption "repomix tool for AI-friendly repository packing";
               upscale.enable = lib.mkEnableOption "realesrgan-ncnn-vulkan for upscaling";
             };
-
             config = lib.mkMerge [
-              # Docker configuration
               (lib.mkIf config.home.dev.docker.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7281,8 +5475,6 @@ in {
                   };
                 };
               })
-
-              # Gemini CLI configuration
               (lib.mkIf config.home.dev.gemini-cli.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7300,8 +5492,6 @@ in {
                   };
                 };
               })
-
-              # MCP configuration
               (lib.mkIf config.home.dev.mcp.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7323,11 +5513,9 @@ in {
                     };
                   };
                 };
-
                 systemd.tmpfiles.rules = [
                   "d ${config.user.homeDirectory}/.local/share/npm/lib/node_modules 0755 ${config.user.name} users - -"
                 ];
-
                 system.activationScripts.setupClaudeMcp = {
                   text = ''
                     echo "Setting up Claude MCP servers via CLI..."
@@ -7352,8 +5540,6 @@ in {
                   deps = [];
                 };
               })
-
-              # Claude Code configuration
               (lib.mkIf config.home.dev.claude-code.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7384,8 +5570,6 @@ in {
                   };
                 };
               })
-
-              # Claude Agents configuration (condensed)
               (lib.mkIf config.home.dev.claude.agents.enable {
                 hjem.users.${config.user.name} = {
                   files = {
@@ -7425,14 +5609,11 @@ in {
                   };
                 };
               })
-
-              # Claude Slash Commands configuration (condensed)
               (lib.mkIf config.home.dev.claude.slash-commands.enable {
                 hjem.users.${config.user.name} = {
                   files = {
                     ".claude/commands/nixos-build.md" = {
                       text = ''
-                        # /nixos-build
                         Build and switch NixOS configuration safely:
                         1. Format code with `alejandra .`
                         2. Test build with `nh os switch --dry`
@@ -7442,7 +5623,6 @@ in {
                     };
                     ".claude/commands/fix-issue.md" = {
                       text = ''
-                        # /fix-issue
                         Analyze and fix GitHub issue: $ARGUMENTS
                         1. Use `gh issue view` to get issue details
                         2. Search codebase for relevant files
@@ -7453,8 +5633,6 @@ in {
                   };
                 };
               })
-
-              # OpenCode configuration
               (lib.mkIf config.home.dev.opencode.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7489,14 +5667,11 @@ in {
                     };
                   };
                 };
-
                 systemd.tmpfiles.rules = [
                   "d ${config.user.homeDirectory}/.config/opencode 0755 ${config.user.name} users - -"
                   "d ${config.user.homeDirectory}/.npm-global 0755 ${config.user.name} users - -"
                 ];
-
                 environment.variables.PATH = lib.mkAfter "${config.user.homeDirectory}/.npm-global/bin";
-
                 systemd.services.opencode-install = {
                   description = "Install OpenCode via npm";
                   wantedBy = ["multi-user.target"];
@@ -7510,8 +5685,6 @@ in {
                   path = with pkgs; [nodejs_20 bash uv];
                 };
               })
-
-              # NPM configuration
               (lib.mkIf config.home.dev.npm.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7536,8 +5709,6 @@ in {
                   "d ${config.user.homeDirectory}/.cache/pnpm/store 0755 ${config.user.name} ${config.user.name} - -"
                 ];
               })
-
-              # Neovim configuration (simplified)
               (lib.mkIf config.home.dev.nvim.enable {
                 hjem.users.${config.user.name} = {
                   packages = [
@@ -7569,7 +5740,6 @@ in {
                         -- Neovim Configuration
                         vim.g.mapleader = " "
                         vim.g.maplocalleader = "\\"
-
                         -- Basic settings
                         vim.opt.number = true
                         vim.opt.relativenumber = true
@@ -7581,10 +5751,8 @@ in {
                         vim.opt.clipboard = "unnamedplus"
                         vim.opt.ignorecase = true
                         vim.opt.smartcase = true
-
                         -- Load vim.pack configuration
                         require("vim-pack-config")
-
                         -- Load opencode configuration if available
                         pcall(require, "vim-pack-opencode")
                       '';
@@ -7611,7 +5779,6 @@ in {
                           "https://github.com/stevearc/oil.nvim",
                           "https://github.com/nvim-tree/nvim-web-devicons",
                         })
-
                         -- Basic setup
                         local function initialize_config()
                           -- LSP
@@ -7621,7 +5788,6 @@ in {
                           for _, server in ipairs(servers) do
                             lspconfig[server].setup({ capabilities = capabilities })
                           end
-
                           -- Completion
                           local cmp = require("cmp")
                           cmp.setup({
@@ -7631,7 +5797,6 @@ in {
                             }),
                             sources = {{ name = "nvim_lsp" }, { name = "buffer" }, { name = "path" }},
                           })
-
                           -- UI
                           require("cyberdream").setup({ transparent = true })
                           vim.cmd.colorscheme("cyberdream")
@@ -7643,7 +5808,6 @@ in {
                           require("Comment").setup({})
                           require("nvim-autopairs").setup({})
                         end
-
                         vim.api.nvim_create_autocmd("PackChanged", { callback = function() vim.schedule(initialize_config) end })
                         vim.schedule(function() if pcall(require, "lspconfig") then initialize_config() end end)
                       '';
@@ -7652,8 +5816,6 @@ in {
                   };
                 };
               })
-
-              # Neovide configuration
               (lib.mkIf (config.home.dev.nvim.enable && config.home.dev.nvim.neovide) {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [neovide];
@@ -7671,8 +5833,6 @@ in {
                   };
                 };
               })
-
-              # OpenCode Neovim integration
               (lib.mkIf (config.home.dev.nvim.enable && config.home.dev.opencode.enable) {
                 hjem.users.${config.user.name}.files = {
                   ".config/nvim/lua/vim-pack-opencode.lua" = {
@@ -7691,8 +5851,6 @@ in {
                   };
                 };
               })
-
-              # Python configuration
               (lib.mkIf config.home.dev.python.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [
@@ -7742,20 +5900,15 @@ in {
                   "d ${config.user.homeDirectory}/.local/share/venvs 0755 ${config.user.name} ${config.user.name} - -"
                 ];
               })
-
-              # Additional tools (inlined from tools.nix)
               (lib.mkIf config.home.dev.cursor-ide.enable {
                 hjem.users.${config.user.name}.packages = with pkgs; [code-cursor];
               })
-
               (lib.mkIf config.home.dev.latex.enable {
                 hjem.users.${config.user.name}.packages = with pkgs; [texliveFull texstudio tectonic];
               })
-
               (lib.mkIf config.home.dev.repomix.enable {
                 hjem.users.${config.user.name}.packages = with pkgs; [repomix];
               })
-
               (lib.mkIf config.home.dev.upscale.enable {
                 hjem.users.${config.user.name} = {
                   packages = with pkgs; [realesrgan-ncnn-vulkan];
@@ -7772,11 +5925,6 @@ in {
             ];
           }
         )
-
-        # 🔥 OBLITERATED WRAPPER MODULES! 🔥
-        # Shell modules consolidated into shell.nix
-        # From modules/home/tools/default.nix (12 lines -> OBLITERATED!)
-        # From modules/home/tools/7z.nix (17 lines -> INLINED!)
         ({
           config,
           lib,
@@ -7794,7 +5942,6 @@ in {
             ];
           };
         })
-        # From modules/home/tools/file-roller.nix (17 lines -> INLINED!)
         ({
           config,
           lib,
@@ -7812,11 +5959,7 @@ in {
             ];
           };
         })
-        # Tools modules consolidated into tools.nix
-
-        # Services modules consolidated into services.nix
       ];
-
       _module.args = {
         inherit (hostConfig) hostname;
         inherit users sources;
