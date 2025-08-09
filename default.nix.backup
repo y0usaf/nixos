@@ -2696,11 +2696,6 @@ in {
             })
           ];
         })
-        # ====================================================================
-        # SHELL AND DEVELOPMENT TOOLS MODULE
-        # ====================================================================
-        # Comprehensive shell configuration including ZSH, Zellij, aliases,
-        # and development tools like Git, Jujutsu, nh, and media tools
         ({
           config,
           pkgs,
@@ -2996,12 +2991,6 @@ in {
             })
           ];
         })
-        # ====================================================================
-        # USER INTERFACE AND DESKTOP ENVIRONMENT MODULE
-        # ====================================================================
-        # Complete desktop environment configuration including window managers
-        # (Hyprland, Niri), GUI applications, theming, fonts, cursors, and
-        # Wayland/X11 compatibility layer
         (
           {
             config,
@@ -5024,11 +5013,6 @@ in {
             ];
           }
         )
-        # ====================================================================
-        # HARDWARE SUPPORT AND GRAPHICS MODULE
-        # ====================================================================
-        # Hardware-specific configuration including NVIDIA/AMD graphics drivers,
-        # Bluetooth, OpenGL/Vulkan, I2C, UDEV rules, and peripheral support
         ({
           config,
           lib,
@@ -5186,11 +5170,6 @@ in {
             services.udev.extraRules = ''KERNEL=="video[0-9]*", GROUP="video", MODE="0660"'';
           };
         })
-        # ====================================================================
-        # APPLICATION PROGRAMS MODULE
-        # ====================================================================
-        # User application modules including media players, creative tools,
-        # browsers, communication apps, and productivity software
         ({
           config,
           lib,
@@ -5348,11 +5327,6 @@ in {
             hjem.users.${config.user.name}.packages = [pkgs.vesktop];
           };
         })
-        # ====================================================================
-        # DEVELOPMENT ENVIRONMENT MODULE
-        # ====================================================================
-        # Complete development setup including Docker, AI tools (Claude, Gemini),
-        # MCP servers, Node.js/NPM, Python, Neovim, IDEs, and development utilities
         (
           {
             config,
@@ -5965,10 +5939,6 @@ in {
             ];
           }
         )
-        # ====================================================================
-        # UTILITY TOOLS AND ARCHIVE MANAGERS MODULE
-        # ====================================================================
-        # Additional utility tools including archive managers and file handling tools
         ({
           config,
           lib,
