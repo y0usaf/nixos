@@ -2576,8 +2576,8 @@ in {
                         alias ide='zellij --layout ${config.user.configDirectory}/zellij/layouts/ide.kdl'
                       ''}
                       ${lib.optionalString config.home.tools.spotdl.enable ''
-                        alias spotm4a="uvx spotdl --format m4a --output '{title}'"
-                        alias spotmp3="uvx spotdl --format mp3 --output '{title}'"
+                        alias spotm4a="uvx spotdl --format m4a --output '{title}.{ext}'"
+                        alias spotmp3="uvx spotdl --format mp3 --output '{title}.{ext}'"
                       ''}
                       ${lib.optionalString config.home.tools.yt-dlp.enable ''
                         alias ytm4a="yt-dlp --extractor-args 'youtube:player_client=android' --no-check-certificate -x --audio-format m4a --embed-metadata --add-metadata -o '%(title)s.%(ext)s'"
@@ -5562,20 +5562,6 @@ in {
                     add_mcp_server "GitHub Repo MCP" "npx" "github-repo-mcp"
                     add_mcp_server "Gemini MCP" "npx" "gemini-mcp-tool"
                     echo "Claude MCP servers setup complete"
-                  '';
-                  deps = [];
-                };
-                system.activationScripts.updateClaudeContext = {
-                  text = ''
-                    echo "Updating CLAUDE.md with current default.nix contents..."
-                    if [ -f "/home/y0usaf/nixos/update-claude-context.sh" ]; then
-                      cd /home/y0usaf/nixos
-                      chmod +x ./update-claude-context.sh
-                      bash ./update-claude-context.sh
-                      echo "✅ CLAUDE.md updated successfully"
-                    else
-                      echo "❌ update-claude-context.sh not found"
-                    fi
                   '';
                   deps = [];
                 };
