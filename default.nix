@@ -1,4 +1,4 @@
-let
+{inputs ? {}}: let
   sources = import ./npins;
   system = "x86_64-linux";
   constants = {
@@ -143,6 +143,19 @@ let
 in {
   inherit lib;
   formatter.${system} = pkgs.alejandra;
+
+  # Git hooks configuration
+  checks.${system} = lib.optionalAttrs (inputs ? pre-commit-hooks) {
+    pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+      src = ./.;
+      hooks = {
+        # Code formatting and linting
+        alejandra.enable = true;
+        statix.enable = true;
+        deadnix.enable = true;
+      };
+    };
+  };
   nixosConfigurations.y0usaf-desktop = import (sources.nixpkgs + "/nixos") {
     inherit system;
     configuration = {
