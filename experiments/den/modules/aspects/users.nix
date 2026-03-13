@@ -4,7 +4,22 @@
       den.provides.define-user
       den.provides.primary-user
       (den.provides.user-shell "zsh")
+      den.aspects.user-profile
     ];
+  };
+
+  # Route the legacy profile imports from inventory data instead of
+  # repeating them in each host aspect.
+  den.aspects.user-profile = {den, user, ...}: {
+    includes =
+      {
+        desktop = [den.aspects.profile-desktop];
+        mobile = [den.aspects.profile-mobile];
+        server = [den.aspects.profile-server];
+        darwin = [den.aspects.profile-darwin];
+      }
+      .${user.profile}
+      or [];
   };
 
   # These profile aspects intentionally bridge the existing monolithic files.

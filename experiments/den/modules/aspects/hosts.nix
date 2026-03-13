@@ -12,7 +12,6 @@
       den.aspects.cpu-amd
       den.aspects.gpu-nvidia
       den.aspects.syncthing-proxy
-      den.aspects.profile-desktop
     ];
 
     nixos = {pkgs, ...}: {
@@ -100,7 +99,6 @@
       den.aspects.cpu-amd
       den.aspects.gpu-amdgpu
       den.aspects.syncthing-proxy
-      den.aspects.profile-desktop
     ];
 
     nixos = {pkgs, ...}: {
@@ -131,7 +129,6 @@
       den.aspects.cpu-amd
       den.aspects.gpu-amdgpu
       den.aspects.syncthing-proxy
-      den.aspects.profile-mobile
     ];
 
     nixos = {pkgs, ...}: {
@@ -167,7 +164,6 @@
       den.aspects.linux-server
       den.aspects.cpu-intel
       den.aspects.syncthing-proxy
-      den.aspects.profile-server
     ];
 
     nixos = {
@@ -228,7 +224,6 @@
     includes = [
       den.provides.hostname
       den.aspects.darwin-base
-      den.aspects.profile-darwin
     ];
 
     darwin = {pkgs, ...}: {

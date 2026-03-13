@@ -13,14 +13,6 @@
     };
   };
 
-  den.schema.host = {
-    options = {
-      hostName = lib.mkOption {
-        type = lib.types.str;
-      };
-    };
-  };
-
   den.schema.user = {
     options = {
       homeDirectory = lib.mkOption {

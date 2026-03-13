@@ -64,6 +64,10 @@ Use den schema for stable inventory data:
 
 Keep schema for data that should be queryable. Keep aspects for behaviour.
 
+In the spike scaffold, `user.profile` is the routing seam for the legacy
+profile imports. That is deliberate: profile choice belongs in inventory
+data, while the imported module tree remains a temporary implementation detail.
+
 ### Aspects
 
 Split behaviour into four groups:
@@ -119,6 +123,10 @@ This keeps the first den branch honest: it is a translation layer around the cur
 | [`configs/users/y0usaf-darwin.nix`](../../configs/users/y0usaf-darwin.nix) | `profile-darwin` extraction |
 | [`lib`](../../lib) reusable modules | den shared aspects or class-specific batteries |
 | Host-specific impermanence modules | `impermanent-host` plus per-host imports |
+
+The sidecar now uses `den.hosts.*.users.*.profile` to select those profile
+aspects, so host inventory drives composition instead of duplicating profile
+choices in host-local includes.
 
 ## Migration Phases
 
@@ -180,4 +188,3 @@ inherit (den.flake) nixosConfigurations darwinConfigurations;
 - an initial schema proposal
 - initial host declarations
 - initial shared, host, and profile aspect boundaries
-
